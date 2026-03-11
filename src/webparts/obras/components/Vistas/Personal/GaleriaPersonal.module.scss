@@ -1,82 +1,114 @@
 .container {
-  padding: 10px;
+    padding: 10px;
 
-  .formAlta {
-    display: flex;
-    gap: 12px;
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    margin-bottom: 30px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    align-items: center;
+    .formAlta {
+        display: flex;
+        gap: 12px;
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 30px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        align-items: center;
 
-    input, select {
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      flex-grow: 1;
+        input,
+        select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            flex-grow: 1;
+        }
+
+        .btnPrimario {
+            background: #0078d4;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+        }
     }
 
-    .btnPrimario {
-      background: #0078d4;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-weight: 600;
-    }
-  }
-
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 25px;
-  }
-
-  .card {
-    background: white;
-    padding: 25px;
-    border-radius: 12px;
-    text-align: center;
-    position: relative;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    transition: transform 0.2s;
-
-    &:hover { transform: translateY(-5px); }
-
-    .acciones {
-        position: absolute;
-        top: 10px; right: 10px;
-        display: flex; gap: 8px;
-        
-        i { cursor: pointer; font-size: 14px; color: #666; }
-        .iconDelete:hover { color: #d13438; }
-        .iconEdit:hover { color: #0078d4; }
+    .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 25px;
     }
 
-    .avatar {
-      width: 90px; height: 90px;
-      border-radius: 50%;
-      background: #0078d4;
-      color: white;
-      margin: 0 auto 15px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 28px;
-      overflow: hidden;
-      img { width: 100%; height: 100%; object-fit: cover; }
-    }
+    .card {
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        text-align: center;
+        position: relative;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        transition: transform 0.2s;
 
-    h4 { margin: 10px 0 5px; color: #323130; }
-    .badgeRol {
-        background: #f3f2f1;
-        padding: 4px 12px;
-        border-radius: 15px;
-        font-size: 12px;
-        font-weight: 600;
-        color: #0078d4;
+        &:hover {
+            transform: translateY(-5px);
+        }
+
+        .acciones {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 8px;
+
+            i {
+                cursor: pointer;
+                font-size: 14px;
+                color: #666;
+            }
+
+            .iconDelete:hover {
+                color: #d13438;
+            }
+
+            .iconEdit:hover {
+                color: #0078d4;
+            }
+        }
+
+        .avatar {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            background: #0078d4;
+            color: white;
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            overflow: hidden;
+
+            img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+        }
+
+        h4 {
+            margin: 10px 0 5px;
+            color: #323130;
+        }
+
+        .badgeRol {
+            background: #f3f2f1;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #0078d4;
+        }
+
+        .emailText {
+            font-size: 12px;
+            color: #605e5c;
+            margin-top: 10px;
+        }
     }
-    .emailText { font-size: 12px; color: #605e5c; margin-top: 10px; }
-  }
 }

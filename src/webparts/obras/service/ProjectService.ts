@@ -57,7 +57,7 @@ export class ProjectService {
      * Actualiza el estado de una obra (Flujo Presupuesto -> Stock)
      */
     public async actualizarEstado(obraId: number, nuevoEstado: string): Promise<void> {
-        const endpoint = `${this._baseUrl}/_api/web/lists/getbytitle('Obras')/items(${obraId})`;
+        const endpoint = `${this._baseUrl}/_api/web/lists/getbytitle('${this._listName}')/items(${obraId})`;
 
         const headers = {
             'X-HTTP-Method': 'MERGE',
@@ -75,7 +75,7 @@ export class ProjectService {
     }
 
     public async asignarPersonalAObra(obraId: number, trabajadorId: number): Promise<void> {
-        const endpoint = `${this._baseUrl}/_api/web/lists/getbytitle('Obras')/items(${obraId})`;
+        const endpoint = `${this._baseUrl}/_api/web/lists/getbytitle('${this._listName}')/items(${obraId})`;
 
         const body = JSON.stringify({
             // 'ResponsableId' es el nombre interno de la columna tipo Persona
