@@ -18,97 +18,72 @@ export const GaleriaPersonal: React.FC<{ context: any }> = (props) => {
   const [empleados, setEmpleados] = React.useState<IPersonal[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
-
-  const [nuevo, setNuevo] = React.useState({
-    NombreyApellido: "",
-    Rol: "Operario",
-    EmpresaAsociadaId: "", // Lo dejamos como string vacío para el input
+  const [nuevo, setNuevo] = React.useState({ 
+    NombreyApellido: '', 
+    Rol: 'Operario' 
   });
 
-  const service = React.useMemo(
-    () => new PersonalService(props.context),
-    [props.context],
-  );
+  const service = React.useMemo(() => new PersonalService(props.context), [props.context]);
 
   const cargarDatos = async (): Promise<void> => {
     try {
       setLoading(true);
       setError(null);
-      const data = await service.getPersonal();
+      const data = await service.getPersonal(); 
       setEmpleados(data);
     } catch (err) {
-      console.error("Detalle del error:", err);
-      setError(
-        "Error al conectar con la lista 'Personal EWS'. Verifica que las columnas existan.",
-      );
+      console.error("Error al cargar:", err);
+      setError("Error al cargar la lista. Probablemente la columna 'EmpresaAsociadaId' no existe.");
     } finally {
       setLoading(false);
     }
   };
 
   React.useEffect(() => {
-    if (props.context) {
-      cargarDatos().catch(console.error);
-    }
-  }, [props.context]);
+    cargarDatos().catch(console.error);
+  }, []);
 
   const handleGuardar = async (): Promise<void> => {
     if (!nuevo.NombreyApellido.trim()) return;
-
+    
     try {
+      
       await service.crearTrabajador({
         NombreyApellido: nuevo.NombreyApellido,
-        Rol: nuevo.Rol,
-        // Convertimos a número antes de enviar, igual que en otros servicios funcionales
-        EmpresaAsociadaId: nuevo.EmpresaAsociadaId
-          ? parseInt(nuevo.EmpresaAsociadaId)
-          : undefined,
+        Rol: nuevo.Rol
       });
-
-      // Limpieza de campos tras éxito
-      setNuevo({ NombreyApellido: "", Rol: "Operario", EmpresaAsociadaId: "" });
+      
+      setNuevo({ NombreyApellido: '', Rol: 'Operario' });
       await cargarDatos();
+      alert("¡Guardado correctamente!");
     } catch (err) {
-      alert(
-        "Error al guardar. Revisa si el nombre interno de la columna es correcto.",
-      );
+      alert("Error al guardar. Revisa la consola.");
     }
   };
 
-  if (loading)
-    return <Spinner size={SpinnerSize.large} label="Cargando personal..." />;
+  if (loading) return <Spinner size={SpinnerSize.large} label="Cargando..." />;
 
   return (
     <Stack tokens={{ childrenGap: 20 }}>
-      <Text variant="xxLarge">👥 Personal de EWS</Text>
-
+      <Text variant="xxLarge">👥 Personal de EWS (Prueba de Conexión)</Text>
+      
       <Stack horizontal verticalAlign="end" tokens={{ childrenGap: 10 }}>
-        <TextField
-          label="Nombre y Apellido"
-          value={nuevo.NombreyApellido}
-          onChange={(_, v) => setNuevo({ ...nuevo, NombreyApellido: v || "" })}
-        />
-        <TextField
-          label="ID Empresa"
-          value={nuevo.EmpresaAsociadaId}
-          onChange={(_, v) =>
-            setNuevo({ ...nuevo, EmpresaAsociadaId: v || "" })
-          }
+        <TextField 
+          label="Nombre y Apellido" 
+          value={nuevo.NombreyApellido} 
+          onChange={(_, v) => setNuevo({...nuevo, NombreyApellido: v || ''})} 
         />
         <PrimaryButton text="Registrar" onClick={handleGuardar} />
       </Stack>
 
-      {error && (
-        <MessageBar messageBarType={MessageBarType.error}>{error}</MessageBar>
-      )}
+      {error && <MessageBar messageBarType={MessageBarType.error}>{error}</MessageBar>}
 
       <Stack horizontal wrap tokens={{ childrenGap: 20 }}>
         {empleados.map((emp) => (
           <Persona
             key={emp.Id}
-            text={emp.NombreyApellido} // CAMBIO: Usamos NombreyApellido
+            text={emp.NombreyApellido}
             secondaryText={emp.Rol}
-            imageUrl={emp.FotoPerfil?.Url}
             size={PersonaSize.size72}
           />
         ))}

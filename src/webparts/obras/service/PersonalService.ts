@@ -1,5 +1,5 @@
 import { WebPartContext } from '@microsoft/sp-webpart-base';
-import { SPHttpClient, SPHttpClientResponse } from '@microsoft/sp-http';
+import { SPHttpClient } from '@microsoft/sp-http';
 import { IPersonal } from '../models/IPersonal';
 
 export class PersonalService {
@@ -12,43 +12,30 @@ export class PersonalService {
         this._baseUrl = context.pageContext.web.absoluteUrl;
     }
 
-    /**
-     * Obtiene el personal de la lista 'Personal EWS' con los campos correctos
-     */
     public async getPersonal(): Promise<IPersonal[]> {
-        const endpoint = `${this._baseUrl}/_api/web/lists/getbytitle('${this._listName}')/items?$select=Id,NombreyApellido,Rol,EmpresaAsociadaId,FotoPerfil`;
-
-        const response: SPHttpClientResponse = await this._context.spHttpClient.get(
-            endpoint,
-            SPHttpClient.configurations.v1
-        );
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Error al obtener personal: ${response.status} - ${errorText}`);
-        }
-
+        // Obtenemos 'Title' y lo mapearemos después a 'NombreyApellido'
+        const endpoint = `${this._baseUrl}/_api/web/lists/getbytitle('${this._listName}')/items?$select=Id,Title,Rol,EmpresaAsociadaId,FotoPerfil`;
+        const response = await this._context.spHttpClient.get(endpoint, SPHttpClient.configurations.v1);
         const data = await response.json();
-        return data.value as IPersonal[];
+
+        // Mapeo manual para que el componente reciba 'NombreyApellido'
+        return (data.value || []).map((item: any) => ({
+            Id: item.Id,
+            NombreyApellido: item.Title, // Mapeamos Title -> NombreyApellido
+            Rol: item.Rol,
+            EmpresaAsociadaId: item.EmpresaAsociadaId,
+            FotoPerfil: item.FotoPerfil
+        }));
     }
 
-    /**
-     * Crea un nuevo trabajador mapeando los campos a las columnas reales de SharePoint
-     */
     public async crearTrabajador(nuevo: Partial<IPersonal>): Promise<void> {
-        const endpoint = `${this._baseUrl}/_api/web/lists/getbytitle('${this._listName}')`;
-        // Obtenemos la URL de los ítems de forma limpia
-        const itemsEndpoint = `${endpoint}/items`;
-
-        // IMPORTANTE: Mapeamos NombreyApellido al campo interno 'Title'
-        // que es el que SharePoint reconoce por defecto.
+        const endpoint = `${this._baseUrl}/_api/web/lists/getbytitle('${this._listName}')/items`;
         const body = JSON.stringify({
             'Title': nuevo.NombreyApellido,
-            'Rol': nuevo.Rol,
-            'EmpresaAsociadaId': nuevo.EmpresaAsociadaId || null
+            'Rol': nuevo.Rol
         });
 
-        const response = await this._context.spHttpClient.post(itemsEndpoint, SPHttpClient.configurations.v1, {
+        const response = await this._context.spHttpClient.post(endpoint, SPHttpClient.configurations.v1, {
             headers: {
                 'Accept': 'application/json;odata=nometadata',
                 'Content-type': 'application/json;odata=nometadata',
@@ -59,11 +46,10 @@ export class PersonalService {
 
         if (!response.ok) {
             const errorText = await response.text();
-            console.error("Error detallado de SharePoint:", errorText);
-            throw new Error("No se pudo insertar en Personal EWS");
+            console.error("Error en la prueba de conexión:", errorText);
+            throw new Error("Fallo al insertar solo Nombre y Rol.");
         }
     }
-
     /**
      * Elimina un trabajador por ID
      */
