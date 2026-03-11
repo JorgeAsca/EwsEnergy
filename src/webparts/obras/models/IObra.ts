@@ -8,6 +8,7 @@ export interface IObra {
     EstadoPresupuesto: EstadoPresupuesto;
     EstadoObra: EstadoObra;
     FechaInicio?: string;
+    PersonalAsignadoId?: number;
     // Campos expandidos (cuando hagamos el join con la lista de Clientes)
     Cliente?: {
         Title: string;

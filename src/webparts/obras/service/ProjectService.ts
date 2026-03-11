@@ -36,7 +36,7 @@ export class ProjectService {
      */
     public async actualizarEstado(obraId: number, nuevoEstado: string): Promise<void> {
         const endpoint = `${this._baseUrl}/_api/web/lists/getbytitle('Obras')/items(${obraId})`;
-        
+
         const headers = {
             'X-HTTP-Method': 'MERGE',
             'IF-MATCH': '*'
@@ -49,6 +49,25 @@ export class ProjectService {
         await this._context.spHttpClient.post(endpoint, SPHttpClient.configurations.v1, {
             headers: headers,
             body: body
+        });
+    }
+
+    public async asignarPersonalAObra(obraId: number, trabajadorId: number): Promise<void> {
+        const endpoint = `${this._baseUrl}/_api/web/lists/getbytitle('Obras')/items(${obraId})`;
+
+        const body = JSON.stringify({
+            // 'ResponsableId' es el nombre interno de la columna tipo Persona
+            ResponsableId: trabajadorId
+        });
+
+        await this._context.spHttpClient.post(endpoint, SPHttpClient.configurations.v1, {
+            body: body,
+            headers: {
+                "Accept": "application/json",
+                "Content-type": "application/json",
+                "X-HTTP-Method": "MERGE",
+                "IF-MATCH": "*"
+            }
         });
     }
 }

@@ -3,8 +3,6 @@ import styles from './Obras.module.scss';
 import type { IObrasProps } from './IObrasProps';
 import { SPHttpClient } from '@microsoft/sp-http';
 import { Stack, Text } from '@fluentui/react';
-
-// IMPORTAMOS LOS NUEVOS MÓDULOS
 import { Sidebar } from './Navegacion/Sidebar';
 import { ListaMateriales } from './Vistas/Inventario/ListaMateriales';
 import { GaleriaPersonal } from './Vistas/Personal/GaleriaPersonal';
