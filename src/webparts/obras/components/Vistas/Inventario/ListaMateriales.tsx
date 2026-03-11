@@ -1,17 +1,47 @@
+<<<<<<< HEAD
 import * as React from 'react';
 import { Stack, Text, TextField, PrimaryButton, DetailsList, DetailsListLayoutMode, SelectionMode, IColumn, IconButton, Dropdown, IDropdownOption, SearchBox, Separator } from '@fluentui/react';
 import styles from '../../Obras.module.scss';
 
 const categorias: IDropdownOption[] = [
   { key: 'Consumible', text: 'Consumible' }, { key: 'Herramienta', text: 'Herramienta' }, { key: 'Maquinaria', text: 'Maquinaria' }, { key: 'EPIS', text: 'EPIS' }
+=======
+import * as React from "react";
+import {
+  Stack,
+  Text,
+  TextField,
+  PrimaryButton,
+  DetailsList,
+  DetailsListLayoutMode,
+  SelectionMode,
+  IColumn,
+  IconButton,
+  Dropdown,
+  IDropdownOption,
+  SearchBox,
+} from "@fluentui/react";
+import styles from "../../Obras.module.scss";
+
+const categorias: IDropdownOption[] = [
+  { key: "Consumible", text: "Consumible" },
+  { key: "Herramienta", text: "Herramienta" },
+  { key: "Maquinaria", text: "Maquinaria" },
+>>>>>>> ede9555f9f3d424d0286192525c8bb8b3fd86e8a
 ];
 
 export const ListaMateriales: React.FC<any> = (props) => {
-  const [nuevo, setNuevo] = React.useState({ nombre: '', stock: 0, stockMin: 0, cat: 'Consumible' });
-  const [filterText, setFilterText] = React.useState('');
+  const [nuevo, setNuevo] = React.useState({
+    nombre: "",
+    stock: 0,
+    stockMin: 0,
+    cat: "Consumible",
+  });
+  const [filterText, setFilterText] = React.useState("");
   const [editId, setEditId] = React.useState<number | null>(null);
   const [editData, setEditData] = React.useState<any>(null);
 
+<<<<<<< HEAD
   const itemsFiltrados = (props.items || []).filter((i: any) => (i.Title || "").toLowerCase().includes(filterText.toLowerCase()));
 
   const columns: IColumn[] = [
@@ -56,10 +86,135 @@ export const ListaMateriales: React.FC<any> = (props) => {
         );
       }
     }
+=======
+  const itemsFiltrados = props.items.filter((i: any) =>
+    i.Title.toLowerCase().includes(filterText.toLowerCase()),
+  );
+
+  const columns: IColumn[] = [
+    {
+      key: "c1",
+      name: "Material",
+      fieldName: "Title",
+      minWidth: 150,
+      onRender: (item) =>
+        editId === item.ID && editData ? (
+          <TextField
+            value={editData.Title}
+            onChange={(_, v) => setEditData({ ...editData, Title: v })}
+          />
+        ) : (
+          <span>{item.Title}</span>
+        ),
+    },
+    {
+      key: "c2",
+      name: "Categoría",
+      fieldName: "Categoria",
+      minWidth: 100,
+      onRender: (item) =>
+        editId === item.ID && editData ? (
+          <Dropdown
+            options={categorias}
+            selectedKey={editData.Categoria}
+            onChange={(_, o) => setEditData({ ...editData, Categoria: o?.key })}
+          />
+        ) : (
+          <span>{item.Categoria}</span>
+        ),
+    },
+    {
+      key: "c3",
+      name: "Actual",
+      fieldName: "StockActual",
+      minWidth: 60,
+      onRender: (item) =>
+        editId === item.ID && editData ? (
+          <TextField
+            type="number"
+            value={editData.StockActual?.toString()}
+            onChange={(_, v) =>
+              setEditData({ ...editData, StockActual: parseInt(v || "0") })
+            }
+          />
+        ) : (
+          <span>{item.StockActual}</span>
+        ),
+    },
+    {
+      key: "c4",
+      name: "Mínimo",
+      fieldName: "StockMinimo",
+      minWidth: 60,
+      onRender: (item) =>
+        editId === item.ID && editData ? (
+          <TextField
+            type="number"
+            value={editData.StockMinimo?.toString()}
+            onChange={(_, v) =>
+              setEditData({ ...editData, StockMinimo: parseInt(v || "0") })
+            }
+          />
+        ) : (
+          <span>{item.StockMinimo}</span>
+        ),
+    },
+    {
+      key: "actions",
+      name: "Acciones",
+      minWidth: 100,
+      onRender: (item) => (
+        <Stack horizontal tokens={{ childrenGap: 5 }}>
+          {editId === item.ID ? (
+            <>
+              <IconButton
+                iconProps={{ iconName: "CheckMark" }}
+                onClick={() => {
+                  props.onEditMaterial(
+                    editData.ID,
+                    editData.Title,
+                    editData.StockActual,
+                    editData.StockMinimo,
+                    editData.Categoria,
+                  );
+                  setEditId(null);
+                }}
+                styles={{ root: { color: "green" } }}
+              />
+              <IconButton
+                iconProps={{ iconName: "Cancel" }}
+                onClick={() => {
+                  setEditId(null);
+                  setEditData(null);
+                }}
+                styles={{ root: { color: "red" } }}
+              />
+            </>
+          ) : (
+            <>
+              <IconButton
+                iconProps={{ iconName: "Edit" }}
+                onClick={() => {
+                  setEditData({ ...item });
+                  setEditId(item.ID);
+                }}
+              />
+              <IconButton
+                iconProps={{ iconName: "Delete" }}
+                onClick={() => props.onDeleteMaterial(item.ID)}
+                styles={{ root: { color: "#d13438" } }}
+              />
+            </>
+          )}
+        </Stack>
+      ),
+    },
+>>>>>>> ede9555f9f3d424d0286192525c8bb8b3fd86e8a
   ];
 
   return (
     <Stack tokens={{ childrenGap: 20 }}>
+<<<<<<< HEAD
       <Text variant="xxLarge" style={{ color: '#004a99', fontWeight: 600 }}>📦 Inventario de Materiales</Text>
       
       <Stack className={styles.formCard} tokens={{ childrenGap: 10 }}>
@@ -81,6 +236,73 @@ export const ListaMateriales: React.FC<any> = (props) => {
 
       <div className={styles.tableContainer}>
         <DetailsList items={itemsFiltrados} columns={columns} selectionMode={SelectionMode.none} layoutMode={DetailsListLayoutMode.justified} />
+=======
+      <Text variant="xxLarge" style={{ color: "#004a99", fontWeight: 600 }}>
+        📦 Inventario
+      </Text>
+
+      <Stack
+        className={styles.formCard}
+        horizontal
+        wrap
+        tokens={{ childrenGap: 15 }}
+        verticalAlign="end"
+      >
+        <TextField
+          label="Nombre"
+          value={nuevo.nombre}
+          onChange={(_, v) => setNuevo({ ...nuevo, nombre: v || "" })}
+        />
+        <Dropdown
+          label="Categoría"
+          options={categorias}
+          selectedKey={nuevo.cat}
+          onChange={(_, o) => setNuevo({ ...nuevo, cat: o?.key as string })}
+          styles={{ root: { width: 140 } }}
+        />
+        <TextField
+          label="Stock"
+          type="number"
+          value={nuevo.stock.toString()}
+          onChange={(_, v) => setNuevo({ ...nuevo, stock: parseInt(v || "0") })}
+          styles={{ root: { width: 80 } }}
+        />
+        <TextField
+          label="Mínimo"
+          type="number"
+          value={nuevo.stockMin.toString()}
+          onChange={(_, v) =>
+            setNuevo({ ...nuevo, stockMin: parseInt(v || "0") })
+          }
+          styles={{ root: { width: 80 } }}
+        />
+        <PrimaryButton
+          text="Añadir"
+          onClick={() => {
+            props.onAddMaterial(
+              nuevo.nombre,
+              nuevo.stock,
+              nuevo.stockMin,
+              nuevo.cat,
+            );
+            setNuevo({ nombre: "", stock: 0, stockMin: 0, cat: "Consumible" });
+          }}
+        />
+      </Stack>
+
+      <SearchBox
+        placeholder="Filtrar materiales..."
+        onChange={(_, v) => setFilterText(v || "")}
+        styles={{ root: { width: 300 } }}
+      />
+
+      <div className={styles.tableContainer}>
+        <DetailsList
+          items={itemsFiltrados}
+          columns={columns}
+          selectionMode={SelectionMode.none}
+        />
+>>>>>>> ede9555f9f3d424d0286192525c8bb8b3fd86e8a
       </div>
     </Stack>
   );

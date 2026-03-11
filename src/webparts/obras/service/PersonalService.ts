@@ -5,6 +5,7 @@ import { IPersonal } from '../models/IPersonal';
 export class PersonalService {
     private _context: WebPartContext;
     private _baseUrl: string;
+    private _listName: string = "Personal EWS";
 
     constructor(context: WebPartContext) {
         this._context = context;
@@ -18,7 +19,7 @@ export class PersonalService {
      */
     public async getPersonal(): Promise<IPersonal[]> {
         // Seleccionamos ID, Nombre (Title), Rol, Email y la Foto de perfil
-        const endpoint = `${this._baseUrl}/_api/web/lists/getbytitle('Personal')/items?$select=Id,Title,Rol,Email,FotoPerfil`;
+        const endpoint = `${this._baseUrl}/_api/web/lists/getbytitle('${this._listName}')/items?$select=Id,Title,Rol,Email,FotoPerfil`;
 
         const response: SPHttpClientResponse = await this._context.spHttpClient.get(
             endpoint,
@@ -46,7 +47,7 @@ export class PersonalService {
      * Filtra personal por Empresa Asociada (útil para el Administrador)
      */
     public async getPersonalByEmpresa(empresaId: number): Promise<IPersonal[]> {
-        const endpoint = `${this._baseUrl}/_api/web/lists/getbytitle('Personal')/items?$filter=EmpresaAsociadaId eq ${empresaId}`;
+        const endpoint = `${this._baseUrl}/_api/web/lists/getbytitle('${this._listName}')/items?$filter=EmpresaAsociadaId eq ${empresaId}`;
 
         const response: SPHttpClientResponse = await this._context.spHttpClient.get(
             endpoint,
@@ -58,7 +59,7 @@ export class PersonalService {
     }
 
     public async crearTrabajador(nuevo: { Title: string, Rol: string, Email: string }): Promise<void> {
-        const endpoint = `${this._baseUrl}/_api/web/lists/getbytitle('Personal')/items`;
+        const endpoint = `${this._baseUrl}/_api/web/lists/getbytitle('${this._listName}')/items`;
 
         const body = JSON.stringify({
             Title: nuevo.Title,
@@ -76,7 +77,7 @@ export class PersonalService {
     }
 
     public async eliminarTrabajador(id: number): Promise<void> {
-        const endpoint = `${this._baseUrl}/_api/web/lists/getbytitle('Personal')/items(${id})`;
+        const endpoint = `${this._baseUrl}/_api/web/lists/getbytitle('${this._listName}')/items(${id})`;
         await this._context.spHttpClient.post(endpoint, SPHttpClient.configurations.v1, {
             headers: {
                 'X-HTTP-Method': 'DELETE',
