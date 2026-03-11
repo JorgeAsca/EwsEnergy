@@ -2,7 +2,7 @@ export type RolUsuario = 'Manager' | 'Operario';
 
 export interface IPersonal {
     Id: number;
-    Title: string; // Nombre completo
+    Title: string; 
     Rol: RolUsuario;
     Email: string;
     FotoPerfil?: {
