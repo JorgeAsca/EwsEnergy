@@ -3,12 +3,13 @@ import styles from './Obras.module.scss';
 import type { IObrasProps } from './IObrasProps';
 import { SPHttpClient } from '@microsoft/sp-http';
 import { Stack, Text } from '@fluentui/react';
+
 import { Sidebar } from './Navegacion/Sidebar';
 import { ListaMateriales } from './Vistas/Inventario/ListaMateriales';
 import { GaleriaPersonal } from './Vistas/Personal/GaleriaPersonal';
 import { TablaObras } from './Vistas/Proyectos/TablaObras';
 
-export default class Obras extends React.Component<IObrasProps, { items: any[], selectedKey: string }> {
+eexport default class Obras extends React.Component<IObrasProps, { items: any[], selectedKey: string }> {
   constructor(props: IObrasProps) {
     super(props);
     this.state = { items: [], selectedKey: 'inventario' };
@@ -23,11 +24,42 @@ export default class Obras extends React.Component<IObrasProps, { items: any[], 
     this.setState({ items: json.value || [] });
   }
 
-  private _crearMaterial = async (nombre: string, stock: number) => {
-    const url = `${this.props.context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('Inventario de Materiales')/items`;
+  private _crearMaterial = async (nombre: string, stock: number, stockMin: number, categoria: string) => {
+    try {
+      const url = `${this.props.context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('Inventario de Materiales')/items`;
+      const response = await this.props.context.spHttpClient.post(url, SPHttpClient.configurations.v1, {
+        headers: { 'Accept': 'application/json;odata=nometadata', 'Content-type': 'application/json;odata=nometadata' },
+        body: JSON.stringify({ 
+          'Title': nombre, 
+          'StockActual': stock,
+          'StockMinimo': stockMin,
+          'Categoria': categoria
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        alert("Error de SharePoint: " + error.error.message.value);
+      }
+      this._getListData();
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  private _editarMaterial = async (id: number, nombre: string, stock: number, stockMin: number, categoria: string) => {
+    const url = `${this.props.context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('Inventario de Materiales')/items(${id})`;
     await this.props.context.spHttpClient.post(url, SPHttpClient.configurations.v1, {
-      headers: { 'Accept': 'application/json;odata=nometadata', 'Content-type': 'application/json;odata=nometadata' },
-      body: JSON.stringify({ 'Title': nombre, 'StockActual': stock })
+      headers: { 'Accept': 'application/json;odata=nometadata', 'IF-MATCH': '*', 'X-HTTP-Method': 'MERGE' },
+      body: JSON.stringify({ 'Title': nombre, 'StockActual': stock, 'StockMinimo': stockMin, 'Categoria': categoria })
+    });
+    this._getListData();
+  }
+
+  private _eliminarMaterial = async (id: number) => {
+    const url = `${this.props.context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('Inventario de Materiales')/items(${id})`;
+    await this.props.context.spHttpClient.post(url, SPHttpClient.configurations.v1, {
+      headers: { 'Accept': 'application/json;odata=nometadata', 'IF-MATCH': '*', 'X-HTTP-Method': 'DELETE' }
     });
     this._getListData();
   }
@@ -36,17 +68,14 @@ export default class Obras extends React.Component<IObrasProps, { items: any[], 
     return (
       <section className={styles.obras}>
         <Stack horizontal className={styles.appWrapper}>
-          <Sidebar 
-            selectedKey={this.state.selectedKey} 
-            onLinkClick={(key) => this.setState({ selectedKey: key })} 
-          />
+          <Sidebar selectedKey={this.state.selectedKey} onLinkClick={(key) => this.setState({ selectedKey: key })} />
           <main className={styles.mainContent}>
             <header className={styles.header}>
-              <Text variant="medium">Usuario: <b>{this.props.userDisplayName}</b></Text>
+              <Text variant="medium"><b>EWS Stock</b> | {this.props.userDisplayName}</Text>
             </header>
             <div className={styles.pageBody}>
               {this.state.selectedKey === 'inventario' && <ListaMateriales items={this.state.items} onAddMaterial={this._crearMaterial} />}
-              {this.state.selectedKey === 'personal' && <GaleriaPersonal context={this.props.context} />}
+              {this.state.selectedKey === 'personal' && <GaleriaPersonal />}
               {this.state.selectedKey === 'obras' && <TablaObras context={this.props.context} />}
             </div>
           </main>
