@@ -26,7 +26,6 @@ export default class Obras extends React.Component<IObrasProps, { selectedKey: s
               <Text variant="medium">Usuario: <b>{this.props.userDisplayName}</b></Text>
             </header>
             <div className={styles.pageBody}>
-              {/* Navegación Limpia: Solo pasamos el context a los componentes hijos */}
               {this.state.selectedKey === 'inventario' && <ListaMateriales context={this.props.context} />}
               {this.state.selectedKey === 'personal' && <GaleriaPersonal context={this.props.context} />}
               {this.state.selectedKey === 'obras' && <TablaObras context={this.props.context} />}

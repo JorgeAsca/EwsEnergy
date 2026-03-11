@@ -1,29 +1,46 @@
-import * as React from 'react';
-import { 
-  Stack, Text, Persona, PersonaSize, Spinner, 
-  SpinnerSize, MessageBar, MessageBarType, TextField, PrimaryButton, IconButton 
-} from '@fluentui/react';
-import { PersonalService } from '../../../service/PersonalService';
-import { IPersonal } from '../../../models/IPersonal';
+import * as React from "react";
+import {
+  Stack,
+  Text,
+  Persona,
+  PersonaSize,
+  Spinner,
+  SpinnerSize,
+  MessageBar,
+  MessageBarType,
+  TextField,
+  PrimaryButton,
+} from "@fluentui/react";
+import { PersonalService } from "../../../service/PersonalService";
+import { IPersonal } from "../../../models/IPersonal";
 
 export const GaleriaPersonal: React.FC<{ context: any }> = (props) => {
   const [empleados, setEmpleados] = React.useState<IPersonal[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
-  const [nuevo, setNuevo] = React.useState({ Title: '', Rol: 'Operario', Email: '' });
 
-  
-  const service = React.useMemo(() => new PersonalService(props.context), [props.context]);
+  const [nuevo, setNuevo] = React.useState({
+    NombreyApellido: "",
+    Rol: "Operario",
+    EmpresaAsociadaId: "", // Lo dejamos como string vacío para el input
+  });
+
+  const service = React.useMemo(
+    () => new PersonalService(props.context),
+    [props.context],
+  );
 
   const cargarDatos = async (): Promise<void> => {
     try {
       setLoading(true);
       setError(null);
-      const data = await service.getPersonal(); 
+      const data = await service.getPersonal();
       setEmpleados(data);
     } catch (err) {
       console.error("Detalle del error:", err);
-      setError("Error al conectar con la lista 'Personal EWS'. Revisa los nombres de las columnas.");
+      setError(
+        "Error al conectar con la lista 'Personal EWS'. Verifica que las columnas existan.",
+      );
     } finally {
       setLoading(false);
     }
@@ -36,38 +53,66 @@ export const GaleriaPersonal: React.FC<{ context: any }> = (props) => {
   }, [props.context]);
 
   const handleGuardar = async (): Promise<void> => {
-    if (!nuevo.Title || !nuevo.Email) return;
+    // Validación mínima: NombreyApellido es obligatorio
+    if (!nuevo.NombreyApellido.trim()) {
+      alert("El nombre es obligatorio");
+      return;
+    }
+
     try {
-      await service.crearTrabajador(nuevo);
-      setNuevo({ Title: '', Rol: 'Operario', Email: '' });
+      await service.crearTrabajador({
+        NombreyApellido: nuevo.NombreyApellido,
+        Rol: nuevo.Rol,
+        // Convertimos a número solo si hay algo escrito, si no enviamos undefined
+        EmpresaAsociadaId: nuevo.EmpresaAsociadaId
+          ? parseInt(nuevo.EmpresaAsociadaId)
+          : undefined,
+      });
+
+      // Limpiamos el formulario con los campos correctos
+      setNuevo({ NombreyApellido: "", Rol: "Operario", EmpresaAsociadaId: "" });
       await cargarDatos();
     } catch (err) {
-      alert("Error al guardar trabajador");
+      alert(
+        "Error al guardar trabajador en SharePoint. Revisa la consola para más detalles.",
+      );
     }
   };
 
-  if (loading) return <Spinner size={SpinnerSize.large} label="Cargando personal..." />;
+  if (loading)
+    return <Spinner size={SpinnerSize.large} label="Cargando personal..." />;
 
   return (
     <Stack tokens={{ childrenGap: 20 }}>
       <Text variant="xxLarge">👥 Personal de EWS</Text>
-      
-      {/* Formulario de Alta */}
+
       <Stack horizontal verticalAlign="end" tokens={{ childrenGap: 10 }}>
-        <TextField label="Nombre" value={nuevo.Title} onChange={(_, v) => setNuevo({...nuevo, Title: v || ''})} />
-        <TextField label="Email" value={nuevo.Email} onChange={(_, v) => setNuevo({...nuevo, Email: v || ''})} />
+        <TextField
+          label="Nombre y Apellido"
+          value={nuevo.NombreyApellido}
+          onChange={(_, v) => setNuevo({ ...nuevo, NombreyApellido: v || "" })}
+        />
+        <TextField
+          label="ID Empresa"
+          value={nuevo.EmpresaAsociadaId}
+          onChange={(_, v) =>
+            setNuevo({ ...nuevo, EmpresaAsociadaId: v || "" })
+          }
+        />
         <PrimaryButton text="Registrar" onClick={handleGuardar} />
       </Stack>
 
-      {error && <MessageBar messageBarType={MessageBarType.error}>{error}</MessageBar>}
+      {error && (
+        <MessageBar messageBarType={MessageBarType.error}>{error}</MessageBar>
+      )}
 
       <Stack horizontal wrap tokens={{ childrenGap: 20 }}>
         {empleados.map((emp) => (
           <Persona
             key={emp.Id}
-            text={emp.Title}
+            text={emp.NombreyApellido} // CAMBIO: Usamos NombreyApellido
             secondaryText={emp.Rol}
-            tertiaryText={emp.Email}
+            imageUrl={emp.FotoPerfil?.Url}
             size={PersonaSize.size72}
           />
         ))}
