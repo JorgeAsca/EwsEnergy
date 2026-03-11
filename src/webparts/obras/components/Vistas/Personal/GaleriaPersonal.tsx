@@ -1,64 +1,80 @@
 import * as React from 'react';
-import { PersonalService } from '../../../service/PersonalService';
-import { IPersonal } from '../../../models/IPersonal';
-import styles from './GaleriaPersonal.module.scss';
-import { Icon } from '@fluentui/react/lib/Icon';
+import { 
+  Stack, 
+  Text, 
+  Persona, 
+  PersonaSize, 
+  PersonaPresence, 
+  Spinner, 
+  SpinnerSize, 
+  MessageBar, 
+  MessageBarType 
+} from '@fluentui/react';
+import { SPHttpClient } from '@microsoft/sp-http';
 
-export const GaleriaPersonal: React.FC<{ context: any }> = (props) => {
-  const [personal, setPersonal] = React.useState<IPersonal[]>([]);
-  const [nuevo, setNuevo] = React.useState({ Title: '', Rol: 'Operario', Email: '', EmpresaAsociada: '' });
-  const service = new PersonalService(props.context);
+export interface IGaleriaPersonalProps {
+  context: any; // Recibimos el contexto de SharePoint
+}
 
-  const cargarPersonal = () => service.getPersonal().then(setPersonal);
-  React.useEffect(() => { cargarPersonal(); }, []);
+export const GaleriaPersonal: React.FC<IGaleriaPersonalProps> = (props) => {
+  const [empleados, setEmpleados] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState(null);
 
-  const handleGuardar = async () => {
-    if (!nuevo.Title || !nuevo.Email) return alert("Nombre y Email son obligatorios");
-    await service.crearTrabajador(nuevo);
-    setNuevo({ Title: '', Rol: 'Operario', Email: '', EmpresaAsociada: '' });
-    cargarPersonal();
-  };
-
-  const handleEliminar = async (id: number) => {
-    if (confirm("¿Estás seguro de eliminar a este trabajador?")) {
-      // Aquí llamaremos al método delete que crearemos en el servicio
-      alert("Función de borrado conectando...");
+  // Función para cargar los datos de la lista 'Personal'
+  const cargarPersonal = async () => {
+    try {
+      const url = `${props.context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('Personal')/items`;
+      const response = await props.context.spHttpClient.get(url, SPHttpClient.configurations.v1);
+      
+      if (response.ok) {
+        const data = await response.json();
+        setEmpleados(data.value || []);
+      } else {
+        setError("No se encontró la lista 'Personal'. Asegúrate de crearla en SharePoint.");
+      }
+    } catch (err) {
+      setError("Error de conexión con SharePoint");
+    } finally {
+      setLoading(false);
     }
   };
 
+  React.useEffect(() => {
+    if (props.context) {
+      cargarPersonal();
+    }
+  }, [props.context]);
+
+  if (loading) return <Spinner size={SpinnerSize.large} label="Cargando personal..." />;
+
   return (
-    <div className={styles.container}>
-      <h2>Gestión de Personal y Equipos</h2>
+    <Stack tokens={{ childrenGap: 25 }}>
+      <Text variant="xxLarge" style={{ color: '#004a99', fontWeight: 600 }}>👥 Personal de EWS</Text>
+      
+      {error && (
+        <MessageBar messageBarType={MessageBarType.error}>
+          {error}
+        </MessageBar>
+      )}
 
-      {/* Formulario de Alta */}
-      <div className={styles.formAlta}>
-        <input type="text" placeholder="Nombre Completo" value={nuevo.Title} onChange={e => setNuevo({...nuevo, Title: e.target.value})} />
-        <input type="email" placeholder="Correo Electrónico" value={nuevo.Email} onChange={e => setNuevo({...nuevo, Email: e.target.value})} />
-        <select value={nuevo.Rol} onChange={e => setNuevo({...nuevo, Rol: e.target.value})}>
-          <option value="Operario">Operario</option>
-          <option value="Manager">Manager</option>
-          <option value="Administrador">Administrador</option>
-        </select>
-        <button onClick={handleGuardar} className={styles.btnPrimario}>Registrar Personal</button>
-      </div>
-
-      {/* Galería de Tarjetas */}
-      <div className={styles.grid}>
-        {personal.map(p => (
-          <div key={p.Id} className={styles.card}>
-            <div className={styles.acciones}>
-                <Icon iconName="Edit" className={styles.iconEdit} onClick={() => alert('Editar ID: ' + p.Id)} />
-                <Icon iconName="Delete" className={styles.iconDelete} onClick={() => handleEliminar(p.Id)} />
-            </div>
-            <div className={styles.avatar}>
-               {p.FotoPerfil ? <img src={p.FotoPerfil.Url} /> : <span>{p.Title.charAt(0)}</span>}
-            </div>
-            <h4>{p.Title}</h4>
-            <span className={styles.badgeRol}>{p.Rol}</span>
-            <p className={styles.emailText}>{p.Email}</p>
-          </div>
-        ))}
-      </div>
-    </div>
+      <Stack horizontal wrap tokens={{ childrenGap: 30 }}>
+        {empleados.length > 0 ? (
+          empleados.map((emp, i) => (
+            <Persona
+              key={i}
+              imageUrl={emp.FotoPerfil} // Asegúrate que la columna se llame así
+              text={emp.Title} // Nombre del empleado
+              secondaryText={emp.Rol} // Cargo o Rol
+              tertiaryText={emp.Email}
+              size={PersonaSize.size72}
+              presence={PersonaPresence.online}
+            />
+          ))
+        ) : (
+          !error && <Text>No hay empleados registrados en la lista.</Text>
+        )}
+      </Stack>
+    </Stack>
   );
 };
