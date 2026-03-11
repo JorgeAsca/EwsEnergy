@@ -53,28 +53,24 @@ export const GaleriaPersonal: React.FC<{ context: any }> = (props) => {
   }, [props.context]);
 
   const handleGuardar = async (): Promise<void> => {
-    // Validación mínima: NombreyApellido es obligatorio
-    if (!nuevo.NombreyApellido.trim()) {
-      alert("El nombre es obligatorio");
-      return;
-    }
+    if (!nuevo.NombreyApellido.trim()) return;
 
     try {
       await service.crearTrabajador({
         NombreyApellido: nuevo.NombreyApellido,
         Rol: nuevo.Rol,
-        // Convertimos a número solo si hay algo escrito, si no enviamos undefined
+        // Convertimos a número antes de enviar, igual que en otros servicios funcionales
         EmpresaAsociadaId: nuevo.EmpresaAsociadaId
           ? parseInt(nuevo.EmpresaAsociadaId)
           : undefined,
       });
 
-      // Limpiamos el formulario con los campos correctos
+      // Limpieza de campos tras éxito
       setNuevo({ NombreyApellido: "", Rol: "Operario", EmpresaAsociadaId: "" });
       await cargarDatos();
     } catch (err) {
       alert(
-        "Error al guardar trabajador en SharePoint. Revisa la consola para más detalles.",
+        "Error al guardar. Revisa si el nombre interno de la columna es correcto.",
       );
     }
   };

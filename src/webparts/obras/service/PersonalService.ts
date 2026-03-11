@@ -36,31 +36,31 @@ export class PersonalService {
      * Crea un nuevo trabajador mapeando los campos a las columnas reales de SharePoint
      */
     public async crearTrabajador(nuevo: Partial<IPersonal>): Promise<void> {
-        const endpoint = `${this._baseUrl}/_api/web/lists/getbytitle('${this._listName}')/items`;
+        const endpoint = `${this._baseUrl}/_api/web/lists/getbytitle('${this._listName}')`;
+        // Obtenemos la URL de los ítems de forma limpia
+        const itemsEndpoint = `${endpoint}/items`;
 
-        // Solo incluimos EmpresaAsociadaId si tiene un valor numérico real
-        const datosParaEnviar: any = {
+        // IMPORTANTE: Mapeamos NombreyApellido al campo interno 'Title'
+        // que es el que SharePoint reconoce por defecto.
+        const body = JSON.stringify({
             'Title': nuevo.NombreyApellido,
-            'Rol': nuevo.Rol
-        };
+            'Rol': nuevo.Rol,
+            'EmpresaAsociadaId': nuevo.EmpresaAsociadaId || null
+        });
 
-        if (nuevo.EmpresaAsociadaId) {
-            datosParaEnviar['EmpresaAsociadaId'] = nuevo.EmpresaAsociadaId;
-        }
-
-        const response = await this._context.spHttpClient.post(endpoint, SPHttpClient.configurations.v1, {
+        const response = await this._context.spHttpClient.post(itemsEndpoint, SPHttpClient.configurations.v1, {
             headers: {
                 'Accept': 'application/json;odata=nometadata',
                 'Content-type': 'application/json;odata=nometadata',
                 'odata-version': ''
             },
-            body: JSON.stringify(datosParaEnviar)
+            body: body
         });
 
         if (!response.ok) {
             const errorText = await response.text();
-            console.error("Detalle del error en SharePoint:", errorText);
-            throw new Error("No se pudo insertar el registro en Personal EWS.");
+            console.error("Error detallado de SharePoint:", errorText);
+            throw new Error("No se pudo insertar en Personal EWS");
         }
     }
 
