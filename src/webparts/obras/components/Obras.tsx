@@ -46,7 +46,7 @@ export default class Obras extends React.Component<IObrasProps, { items: any[], 
             </header>
             <div className={styles.pageBody}>
               {this.state.selectedKey === 'inventario' && <ListaMateriales items={this.state.items} onAddMaterial={this._crearMaterial} />}
-              {this.state.selectedKey === 'personal' && <GaleriaPersonal />}
+              {this.state.selectedKey === 'personal' && <GaleriaPersonal context={this.props.context} />}
               {this.state.selectedKey === 'obras' && <TablaObras context={this.props.context} />}
             </div>
           </main>
