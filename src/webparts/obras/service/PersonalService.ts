@@ -75,4 +75,14 @@ export class PersonalService {
         });
     }
 
+    public async eliminarTrabajador(id: number): Promise<void> {
+        const endpoint = `${this._baseUrl}/_api/web/lists/getbytitle('Personal')/items(${id})`;
+        await this._context.spHttpClient.post(endpoint, SPHttpClient.configurations.v1, {
+            headers: {
+                'X-HTTP-Method': 'DELETE',
+                'IF-MATCH': '*'
+            }
+        });
+    }
+
 }

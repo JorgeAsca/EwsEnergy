@@ -5,6 +5,7 @@ import { IObra } from '../models/IObra';
 export class ProjectService {
     private _context: WebPartContext;
     private _baseUrl: string;
+    private _listName: string = "Proyectos y Obras";
 
     constructor(context: WebPartContext) {
         this._context = context;
@@ -16,7 +17,7 @@ export class ProjectService {
      */
     public async getObras(): Promise<IObra[]> {
         // Usamos $select para elegir campos y $expand para traer datos de la lista de Clientes
-        const endpoint = `${this._baseUrl}/_api/web/lists/getbytitle('Obras')/items?$select=Id,Title,EstadoPresupuesto,EstadoObra,Cliente/Title&$expand=Cliente`;
+        const endpoint = `${this._baseUrl}/_api/web/lists/getbytitle('${this._listName}')/items?$select=Id,Title,EstadoPresupuesto,EstadoObra,Cliente/Title&$expand=Cliente`;
 
         const response: SPHttpClientResponse = await this._context.spHttpClient.get(
             endpoint,
@@ -29,6 +30,27 @@ export class ProjectService {
 
         const data = await response.json();
         return data.value as IObra[];
+    }
+
+    /**
+     * Crea una nueva obra o proyecto en SharePoint
+     */
+    public async crearObra(nuevaObra: { Title: string, EstadoPresupuesto: string, EstadoObra: string }): Promise<void> {
+        const endpoint = `${this._baseUrl}/_api/web/lists/getbytitle('${this._listName}')/items`;
+
+        const body = JSON.stringify(nuevaObra);
+
+        const response = await this._context.spHttpClient.post(endpoint, SPHttpClient.configurations.v1, {
+            headers: {
+                'Accept': 'application/json',
+                'Content-type': 'application/json'
+            },
+            body: body
+        });
+
+        if (!response.ok) {
+            throw new Error("No se pudo crear la obra. Revisa los nombres internos de las columnas.");
+        }
     }
 
     /**
@@ -70,4 +92,30 @@ export class ProjectService {
             }
         });
     }
+
+    public async eliminarObra(id: number): Promise<void> {
+        const endpoint = `${this._baseUrl}/_api/web/lists/getbytitle('${this._listName}')/items(${id})`;
+
+        await this._context.spHttpClient.post(endpoint, SPHttpClient.configurations.v1, {
+            headers: {
+                'X-HTTP-Method': 'DELETE',
+                'IF-MATCH': '*'
+            }
+        });
+    }
+
+    public async actualizarObra(id: number, datosActualizados: Partial<IObra>): Promise<void> {
+        const endpoint = `${this._baseUrl}/_api/web/lists/getbytitle('${this._listName}')/items(${id})`;
+
+        await this._context.spHttpClient.post(endpoint, SPHttpClient.configurations.v1, {
+            headers: {
+                'Accept': 'application/json',
+                'Content-type': 'application/json',
+                'X-HTTP-Method': 'MERGE',
+                'IF-MATCH': '*'
+            },
+            body: JSON.stringify(datosActualizados)
+        });
+    }
+
 }
