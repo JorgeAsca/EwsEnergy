@@ -6,6 +6,7 @@ import { Stack, Text } from '@fluentui/react';
 import { Sidebar } from './Navegacion/Sidebar';
 import { ListaMateriales } from './Vistas/Inventario/ListaMateriales';
 import { GaleriaPersonal } from './Vistas/Personal/GaleriaPersonal';
+import { TablaObras } from './Vistas/Proyectos/TablaObras';
 
 export default class Obras extends React.Component<IObrasProps, { items: any[], selectedKey: string }> {
   constructor(props: IObrasProps) {
@@ -46,7 +47,7 @@ export default class Obras extends React.Component<IObrasProps, { items: any[], 
             <div className={styles.pageBody}>
               {this.state.selectedKey === 'inventario' && <ListaMateriales items={this.state.items} onAddMaterial={this._crearMaterial} />}
               {this.state.selectedKey === 'personal' && <GaleriaPersonal />}
-              {this.state.selectedKey === 'obras' && <Text variant="xxLarge">🏗️ Próximamente: Tabla de Obras</Text>}
+              {this.state.selectedKey === 'obras' && <TablaObras context={this.props.context} />}
             </div>
           </main>
         </Stack>
