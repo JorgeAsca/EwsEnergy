@@ -1,64 +1,73 @@
 @import '~@fluentui/react/dist/sass/References.scss';
 
 .container {
+  padding: 20px;
+
+  .header {
+    font-size: 28px;
+    font-weight: 600;
+    color: #004a99;
+    margin-bottom: 20px;
+    display: block;
+  }
+
+  .formContainer {
+    background-color: #f3f2f1;
     padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+  }
 
-    .header {
-        font-size: 28px;
-        font-weight: 600;
-        color: #004a99;
-        margin-bottom: 20px;
-        display: block;
-    }
+  .grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
 
-    .formContainer {
-        background-color: #f3f2f1;
-        padding: 20px;
-        border-radius: 8px;
-        margin-bottom: 30px;
-    }
+  .obraCard {
+    width: 320px;
+    border: 1px solid #edebe9;
+    border-radius: 8px;
+    padding: 15px;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
 
-    .grid {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 20px;
-    }
+  .obraTitle {
+    font-weight: 600;
+    color: #323130;
+  }
 
-    .obraCard {
-        width: 320px;
-        border: 1px solid #edebe9;
-        border-radius: 8px;
-        padding: 15px;
-        background: white;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
+  .statusDot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+  }
 
-    .obraTitle {
-        font-weight: 600;
-        color: #323130;
-    }
+  .assignmentItem {
+    background-color: #faf9f8;
+    padding: 8px;
+    margin-bottom: 8px;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 4px solid transparent; // Se colorea por el semáforo
+  }
 
-    .statusDot {
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-    }
+  .emptyText {
+    color: #a19f9d;
+    font-style: italic;
+    font-size: 12px;
+    padding: 10px 0;
+  }
 
-    .assignmentItem {
-        background-color: #faf9f8;
-        padding: 8px;
-        margin-bottom: 8px;
-        border-radius: 4px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-left: 4px solid transparent;
+  .deleteBtn {
+    color: #a19f9d;
+    height: 24px;
+    
+    &:hover {
+      color: #d13438;
     }
-
-    .emptyText {
-        color: #a19f9d;
-        font-style: italic;
-        font-size: 12px;
-        padding: 10px 0;
-    }
+  }
 }

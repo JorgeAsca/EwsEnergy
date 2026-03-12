@@ -6,6 +6,7 @@ import {
     PersonaSize,
     Dropdown,
     PrimaryButton,
+    IconButton,
     Spinner,
     MessageBar,
     MessageBarType,
@@ -67,15 +68,6 @@ export const VistaAsignaciones: React.FC<{ context: any }> = (props) => {
         cargarTodo();
     }, []);
 
-    const calcularSemaforo = (fechaFinStr: string) => {
-        const hoy = new Date();
-        const fin = new Date(fechaFinStr);
-        const difDias = (fin.getTime() - hoy.getTime()) / (1000 * 3600 * 24);
-        if (hoy > fin) return { color: "#d13438", label: "Retrasado" };
-        if (difDias < 7) return { color: "#ffaa44", label: "Crítico" };
-        return { color: "#107c10", label: "A tiempo" };
-    };
-
     const handleAsignar = async () => {
         if (!seleccion.obraId || !seleccion.personalId) return;
         try {
@@ -92,7 +84,26 @@ export const VistaAsignaciones: React.FC<{ context: any }> = (props) => {
         }
     };
 
-    if (loading) return <Spinner label="Cargando..." />;
+    const handleEliminar = async (id: number) => {
+        if (!window.confirm("¿Estás seguro de eliminar esta asignación?")) return;
+        try {
+            await services.asignaciones.eliminarAsignacion(id);
+            await cargarTodo();
+        } catch (e) {
+            alert("Error al eliminar la asignación.");
+        }
+    };
+
+    const calcularSemaforo = (fechaFinStr: string) => {
+        const hoy = new Date();
+        const fin = new Date(fechaFinStr);
+        const difDias = (fin.getTime() - hoy.getTime()) / (1000 * 3600 * 24);
+        if (hoy > fin) return { color: "#d13438", label: "Retrasado" };
+        if (difDias < 7) return { color: "#ffaa44", label: "Crítico" };
+        return { color: "#107c10", label: "A tiempo" };
+    };
+
+    if (loading) return <Spinner label="Cargando sistema de asignaciones..." />;
 
     return (
         <div className={styles.container}>
@@ -136,10 +147,13 @@ export const VistaAsignaciones: React.FC<{ context: any }> = (props) => {
                 </Stack>
             </div>
 
+            {error && (
+                <MessageBar messageBarType={MessageBarType.error}>{error}</MessageBar>
+            )}
+
             <div className={styles.grid}>
                 {obras.map((obra) => {
                     const equipo = asignaciones.filter((a) => a.ObraId === obra.Id);
-                    // CORRECCIÓN DEL ERROR: Usamos una validación segura para el estado
                     const esCompletada =
                         (obra as any).Estado === "Completada" ||
                         (obra as any).Status === "Completada";
@@ -172,19 +186,38 @@ export const VistaAsignaciones: React.FC<{ context: any }> = (props) => {
                                                     className={styles.assignmentItem}
                                                     style={{ borderLeftColor: semaforo.color }}
                                                 >
-                                                    <Persona
-                                                        text={p?.NombreyApellido || "Desconocido"}
-                                                        size={PersonaSize.size24}
-                                                    />
-                                                    <Text
-                                                        variant="tiny"
-                                                        style={{
-                                                            color: semaforo.color,
-                                                            fontWeight: "bold",
-                                                        }}
+                                                    <Stack
+                                                        horizontal
+                                                        verticalAlign="center"
+                                                        horizontalAlign="space-between"
+                                                        style={{ width: "100%" }}
                                                     >
-                                                        {semaforo.label}
-                                                    </Text>
+                                                        <Stack
+                                                            horizontal
+                                                            verticalAlign="center"
+                                                            tokens={{ childrenGap: 8 }}
+                                                        >
+                                                            <Persona
+                                                                text={p?.NombreyApellido || "Desconocido"}
+                                                                size={PersonaSize.size24}
+                                                            />
+                                                            <Text
+                                                                variant="tiny"
+                                                                style={{
+                                                                    color: semaforo.color,
+                                                                    fontWeight: "bold",
+                                                                }}
+                                                            >
+                                                                {semaforo.label}
+                                                            </Text>
+                                                        </Stack>
+                                                        <IconButton
+                                                            iconProps={{ iconName: "Delete" }}
+                                                            title="Eliminar"
+                                                            className={styles.deleteBtn}
+                                                            onClick={() => handleEliminar(asig.Id!)}
+                                                        />
+                                                    </Stack>
                                                 </div>
                                             );
                                         })

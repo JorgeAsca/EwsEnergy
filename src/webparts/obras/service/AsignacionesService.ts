@@ -35,4 +35,19 @@ export class AsignacionesService {
             body: JSON.stringify(asignacion)
         });
     }
+
+    // Eliminación de asignación (opcional, para funcionalidad de seguimiento)
+    public async eliminarAsignacion(id: number): Promise<void> {
+        const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('${this._listName}')/items(${id})`;
+
+        await this._context.spHttpClient.post(endpoint, SPHttpClient.configurations.v1, {
+            headers: {
+                'Accept': 'application/json',
+                'Content-type': 'application/json',
+                'X-HTTP-Method': 'DELETE',
+                'IF-MATCH': '*', // El asterisco indica que ignore la validación de versión y borre sí o sí
+                'odata-version': ''
+            }
+        });
+    }
 }

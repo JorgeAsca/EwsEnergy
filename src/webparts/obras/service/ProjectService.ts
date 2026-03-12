@@ -1,121 +1,46 @@
-import { WebPartContext } from '@microsoft/sp-webpart-base';
 import { SPHttpClient, SPHttpClientResponse } from '@microsoft/sp-http';
 import { IObra } from '../models/IObra';
 
 export class ProjectService {
-    private _context: WebPartContext;
-    private _baseUrl: string;
-    private _listName: string = "Proyectos y Obras";
+    private _context: any;
+    private _listName: string = "Proyectos EWS"; // Asegúrate que coincide con tu lista
 
-    constructor(context: WebPartContext) {
+    constructor(context: any) {
         this._context = context;
-        this._baseUrl = context.pageContext.web.absoluteUrl;
     }
 
-    /**
-     * Obtiene todas las obras incluyendo el nombre del cliente relacionado
-     */
     public async getObras(): Promise<IObra[]> {
-        // Usamos $select para elegir campos y $expand para traer datos de la lista de Clientes
-        const endpoint = `${this._baseUrl}/_api/web/lists/getbytitle('${this._listName}')/items?$select=Id,Title,EstadoPresupuesto,EstadoObra,Cliente/Title&$expand=Cliente`;
-
-        const response: SPHttpClientResponse = await this._context.spHttpClient.get(
-            endpoint,
-            SPHttpClient.configurations.v1
-        );
-
-        if (!response.ok) {
-            throw new Error("Error al obtener las obras de SharePoint");
-        }
-
+        // Expandimos Cliente para obtener su Title si lo necesitas mostrar en la tabla
+        const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('${this._listName}')/items?$select=*,Cliente/Title&$expand=Cliente`;
+        const response = await this._context.spHttpClient.get(endpoint, SPHttpClient.configurations.v1);
         const data = await response.json();
-        return data.value as IObra[];
+        return data.value;
     }
 
-    /**
-     * Crea una nueva obra o proyecto en SharePoint
-     */
-    public async crearObra(nuevaObra: { Title: string, EstadoPresupuesto: string, EstadoObra: string }): Promise<void> {
-        const endpoint = `${this._baseUrl}/_api/web/lists/getbytitle('${this._listName}')/items`;
-
-        const body = JSON.stringify(nuevaObra);
+    public async crearObra(nuevaObra: any): Promise<void> {
+        const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('${this._listName}')/items`;
+        
+        const body = JSON.stringify({
+            Title: nuevaObra.Nombre,
+            Descripcion: nuevaObra.Descripcion,
+            ClienteId: nuevaObra.ClienteId, // Enviamos el ID del cliente seleccionado
+            DireccionObra: nuevaObra.Direccion,
+            FechaInicio: nuevaObra.FechaInicio.toISOString(),
+            FechaFinPrevista: nuevaObra.FechaFin.toISOString(),
+            EstadoObra: "En Proceso" // Estado inicial por defecto
+        });
 
         const response = await this._context.spHttpClient.post(endpoint, SPHttpClient.configurations.v1, {
             headers: {
                 'Accept': 'application/json',
-                'Content-type': 'application/json'
+                'Content-type': 'application/json',
+                'odata-version': ''
             },
             body: body
         });
 
         if (!response.ok) {
-            throw new Error("No se pudo crear la obra. Revisa los nombres internos de las columnas.");
+            throw new Error("Error al crear la obra en SharePoint");
         }
     }
-
-    /**
-     * Actualiza el estado de una obra (Flujo Presupuesto -> Stock)
-     */
-    public async actualizarEstado(obraId: number, nuevoEstado: string): Promise<void> {
-        const endpoint = `${this._baseUrl}/_api/web/lists/getbytitle('${this._listName}')/items(${obraId})`;
-
-        const headers = {
-            'X-HTTP-Method': 'MERGE',
-            'IF-MATCH': '*'
-        };
-
-        const body = JSON.stringify({
-            EstadoPresupuesto: nuevoEstado
-        });
-
-        await this._context.spHttpClient.post(endpoint, SPHttpClient.configurations.v1, {
-            headers: headers,
-            body: body
-        });
-    }
-
-    public async asignarPersonalAObra(obraId: number, trabajadorId: number): Promise<void> {
-        const endpoint = `${this._baseUrl}/_api/web/lists/getbytitle('${this._listName}')/items(${obraId})`;
-
-        const body = JSON.stringify({
-            // 'ResponsableId' es el nombre interno de la columna tipo Persona
-            ResponsableId: trabajadorId
-        });
-
-        await this._context.spHttpClient.post(endpoint, SPHttpClient.configurations.v1, {
-            body: body,
-            headers: {
-                "Accept": "application/json",
-                "Content-type": "application/json",
-                "X-HTTP-Method": "MERGE",
-                "IF-MATCH": "*"
-            }
-        });
-    }
-
-    public async eliminarObra(id: number): Promise<void> {
-        const endpoint = `${this._baseUrl}/_api/web/lists/getbytitle('${this._listName}')/items(${id})`;
-
-        await this._context.spHttpClient.post(endpoint, SPHttpClient.configurations.v1, {
-            headers: {
-                'X-HTTP-Method': 'DELETE',
-                'IF-MATCH': '*'
-            }
-        });
-    }
-
-    public async actualizarObra(id: number, datosActualizados: Partial<IObra>): Promise<void> {
-        const endpoint = `${this._baseUrl}/_api/web/lists/getbytitle('${this._listName}')/items(${id})`;
-
-        await this._context.spHttpClient.post(endpoint, SPHttpClient.configurations.v1, {
-            headers: {
-                'Accept': 'application/json',
-                'Content-type': 'application/json',
-                'X-HTTP-Method': 'MERGE',
-                'IF-MATCH': '*'
-            },
-            body: JSON.stringify(datosActualizados)
-        });
-    }
-
 }
