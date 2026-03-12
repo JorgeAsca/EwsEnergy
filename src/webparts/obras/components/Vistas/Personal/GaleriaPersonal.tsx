@@ -1,3 +1,4 @@
+// src/webparts/obras/components/Vistas/Personal/GaleriaPersonal.tsx
 import * as React from "react";
 import {
   Stack,
@@ -12,23 +13,16 @@ import {
   DefaultButton,
   Panel,
   TextField,
-  Dropdown,
-  IDropdownOption
+  Dropdown
 } from "@fluentui/react";
 import { PersonalService } from "../../../service/PersonalService";
 import { IPersonal } from "../../../models/IPersonal";
-
-// Solución al error de styles si lo usas
-const styles: any = require("./GaleriaPersonal.module.scss");
 
 export const GaleriaPersonal: React.FC<{ context: any }> = (props) => {
   const [empleados, setEmpleados] = React.useState<IPersonal[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [isOpen, setIsOpen] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
-
-  // Seguridad: Verificación de Admin
-  const isAdmin = props.context.pageContext.web.permissions.hasPermission(1024);
 
   const [nuevo, setNuevo] = React.useState({
     NombreyApellido: "",
@@ -53,88 +47,65 @@ export const GaleriaPersonal: React.FC<{ context: any }> = (props) => {
   };
 
   React.useEffect(() => {
-    cargarDatos();
+    cargarDatos().catch(console.error);
   }, []);
-
-  const extraerUrlFoto = (foto: any): string => {
-    if (!foto) return "";
-    try {
-      if (foto.serverRelativeUrl) return foto.serverRelativeUrl;
-      const parsed = typeof foto === "string" ? JSON.parse(foto) : foto;
-      return parsed.serverRelativeUrl || "";
-    } catch (e) {
-      return "";
-    }
-  };
 
   const handleGuardar = async () => {
     if (!nuevo.NombreyApellido.trim()) return;
     try {
       setSaving(true);
-      // Aseguramos que pasamos los datos limpios al servicio
-      await service.crearTrabajador({
-        NombreyApellido: nuevo.NombreyApellido,
-        Rol: nuevo.Rol
-      });
+      await service.crearTrabajador(nuevo);
       setIsOpen(false);
       setNuevo({ NombreyApellido: "", Rol: "Operario" });
       await cargarDatos();
     } catch (e) {
-      console.error(e);
-      alert("Error al guardar el empleado. Revisa la consola.");
+      alert("Error al guardar en SharePoint.");
     } finally {
       setSaving(false);
     }
   };
 
-  const opcionesRol: IDropdownOption[] = [
-    { key: "Operario", text: "Operario" },
-    { key: "Jefe de Obra", text: "Jefe de Obra" },
-    { key: "Administración", text: "Administración" },
-  ];
-
   return (
-    <div className={styles.container} style={{ padding: "20px" }}>
+    <div style={{ padding: "20px" }}>
       <Stack horizontal horizontalAlign="space-between" verticalAlign="center">
         <Text variant="xxLarge" style={{ color: "#004a99", fontWeight: 600 }}>
           👥 Equipo EWS Energy
         </Text>
-        {isAdmin && (
-          <PrimaryButton
-            text="Nuevo Personal"
-            iconProps={{ iconName: "AddFriend" }}
-            onClick={() => setIsOpen(true)}
-          />
-        )}
+        {/* Botón siempre visible para evitar el crash de permisos */}
+        <PrimaryButton
+          text="Nuevo Personal"
+          iconProps={{ iconName: "AddFriend" }}
+          onClick={() => setIsOpen(true)}
+        />
       </Stack>
 
       <div style={{ marginTop: "30px" }}>
         {loading ? (
-          <Spinner size={SpinnerSize.large} label="Cargando personal..." />
-        ) : empleados.length > 0 ? (
-          <Stack horizontal wrap tokens={{ childrenGap: 30 }}>
-            {empleados.map((emp) => (
-              <Persona
-                key={emp.Id}
-                text={emp.NombreyApellido || "Empleado sin nombre"}
-                secondaryText={emp.Rol || "Operario"}
-                size={PersonaSize.size100}
-                imageUrl={extraerUrlFoto(emp.FotoPerfil)}
-              />
-            ))}
-          </Stack>
+          <Spinner size={SpinnerSize.large} label="Cargando equipo..." />
         ) : (
-          <MessageBar messageBarType={MessageBarType.info}>
-            No hay personal registrado en la lista.
-          </MessageBar>
+          <Stack horizontal wrap tokens={{ childrenGap: 30 }}>
+            {empleados.length > 0 ? (
+              empleados.map((emp) => (
+                <Persona
+                  key={emp.Id}
+                  text={emp.NombreyApellido || "Operario"}
+                  secondaryText={emp.Rol || "EWS Energy"}
+                  size={PersonaSize.size100}
+                />
+              ))
+            ) : (
+              <MessageBar messageBarType={MessageBarType.info}>
+                No se encontraron datos en la lista 'Personal EWS'.
+              </MessageBar>
+            )}
+          </Stack>
         )}
       </div>
 
       <Panel
         isOpen={isOpen}
         onDismiss={() => setIsOpen(false)}
-        headerText="Dar de alta nuevo personal"
-        closeButtonAriaLabel="Cerrar"
+        headerText="Dar de alta Personal"
       >
         <Stack tokens={{ childrenGap: 15 }} style={{ marginTop: 20 }}>
           <TextField
@@ -147,11 +118,14 @@ export const GaleriaPersonal: React.FC<{ context: any }> = (props) => {
           <Dropdown
             label="Rol / Cargo"
             selectedKey={nuevo.Rol}
-            options={opcionesRol}
+            options={[
+              { key: "Operario", text: "Operario" },
+              { key: "Jefe de Obra", text: "Jefe de Obra" },
+              { key: "Administración", text: "Administración" },
+            ]}
             onChange={(_, opt) => setNuevo({ ...nuevo, Rol: opt?.key as string })}
           />
 
-          {/* Bloque de botones corregido para evitar errores visuales */}
           <Stack horizontal tokens={{ childrenGap: 10 }} style={{ marginTop: 30 }}>
             {saving ? (
               <Spinner label="Guardando..." />

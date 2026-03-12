@@ -4,5 +4,4 @@ export interface IPersonal {
     Id: number;
     NombreyApellido: string;
     Rol?: string;
-    FotoPerfil?: string;
 }

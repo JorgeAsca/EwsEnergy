@@ -45,7 +45,7 @@ export class AsignacionesService {
                 'Accept': 'application/json',
                 'Content-type': 'application/json',
                 'X-HTTP-Method': 'DELETE',
-                'IF-MATCH': '*', // El asterisco indica que ignore la validación de versión y borre sí o sí
+                'IF-MATCH': '*', 
                 'odata-version': ''
             }
         });
