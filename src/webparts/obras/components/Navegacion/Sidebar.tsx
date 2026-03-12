@@ -1,6 +1,6 @@
-import * as React from 'react';
-import { Nav, INavLinkGroup, INavLink, Text } from '@fluentui/react';
-import styles from '../Obras.module.scss';
+import * as React from "react";
+import { Nav, INavLinkGroup, INavLink, Text } from "@fluentui/react";
+import styles from "../Obras.module.scss";
 
 interface ISidebarProps {
   selectedKey: string;
@@ -10,9 +10,10 @@ interface ISidebarProps {
 const navGroups: INavLinkGroup[] = [
   {
     links: [
-      { name: 'Inventario', url: '', key: 'inventario', icon: 'Package' },
-      { name: 'Personal', url: '', key: 'personal', icon: 'Group' },
-      { name: 'Obras', url: '', key: 'obras', icon: 'ConstructionCone' },
+      { name: "Inventario", url: "", key: "inventario", icon: "Package" },
+      { name: "Personal", url: "", key: "personal", icon: "Group" },
+      { name: "Obras", url: "", key: "obras", icon: "ConstructionCone" },
+      {name: "Asignaciones", url: "", key: "asignaciones",icon: "ContactLink" },
     ],
   },
 ];
@@ -21,7 +22,9 @@ export const Sidebar: React.FC<ISidebarProps> = (props) => {
   return (
     <div className={styles.sidebar}>
       <div className={styles.logoArea}>
-        <Text variant="large" style={{ fontWeight: 'bold', color: 'white' }}>EWS ENERGY</Text>
+        <Text variant="large" style={{ fontWeight: "bold", color: "white" }}>
+          EWS ENERGY
+        </Text>
       </div>
       <Nav
         selectedKey={props.selectedKey}
