@@ -19,7 +19,6 @@ import { SPHttpClient } from "@microsoft/sp-http";
 import { ProjectService } from "../../../service/ProjectService";
 import { IObra } from "../../../models/IObra";
 
-// Solución al error de styles: Usamos require para evitar problemas de definición de tipos
 const styles: any = require("./TablaObras.module.scss");
 
 export const TablaObras: React.FC<{ context: any }> = (props) => {
@@ -95,7 +94,6 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
     }
   };
 
-  // --- LÓGICA DE VALIDACIÓN (PASO A) ---
   const fechaInvalida = nuevaObra.FechaFin < nuevaObra.FechaInicio;
   const formularioIncompleto = nuevaObra.Nombre.trim() === "" || nuevaObra.ClienteId === 0;
   const botonBloqueado = saving || fechaInvalida || formularioIncompleto;
@@ -116,7 +114,6 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
       {loading ? (
         <Spinner size={SpinnerSize.large} label="Cargando datos de EWS..." style={{ marginTop: 40 }} />
       ) : (
-        /* --- DISEÑO DE TARJETAS (PASO B) --- */
         <div style={{ 
             marginTop: '25px', 
             display: 'grid', 
