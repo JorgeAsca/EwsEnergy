@@ -13,18 +13,28 @@ export class PersonalService {
     }
 
     public async getPersonal(): Promise<IPersonal[]> {
-        // Obtenemos 'Title' y lo mapearemos después a 'NombreyApellido'
-        const endpoint = `${this._baseUrl}/_api/web/lists/getbytitle('${this._listName}')/items?$select=Id,Title,Rol,EmpresaAsociadaId,FotoPerfil`;
-        const response = await this._context.spHttpClient.get(endpoint, SPHttpClient.configurations.v1);
+        // Pedimos solo Id, Title (que es Nombre y Apellido) y Rol
+        const endpoint = `${this._baseUrl}/_api/web/lists/getbytitle('${this._listName}')/items?$select=Id,Title,Rol`;
+
+        const response = await this._context.spHttpClient.get(
+            endpoint,
+            SPHttpClient.configurations.v1
+        );
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            // Verificacion de error
+            console.error("Error detallado en GET:", errorText);
+            throw new Error(`Error al obtener personal: ${response.status}`);
+        }
+
         const data = await response.json();
 
-        // Mapeo manual para que el componente reciba 'NombreyApellido'
+        // Mapeamos el 'Title' de SharePoint a tu propiedad 'NombreyApellido'
         return (data.value || []).map((item: any) => ({
             Id: item.Id,
-            NombreyApellido: item.Title, // Mapeamos Title -> NombreyApellido
-            Rol: item.Rol,
-            EmpresaAsociadaId: item.EmpresaAsociadaId,
-            FotoPerfil: item.FotoPerfil
+            NombreyApellido: item.Title,
+            Rol: item.Rol
         }));
     }
 
