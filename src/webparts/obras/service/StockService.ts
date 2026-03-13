@@ -11,75 +11,79 @@ export class StockService {
         this._baseUrl = context.pageContext.web.absoluteUrl;
     }
 
-    /**
-     * Obtiene todos los materiales del inventario
-     */
+    private _getHeaders() {
+        return {
+            'Accept': 'application/json;odata=nometadata',
+            'Content-type': 'application/json;odata=nometadata',
+            'odata-version': ''
+        };
+    }
+
     public async getInventario(): Promise<IMaterial[]> {
-        // Seleccionamos los campos necesarios, incluyendo el campo de FotoMaterial
-        const endpoint = `${this._baseUrl}/_api/web/lists/getbytitle('Inventario de Materiales')/items?$select=Id,Title,Categoria,StockActual,StockMinimo,FotoMaterial`;
-
-        const response: SPHttpClientResponse = await this._context.spHttpClient.get(
-            endpoint,
-            SPHttpClient.configurations.v1
-        );
-
-        if (!response.ok) {
-            throw new Error("Error al obtener el inventario");
-        }
-
+        const endpoint = `${this._baseUrl}/_api/web/lists/getbytitle('Inventario de Materiales')/items`;
+        const response: SPHttpClientResponse = await this._context.spHttpClient.get(endpoint, SPHttpClient.configurations.v1);
+        if (!response.ok) throw new Error("Error al obtener el inventario");
         const data = await response.json();
         
-        // Mapeamos los datos de SharePoint al modelo IMaterial de TypeScript
-        return data.value.map((item: any) => {
-            return {
-                Id: item.Id,
-                Title: item.Title,
-                Categoria: item.Categoria,
-                StockActual: item.StockActual,
-                StockMinimo: item.StockMinimo,
-                FotoMaterial: item.FotoMaterial ? { Url: item.FotoMaterial.Url } : null
-            } as IMaterial;
-        });
+        return data.value.map((item: any) => ({
+            Id: item.Id,
+            Title: item.Title,
+            // Mapeamos usando los nombres exactos que encontraste
+            Categoria: item.Categor_x00ed_a || "General",
+            StockActual: item.StockActual || 0,
+            StockMinimo: item.StockM_x00ed_nimo || 0
+        } as IMaterial));
     }
 
-    /**
-     * Actualiza la cantidad de stock de un material específico
-     */
-    public async actualizarStock(materialId: number, nuevaCantidad: number): Promise<void> {
-        const endpoint = `${this._baseUrl}/_api/web/lists/getbytitle('Inventario de Materiales')/items(${materialId})`;
-        
-        const headers = {
-            'X-HTTP-Method': 'MERGE',
-            'IF-MATCH': '*'
-        };
-
-        const body = JSON.stringify({
-            StockActual: nuevaCantidad
-        });
-
-        await this._context.spHttpClient.post(endpoint, SPHttpClient.configurations.v1, {
-            headers: headers,
-            body: body
-        });
-    }
-
-    /**
-     * Crea un nuevo material con foto
-     */
-    public async crearMaterial(material: Partial<IMaterial>): Promise<void> {
+    public async crearMaterial(material: any): Promise<void> {
         const endpoint = `${this._baseUrl}/_api/web/lists/getbytitle('Inventario de Materiales')/items`;
+        
+        // USAMOS TUS NOMBRES INTERNOS REALES
+        const body = JSON.stringify({
+            Title: material.Title,
+            Categor_x00ed_a: material.Categoria,
+            StockActual: material.StockActual,
+            StockM_x00ed_nimo: material.StockMinimo // <--- Nombre exacto de tu URL
+        });
+
+        const response = await this._context.spHttpClient.post(endpoint, SPHttpClient.configurations.v1, { 
+            headers: this._getHeaders(),
+            body: body 
+        });
+
+        if (!response.ok) {
+            const errorRaw = await response.text();
+            throw new Error("Error en SharePoint: " + errorRaw);
+        }
+    }
+
+    public async actualizarMaterial(id: number, material: any): Promise<void> {
+        const endpoint = `${this._baseUrl}/_api/web/lists/getbytitle('Inventario de Materiales')/items(${id})`;
+        const headers = { ...this._getHeaders(), 'X-HTTP-Method': 'MERGE', 'IF-MATCH': '*' };
         
         const body = JSON.stringify({
             Title: material.Title,
-            Categoria: material.Categoria,
+            Categor_x00ed_a: material.Categoria,
             StockActual: material.StockActual,
-            StockMinimo: material.StockMinimo,
-            // Si la columna en SharePoint es de tipo Imagen, se envía el objeto con la URL
-            FotoMaterial: material.FotoMaterial ? JSON.stringify({ serverRelativeUrl: material.FotoMaterial.Url }) : null
+            StockM_x00ed_nimo: material.StockMinimo
         });
 
-        await this._context.spHttpClient.post(endpoint, SPHttpClient.configurations.v1, {
-            body: body
+        await this._context.spHttpClient.post(endpoint, SPHttpClient.configurations.v1, { headers, body });
+    }
+
+    public async actualizarStock(materialId: number, nuevaCantidad: number): Promise<void> {
+        const endpoint = `${this._baseUrl}/_api/web/lists/getbytitle('Inventario de Materiales')/items(${materialId})`;
+        const headers = { ...this._getHeaders(), 'X-HTTP-Method': 'MERGE', 'IF-MATCH': '*' };
+        
+        await this._context.spHttpClient.post(endpoint, SPHttpClient.configurations.v1, { 
+            headers, 
+            body: JSON.stringify({ StockActual: nuevaCantidad }) 
         });
+    }
+
+    public async eliminarMaterial(id: number): Promise<void> {
+        const endpoint = `${this._baseUrl}/_api/web/lists/getbytitle('Inventario de Materiales')/items(${id})`;
+        const headers = { ...this._getHeaders(), 'X-HTTP-Method': 'DELETE', 'IF-MATCH': '*' };
+        await this._context.spHttpClient.post(endpoint, SPHttpClient.configurations.v1, { headers });
     }
 }
