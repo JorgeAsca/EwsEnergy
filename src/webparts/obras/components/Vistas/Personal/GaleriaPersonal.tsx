@@ -1,4 +1,3 @@
-// src/webparts/obras/components/Vistas/Personal/GaleriaPersonal.tsx
 import * as React from "react";
 import {
   Stack,
@@ -13,7 +12,8 @@ import {
   DefaultButton,
   Panel,
   TextField,
-  Dropdown
+  Dropdown,
+  IDropdownOption,
 } from "@fluentui/react";
 import { PersonalService } from "../../../service/PersonalService";
 import { IPersonal } from "../../../models/IPersonal";
@@ -37,6 +37,7 @@ export const GaleriaPersonal: React.FC<{ context: any }> = (props) => {
   const cargarDatos = async () => {
     try {
       setLoading(true);
+      // El servicio ahora retorna Title mapeado como NombreyApellido
       const data = await service.getPersonal();
       setEmpleados(data || []);
     } catch (err) {
@@ -54,14 +55,27 @@ export const GaleriaPersonal: React.FC<{ context: any }> = (props) => {
     if (!nuevo.NombreyApellido.trim()) return;
     try {
       setSaving(true);
+      // El servicio se encargará de enviar esto a la columna 'Title'
       await service.crearTrabajador(nuevo);
       setIsOpen(false);
       setNuevo({ NombreyApellido: "", Rol: "Operario" });
       await cargarDatos();
     } catch (e) {
-      alert("Error al guardar en SharePoint.");
+      console.error("Error al guardar:", e);
+      alert(
+        "Error al guardar en SharePoint. Verifica la conexión y los permisos de la lista.",
+      );
     } finally {
       setSaving(false);
+    }
+  };
+
+  const onDropdownChange = (
+    event: React.FormEvent<HTMLDivElement>,
+    option?: IDropdownOption,
+  ): void => {
+    if (option) {
+      setNuevo({ ...nuevo, Rol: option.key as string });
     }
   };
 
@@ -71,7 +85,6 @@ export const GaleriaPersonal: React.FC<{ context: any }> = (props) => {
         <Text variant="xxLarge" style={{ color: "#004a99", fontWeight: 600 }}>
           👥 Equipo EWS Energy
         </Text>
-        {/* Botón siempre visible para evitar el crash de permisos */}
         <PrimaryButton
           text="Nuevo Personal"
           iconProps={{ iconName: "AddFriend" }}
@@ -88,14 +101,16 @@ export const GaleriaPersonal: React.FC<{ context: any }> = (props) => {
               empleados.map((emp) => (
                 <Persona
                   key={emp.Id}
-                  text={emp.NombreyApellido || "Operario"}
+                  // emp.NombreyApellido contiene ahora el valor de la columna 'Title' (El valor verdadero del nombre del empleado)
+                  text={emp.NombreyApellido || "Sin nombre"}
                   secondaryText={emp.Rol || "EWS Energy"}
                   size={PersonaSize.size100}
                 />
               ))
             ) : (
               <MessageBar messageBarType={MessageBarType.info}>
-                No se encontraron datos en la lista 'Personal EWS'.
+                No se encontraron datos. Asegúrate de que los registros en
+                SharePoint tengan el campo 'Título' (Title) completado.
               </MessageBar>
             )}
           </Stack>
@@ -105,14 +120,18 @@ export const GaleriaPersonal: React.FC<{ context: any }> = (props) => {
       <Panel
         isOpen={isOpen}
         onDismiss={() => setIsOpen(false)}
-        headerText="Dar de alta Personal"
+        headerText="Dar de alta nuevo empleado"
+        closeButtonAriaLabel="Cerrar"
       >
         <Stack tokens={{ childrenGap: 15 }} style={{ marginTop: 20 }}>
           <TextField
-            label="Nombre y Apellido"
+            label="Nombre y Apellido (Campo Título)"
             required
+            placeholder="Escribe el nombre completo..."
             value={nuevo.NombreyApellido}
-            onChange={(_, v) => setNuevo({ ...nuevo, NombreyApellido: v || "" })}
+            onChange={(_, v) =>
+              setNuevo({ ...nuevo, NombreyApellido: v || "" })
+            }
           />
 
           <Dropdown
@@ -122,11 +141,16 @@ export const GaleriaPersonal: React.FC<{ context: any }> = (props) => {
               { key: "Operario", text: "Operario" },
               { key: "Jefe de Obra", text: "Jefe de Obra" },
               { key: "Administración", text: "Administración" },
+              { key: "Manager", text: "Manager" },
             ]}
-            onChange={(_, opt) => setNuevo({ ...nuevo, Rol: opt?.key as string })}
+            onChange={onDropdownChange}
           />
 
-          <Stack horizontal tokens={{ childrenGap: 10 }} style={{ marginTop: 30 }}>
+          <Stack
+            horizontal
+            tokens={{ childrenGap: 10 }}
+            style={{ marginTop: 30 }}
+          >
             {saving ? (
               <Spinner label="Guardando..." />
             ) : (
