@@ -1,20 +1,8 @@
+// src/webparts/obras/components/Vistas/Personal/GaleriaPersonal.tsx
 import * as React from "react";
 import {
-  Stack,
-  Text,
-  Persona,
-  PersonaSize,
-  Spinner,
-  SpinnerSize,
-  MessageBar,
-  MessageBarType,
-  PrimaryButton,
-  DefaultButton,
-  Panel,
-  TextField,
-  Dropdown,
-  IDropdownOption,
-  Icon
+  Stack, Text, Persona, PersonaSize, Spinner, SpinnerSize, MessageBar, 
+  MessageBarType, PrimaryButton, DefaultButton, Panel, TextField, Dropdown, IDropdownOption
 } from "@fluentui/react";
 import { PersonalService } from "../../../service/PersonalService";
 import { IPersonal } from "../../../models/IPersonal";
@@ -22,43 +10,37 @@ import { IPersonal } from "../../../models/IPersonal";
 export const GaleriaPersonal: React.FC<{ context: any }> = (props) => {
   const [empleados, setEmpleados] = React.useState<IPersonal[]>([]);
   const [rolOptions, setRolOptions] = React.useState<IDropdownOption[]>([]);
+  const [fotoOptions, setFotoOptions] = React.useState<IDropdownOption[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [isOpen, setIsOpen] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
-  
-  // Estado para el archivo de imagen seleccionado
-  const [archivoFoto, setArchivoFoto] = React.useState<File | null>(null);
 
   const [nuevo, setNuevo] = React.useState({
     NombreyApellido: "",
     Rol: "",
+    FotoPerfil: "" 
   });
 
-  const service = React.useMemo(
-    () => new PersonalService(props.context),
-    [props.context],
-  );
+  const service = React.useMemo(() => new PersonalService(props.context), [props.context]);
 
   const cargarDatos = async () => {
     try {
       setLoading(true);
-      // Cargamos empleados y las opciones de rol de forma dinámica desde SharePoint
-      const [data, opciones] = await Promise.all([
+      const [data, opciones, fotos] = await Promise.all([
         service.getPersonal(),
-        service.getRolOptions()
+        service.getRolOptions(),
+        service.getFotosDisponibles()
       ]);
 
       setEmpleados(data || []);
-      
-      const mappedOptions = opciones.map(opt => ({ key: opt, text: opt }));
-      setRolOptions(mappedOptions);
+      setRolOptions(opciones.map(opt => ({ key: opt, text: opt })));
+      setFotoOptions(fotos.map(f => ({ key: f.url, text: f.text })));
 
-      // Establecemos el rol inicial basado en la primera opción disponible
-      if (mappedOptions.length > 0 && !nuevo.Rol) {
-        setNuevo(prev => ({ ...prev, Rol: mappedOptions[0].key as string }));
+      if (opciones.length > 0) {
+        setNuevo(prev => ({ ...prev, Rol: opciones[0] }));
       }
     } catch (err) {
-      console.error("Error cargando personal:", err);
+      console.error("Error cargando datos:", err);
     } finally {
       setLoading(false);
     }
@@ -72,39 +54,16 @@ export const GaleriaPersonal: React.FC<{ context: any }> = (props) => {
     if (!nuevo.NombreyApellido.trim()) return;
     try {
       setSaving(true);
-      let urlFotoSubida = "";
-
-      // 1. Si el usuario seleccionó una imagen, la subimos primero a la biblioteca 'FotosPersonal'
-      if (archivoFoto) {
-        urlFotoSubida = await service.subirFoto(archivoFoto);
-      }
-
-      // 2. Creamos el trabajador enviando la URL de la foto al campo de Hipervínculo
-      await service.crearTrabajador({ 
-        ...nuevo, 
-        FotoPerfil: urlFotoSubida 
-      });
-
+      await service.crearTrabajador(nuevo);
       setIsOpen(false);
-      setArchivoFoto(null); // Limpiamos el selector de archivos
-      setNuevo({ NombreyApellido: "", Rol: rolOptions[0]?.key as string || "" });
+      // Limpiar formulario
+      setNuevo({ NombreyApellido: "", Rol: rolOptions[0]?.key as string || "", FotoPerfil: "" });
       await cargarDatos();
     } catch (e) {
       console.error("Error al guardar:", e);
-      alert(
-        "Error al guardar en SharePoint. Verifica que la biblioteca 'FotosPersonal' exista y la columna 'FotoPerfil' sea de tipo Hipervínculo.",
-      );
+      alert("Error al guardar en SharePoint. Revisa la consola para más detalles.");
     } finally {
       setSaving(false);
-    }
-  };
-
-  const onDropdownChange = (
-    event: React.FormEvent<HTMLDivElement>,
-    option?: IDropdownOption,
-  ): void => {
-    if (option) {
-      setNuevo({ ...nuevo, Rol: option.key as string });
     }
   };
 
@@ -130,87 +89,60 @@ export const GaleriaPersonal: React.FC<{ context: any }> = (props) => {
               empleados.map((emp) => (
                 <Persona
                   key={emp.Id}
-                  text={emp.NombreyApellido || "Sin nombre"}
-                  secondaryText={emp.Rol || "EWS Energy"}
-                  imageUrl={emp.FotoPerfil} // Muestra la foto desde la biblioteca
+                  text={emp.NombreyApellido}
+                  secondaryText={emp.Rol}
+                  imageUrl={emp.FotoPerfil}
                   size={PersonaSize.size100}
                 />
               ))
             ) : (
               <MessageBar messageBarType={MessageBarType.info}>
-                No se encontraron datos. Asegúrate de que los registros en
-                SharePoint tengan el campo 'Título' (Title) completado.
+                No se encontraron empleados en la lista.
               </MessageBar>
             )}
           </Stack>
         )}
       </div>
 
-      <Panel
-        isOpen={isOpen}
-        onDismiss={() => setIsOpen(false)}
-        headerText="Dar de alta nuevo empleado"
-        closeButtonAriaLabel="Cerrar"
-      >
+      <Panel isOpen={isOpen} onDismiss={() => setIsOpen(false)} headerText="Alta de Personal">
         <Stack tokens={{ childrenGap: 15 }} style={{ marginTop: 20 }}>
-          <TextField
-            label="Nombre y Apellido"
-            required
-            placeholder="Escribe el nombre completo..."
-            value={nuevo.NombreyApellido}
-            onChange={(_, v) =>
-              setNuevo({ ...nuevo, NombreyApellido: v || "" })
-            }
+          <TextField 
+            label="Nombre y Apellido" 
+            required 
+            value={nuevo.NombreyApellido} 
+            onChange={(_, v) => setNuevo({ ...nuevo, NombreyApellido: v || "" })} 
           />
-
-          <Dropdown
-            label="Rol / Cargo"
+          
+          <Dropdown 
+            label="Rol / Cargo" 
+            options={rolOptions} 
             selectedKey={nuevo.Rol}
-            options={rolOptions}
-            onChange={onDropdownChange}
+            onChange={(_, opt) => setNuevo({ ...nuevo, Rol: opt?.key as string })} 
           />
 
-          {/* Sección de carga de imagen */}
-          <div>
-            <Text block style={{ marginBottom: 8, fontWeight: 600 }}>Foto de Perfil</Text>
-            <input 
-              type="file" 
-              accept="image/*" 
-              style={{ display: 'none' }} 
-              id="input-foto-personal" 
-              onChange={(e) => setArchivoFoto(e.target.files?.[0] || null)} 
-            />
-            <DefaultButton 
-              text={archivoFoto ? archivoFoto.name : "Seleccionar Imagen"} 
-              iconProps={{ iconName: 'Photo2' }} 
-              onClick={() => document.getElementById('input-foto-personal')?.click()} 
-            />
-            {archivoFoto && (
-              <Text variant="small" style={{ marginLeft: 10, color: '#107c10' }}>
-                <Icon iconName="CheckMark" /> Lista para subir
-              </Text>
-            )}
-          </div>
+          <Dropdown 
+            label="Seleccionar Foto de la Biblioteca"
+            placeholder="Elige una imagen..."
+            options={fotoOptions}
+            selectedKey={nuevo.FotoPerfil}
+            onChange={(_, opt) => setNuevo({ ...nuevo, FotoPerfil: opt?.key as string })}
+          />
 
-          <Stack
-            horizontal
-            tokens={{ childrenGap: 10 }}
-            style={{ marginTop: 30 }}
-          >
+          {nuevo.FotoPerfil && (
+            <Stack horizontalAlign="center" style={{ marginTop: 10 }}>
+              <Text variant="small">Vista previa:</Text>
+              <Persona imageUrl={nuevo.FotoPerfil} size={PersonaSize.size72} hidePersonaDetails />
+            </Stack>
+          )}
+
+          <Stack horizontal tokens={{ childrenGap: 10 }} style={{ marginTop: 30 }}>
             {saving ? (
-              <Spinner label="Subiendo información..." />
+              <Spinner label="Guardando..." />
             ) : (
-              <React.Fragment>
-                <PrimaryButton
-                  text="Guardar"
-                  onClick={handleGuardar}
-                  disabled={!nuevo.NombreyApellido.trim()}
-                />
-                <DefaultButton
-                  text="Cancelar"
-                  onClick={() => setIsOpen(false)}
-                />
-              </React.Fragment>
+              <>
+                <PrimaryButton text="Guardar" onClick={handleGuardar} disabled={!nuevo.NombreyApellido.trim()} />
+                <DefaultButton text="Cancelar" onClick={() => setIsOpen(false)} />
+              </>
             )}
           </Stack>
         </Stack>

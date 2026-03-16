@@ -1,4 +1,4 @@
-import { SPHttpClient, ISPHttpClientOptions } from '@microsoft/sp-http';
+import { SPHttpClient } from '@microsoft/sp-http';
 import { IPersonal } from '../models/IPersonal';
 
 export class PersonalService {
@@ -16,7 +16,7 @@ export class PersonalService {
 
             if (!response.ok) return [];
             const data = await response.json();
-            
+
             return (data.value || []).map((item: any) => ({
                 Id: item.Id,
                 NombreyApellido: item.Title,
@@ -29,62 +29,68 @@ export class PersonalService {
         }
     }
 
-    public async subirFoto(file: File): Promise<string> {
-        const serverRelativeUrl = `${this._context.pageContext.web.serverRelativeUrl}/Fotos_Personal`;
-        const fileName = encodeURIComponent(file.name);
-        
-        const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/getfolderbyserverrelativeurl('${serverRelativeUrl}')/files/add(url='${fileName}',overwrite=true)`;
+    /**
+     * Obtiene los archivos de la biblioteca 'Fotos_Personal' para elegirlos en el formulario
+     */
+    public async getFotosDisponibles(): Promise<{ key: string, text: string, url: string }[]> {
+        try {
+            const serverRelativeUrl = `${this._context.pageContext.web.serverRelativeUrl}/Fotos_Personal`;
+            const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/getfolderbyserverrelativeurl('${serverRelativeUrl}')/files`;
 
-        const options: ISPHttpClientOptions = {
-            body: file,
-            headers: {
-                "Accept": "application/json;odata=nometadata",
-                "Content-type": file.type
+            // Para listar archivos, odata=verbose suele ser más fiable y evita errores 406
+            const response = await this._context.spHttpClient.get(endpoint, SPHttpClient.configurations.v1, {
+                headers: {
+                    'Accept': 'application/json;odata=verbose',
+                    'odata-version': ''
+                }
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error("Error al obtener archivos de la biblioteca:", errorText);
+                return [];
             }
-        };
 
-        const response = await this._context.spHttpClient.post(endpoint, SPHttpClient.configurations.v1, options);
-        
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error("Detalle del error de subida (404 significa ruta mal escrita):", errorText);
-            throw new Error("Error al subir archivo a la biblioteca");
+            const data = await response.json();
+            // Con odata=verbose, los datos están en d.results
+            const files = data.d && data.d.results ? data.d.results : [];
+
+            return files.map((file: any) => ({
+                key: `${window.location.origin}${file.ServerRelativeUrl}`,
+                text: file.Name,
+                url: `${window.location.origin}${file.ServerRelativeUrl}`
+            }));
+        } catch (error) {
+            console.error("Error obteniendo fotos de la biblioteca:", error);
+            return [];
         }
-
-        const data = await response.json();
-        // Retornamos la URL absoluta
-        return `${window.location.origin}${data.ServerRelativeUrl}`;
     }
 
     public async crearTrabajador(nuevo: { NombreyApellido: string, Rol: string, FotoPerfil?: string }): Promise<void> {
         const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('${this._listName}')/items`;
-        
+
         const body: any = {
             Title: nuevo.NombreyApellido,
-            Rol: nuevo.Rol
+            Rol: nuevo.Rol,
+            FotoPerfil: nuevo.FotoPerfil ? {
+                Description: nuevo.NombreyApellido,
+                Url: nuevo.FotoPerfil
+            } : null
         };
-
-        if (nuevo.FotoPerfil) {
-            body.FotoPerfil = {
-                '__metadata': { 'type': 'SP.FieldUrlValue' },
-                'Description': nuevo.NombreyApellido,
-                'Url': nuevo.FotoPerfil
-            };
-        }
 
         const response = await this._context.spHttpClient.post(endpoint, SPHttpClient.configurations.v1, {
             headers: {
-                'Accept': 'application/json;odata=verbose',
-                'Content-type': 'application/json;odata=verbose',
-                'odata-version': ''
+                'Accept': 'application/json;odata=nometadata',
+                'Content-type': 'application/json;odata=nometadata',
+                'odata-version': '3.0'
             },
             body: JSON.stringify(body)
         });
 
         if (!response.ok) {
             const err = await response.text();
-            console.error("Error al crear ítem:", err);
-            throw new Error("Error en la creación del registro");
+            console.error("Detalle del error al crear ítem:", err);
+            throw new Error("No se pudo crear el registro del personal.");
         }
     }
 
