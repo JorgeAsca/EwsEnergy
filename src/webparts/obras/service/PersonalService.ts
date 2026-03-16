@@ -9,7 +9,6 @@ export class PersonalService {
 
     public async getPersonal(): Promise<IPersonal[]> {
         try {
-            // Seleccionamos Id, Title (NombreyApellido), Rol y FotoPerfil
             const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('${this._listName}')/items?$select=Id,Title,Rol,FotoPerfil`;
             const response = await this._context.spHttpClient.get(endpoint, SPHttpClient.configurations.v1, {
                 headers: { 'Accept': 'application/json;odata=nometadata', 'odata-version': '' }
@@ -22,7 +21,6 @@ export class PersonalService {
                 Id: item.Id,
                 NombreyApellido: item.Title,
                 Rol: item.Rol,
-                // Al ser hipervínculo, accedemos a .Url
                 FotoPerfil: item.FotoPerfil ? item.FotoPerfil.Url : undefined
             }));
         } catch (error) {
@@ -32,9 +30,10 @@ export class PersonalService {
     }
 
     public async subirFoto(file: File): Promise<string> {
-        // 1. Subir el archivo a la biblioteca 'FotosPersonal'
-        const serverRelativeUrl = `${this._context.pageContext.web.serverRelativeUrl}/FotosPersonal`;
-        const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/getfolderbyserverrelativeurl('${serverRelativeUrl}')/files/add(url='${file.name}',overwrite=true)`;
+        const serverRelativeUrl = `${this._context.pageContext.web.serverRelativeUrl}/Fotos_Personal`;
+        const fileName = encodeURIComponent(file.name);
+        
+        const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/getfolderbyserverrelativeurl('${serverRelativeUrl}')/files/add(url='${fileName}',overwrite=true)`;
 
         const options: ISPHttpClientOptions = {
             body: file,
@@ -45,10 +44,15 @@ export class PersonalService {
         };
 
         const response = await this._context.spHttpClient.post(endpoint, SPHttpClient.configurations.v1, options);
-        if (!response.ok) throw new Error("Error al subir archivo a la biblioteca");
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error("Detalle del error de subida (404 significa ruta mal escrita):", errorText);
+            throw new Error("Error al subir archivo a la biblioteca");
+        }
 
         const data = await response.json();
-        // Retornamos la URL absoluta para guardarla en el hipervínculo
+        // Retornamos la URL absoluta
         return `${window.location.origin}${data.ServerRelativeUrl}`;
     }
 
@@ -60,7 +64,6 @@ export class PersonalService {
             Rol: nuevo.Rol
         };
 
-        // Si hay foto, la enviamos como el objeto que requiere la columna Hipervínculo
         if (nuevo.FotoPerfil) {
             body.FotoPerfil = {
                 '__metadata': { 'type': 'SP.FieldUrlValue' },
@@ -69,14 +72,20 @@ export class PersonalService {
             };
         }
 
-        await this._context.spHttpClient.post(endpoint, SPHttpClient.configurations.v1, {
+        const response = await this._context.spHttpClient.post(endpoint, SPHttpClient.configurations.v1, {
             headers: {
-                'Accept': 'application/json;odata=verbose', // Verbose es necesario para objetos complejos como URL
+                'Accept': 'application/json;odata=verbose',
                 'Content-type': 'application/json;odata=verbose',
                 'odata-version': ''
             },
             body: JSON.stringify(body)
         });
+
+        if (!response.ok) {
+            const err = await response.text();
+            console.error("Error al crear ítem:", err);
+            throw new Error("Error en la creación del registro");
+        }
     }
 
     public async getRolOptions(): Promise<string[]> {
