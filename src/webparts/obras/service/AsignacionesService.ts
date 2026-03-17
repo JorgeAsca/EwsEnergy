@@ -1,13 +1,6 @@
 import { WebPartContext } from '@microsoft/sp-webpart-base';
 import { SPHttpClient } from '@microsoft/sp-http';
-
-export interface IAsignacion {
-    Id?: number;
-    ObraId: number;
-    PersonalId: number;
-    FechaInicio: string;
-    FechaFinPrevista: string;
-}
+import { IAsignacion } from '../models/IAsignacion';
 
 export class AsignacionesService {
     private _context: WebPartContext;
@@ -21,7 +14,7 @@ export class AsignacionesService {
         const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('${this._listName}')/items`;
         const response = await this._context.spHttpClient.get(endpoint, SPHttpClient.configurations.v1);
         const data = await response.json();
-        return data.value;
+        return data.value as IAsignacion[];
     }
 
     public async asignarPersonal(asignacion: IAsignacion): Promise<void> {

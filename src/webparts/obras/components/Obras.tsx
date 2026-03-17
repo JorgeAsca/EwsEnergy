@@ -7,6 +7,7 @@ import { ListaMateriales } from './Vistas/Inventario/ListaMateriales';
 import { GaleriaPersonal } from './Vistas/Personal/GaleriaPersonal';
 import { TablaObras } from './Vistas/Proyectos/TablaObras';
 import { VistaAsignaciones } from './Vistas/Asignaciones/VistaAsignaciones';
+import { VistaFotosObra } from './Vistas/Fotos/VistaFotosObra';
 
 export default class Obras extends React.Component<IObrasProps, { selectedKey: string }> {
   constructor(props: IObrasProps) {
@@ -31,6 +32,7 @@ export default class Obras extends React.Component<IObrasProps, { selectedKey: s
               {this.state.selectedKey === 'personal' && <GaleriaPersonal context={this.props.context} />}
               {this.state.selectedKey === 'obras' && <TablaObras context={this.props.context} />}
               {this.state.selectedKey === 'asignaciones' && <VistaAsignaciones context={this.props.context} />}
+              {this.state.selectedKey === 'fotos' && <VistaFotosObra context={this.props.context} />}
             </div>
           </main>
         </Stack>
