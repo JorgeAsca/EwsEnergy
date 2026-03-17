@@ -1,4 +1,3 @@
-// src/webparts/obras/components/Vistas/Personal/GaleriaPersonal.tsx
 import * as React from "react";
 import {
   Stack, Text, Persona, PersonaSize, Spinner, SpinnerSize, MessageBar, 
