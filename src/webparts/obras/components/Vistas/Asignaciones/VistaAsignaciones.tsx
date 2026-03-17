@@ -15,12 +15,10 @@ import {
 } from "@fluentui/react";
 import { ProjectService } from "../../../service/ProjectService";
 import { PersonalService } from "../../../service/PersonalService";
-import {
-    AsignacionesService,
-    IAsignacion,
-} from "../../../service/AsignacionesService";
+import { AsignacionesService } from "../../../service/AsignacionesService";
 import { IObra } from "../../../models/IObra";
 import { IPersonal } from "../../../models/IPersonal";
+import { IAsignacion } from "../../../models/IAsignacion";
 
 import styles from "./VistaAsignaciones.module.scss";
 
@@ -49,10 +47,11 @@ export const VistaAsignaciones: React.FC<{ context: any }> = (props) => {
     const cargarTodo = async () => {
         try {
             setLoading(true);
-            const [o, p, a] = await Promise.all([
+            // Tipado explícito para asegurar compatibilidad con la interfaz que usa Date
+            const [o, p, a]: [IObra[], IPersonal[], IAsignacion[]] = await Promise.all([
                 services.obras.getObras(),
                 services.personal.getPersonal(),
-                services.asignaciones.getAsignaciones(),
+                services.asignaciones.getAsignaciones() as any, // Cast temporal para la conversión de tipos del servicio
             ]);
             setObras(o || []);
             setPersonal(p || []);
@@ -65,19 +64,22 @@ export const VistaAsignaciones: React.FC<{ context: any }> = (props) => {
     };
 
     React.useEffect(() => {
-        cargarTodo();
+        cargarTodo().catch(console.error);
     }, []);
 
     const handleAsignar = async () => {
         if (!seleccion.obraId || !seleccion.personalId) return;
         try {
+            // Cumplimos con la interfaz IAsignacion enviando los campos requeridos
             await services.asignaciones.asignarPersonal({
                 ObraId: seleccion.obraId,
                 PersonalId: seleccion.personalId,
-                FechaInicio: new Date().toISOString(),
-                FechaFinPrevista: seleccion.fechaFin.toISOString(),
-            });
-            setSeleccion({ ...seleccion, obraId: 0, personalId: 0 });
+                FechaInicio: new Date(), // Enviamos objeto Date como pide tu interfaz
+                FechaFinPrevista: seleccion.fechaFin,
+                EstadoProgreso: 0 // Campo requerido en tu interfaz de modelos
+            } as IAsignacion);
+            
+            setSeleccion({ ...seleccion, obraId: 0, personalId: 0, fechaFin: new Date() });
             await cargarTodo();
         } catch (e) {
             alert("Error al asignar.");
@@ -94,10 +96,11 @@ export const VistaAsignaciones: React.FC<{ context: any }> = (props) => {
         }
     };
 
-    const calcularSemaforo = (fechaFinStr: string) => {
+    const calcularSemaforo = (fechaFin: Date | string) => {
         const hoy = new Date();
-        const fin = new Date(fechaFinStr);
+        const fin = new Date(fechaFin);
         const difDias = (fin.getTime() - hoy.getTime()) / (1000 * 3600 * 24);
+        
         if (hoy > fin) return { color: "#d13438", label: "Retrasado" };
         if (difDias < 7) return { color: "#ffaa44", label: "Crítico" };
         return { color: "#107c10", label: "A tiempo" };
@@ -153,10 +156,10 @@ export const VistaAsignaciones: React.FC<{ context: any }> = (props) => {
 
             <div className={styles.grid}>
                 {obras.map((obra) => {
-                    const equipo = asignaciones.filter((a) => a.ObraId === obra.Id);
-                    const esCompletada =
-                        (obra as any).Estado === "Completada" ||
-                        (obra as any).Status === "Completada";
+                    // Filtrado seguro convirtiendo IDs a Number
+                    const equipo = asignaciones.filter((a) => Number(a.ObraId) === Number(obra.Id));
+                    // Uso de la propiedad correcta según IObra.ts
+                    const esFinalizada = obra.EstadoObra === "Finalizado";
 
                     return (
                         <div key={obra.Id} className={styles.obraCard}>
@@ -169,7 +172,7 @@ export const VistaAsignaciones: React.FC<{ context: any }> = (props) => {
                                     <Text className={styles.obraTitle}>{obra.Title}</Text>
                                     <div
                                         className={styles.statusDot}
-                                        style={{ background: esCompletada ? "#107c10" : "#0078d4" }}
+                                        style={{ background: esFinalizada ? "#107c10" : "#0078d4" }}
                                     />
                                 </Stack>
                                 <Separator />
@@ -177,7 +180,7 @@ export const VistaAsignaciones: React.FC<{ context: any }> = (props) => {
                                     {equipo.length > 0 ? (
                                         equipo.map((asig) => {
                                             const p = personal.find(
-                                                (pers) => pers.Id === asig.PersonalId,
+                                                (pers) => Number(pers.Id) === Number(asig.PersonalId),
                                             );
                                             const semaforo = calcularSemaforo(asig.FechaFinPrevista);
                                             return (

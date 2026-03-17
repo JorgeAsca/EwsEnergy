@@ -83,11 +83,11 @@ export const VistaFotosObra: React.FC<{ context: any }> = (props) => {
         };
         init().catch((err) => console.error(err));
     }, [services]);
-
     const cargarActividadHoy = async (id: number) => {
         try {
-            const historial = await services.photos.getFotosHoyPorOperario(id);
-            setFotosHoy(historial);
+            // Forzamos el tipo para que TS reconozca la estructura de SharePoint
+            const historial = await services.photos.getFotosHoyPorOperario(id) as any[];
+            setFotosHoy(historial || []);
         } catch (e) {
             console.error("Error cargando actividad de hoy", e);
         }
@@ -147,7 +147,7 @@ export const VistaFotosObra: React.FC<{ context: any }> = (props) => {
 
     return (
         <div className={styles.container}>
-            {/* PASO 1: SELECCIÓN DE PERFIL */}
+            
             {paso === 1 && (
                 <Stack tokens={{ childrenGap: 20 }}>
                     <Text variant="xxLarge" className={styles.titulo}>
@@ -176,7 +176,7 @@ export const VistaFotosObra: React.FC<{ context: any }> = (props) => {
                 </Stack>
             )}
 
-            {/* PASO 2: ACTIVIDAD DE HOY Y SELECCIÓN DE OBRA */}
+            
             {paso === 2 && (
                 <Stack tokens={{ childrenGap: 20 }}>
                     <Stack
@@ -197,17 +197,18 @@ export const VistaFotosObra: React.FC<{ context: any }> = (props) => {
                         />
                     </Stack>
 
-                    {/* GALERÍA DE ACTIVIDAD RECIENTE (HOY) */}
+                    
                     {fotosHoy.length > 0 && (
-                        <div className={styles.seccionHoy}>
-                            <Text variant="large" className={styles.subtituloHoy}>
+                        <div className={styles['seccionHoy']}>
+                            <Text variant="large" className={styles['subtituloHoy']}>
                                 📸 Tus fotos de hoy ({fotosHoy.length})
                             </Text>
-                            <div className={styles.scrollHorizontal}>
+                            <div className={styles['scrollHorizontal']}>
                                 {fotosHoy.map((f, i) => (
-                                    <div key={i} className={styles.cardFotoHoy}>
-                                        <img src={f.UrlFoto.Url} alt="Actividad" />
-                                        <Text variant="small" className={styles.tagObra}>
+                                    <div key={i} className={styles['cardFotoHoy']}>
+                                        {/* Acceso seguro a la URL de la foto de SharePoint */}
+                                        <img src={f.UrlFoto?.Url} alt="Actividad" />
+                                        <Text variant="small" className={styles['tagObra']}>
                                             {f.Title}
                                         </Text>
                                     </div>
@@ -252,7 +253,7 @@ export const VistaFotosObra: React.FC<{ context: any }> = (props) => {
                 </Stack>
             )}
 
-            {/* PASO 3: CAPTURA Y ENVÍO */}
+            
             {paso === 3 && (
                 <Stack tokens={{ childrenGap: 20 }}>
                     <Stack
