@@ -4,7 +4,7 @@
     padding: 30px;
     background-color: #f8f9fa;
     min-height: 100vh;
-    position: relative; // Fundamental para que el Panel lateral se ancle bien
+    position: relative; 
 }
 
 .headerSection {
@@ -62,9 +62,9 @@
     position: absolute;
     top: -10px;
     right: -10px;
-    opacity: 0; // Oculto por defecto
+    opacity: 0; 
     transition: opacity 0.2s ease;
-    z-index: 5; // Por encima de la foto
+    z-index: 5; 
 }
 
 .panelPersonal {
@@ -127,7 +127,7 @@
     padding: 20px;
     background: #f3f2f1;
     border-radius: 8px;
-    border: 2px dashed #004a99; // Borde azul punteado para resaltar
+    border: 2px dashed #004a99; 
     display: flex;
     justify-content: center;
 }
