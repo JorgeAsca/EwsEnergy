@@ -48,7 +48,6 @@ export class AsignacionesService {
         }
     }
 
-<<<<<<< HEAD
     // Eliminación de asignación (opcional, para funcionalidad de seguimiento)
 public async eliminarAsignacion(id: number): Promise<void> {
     const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('Asignaciones EWS')/items(${id})`;
@@ -67,20 +66,6 @@ public async eliminarAsignacion(id: number): Promise<void> {
         const errorText = await response.text();
         console.error("Error detallado de SharePoint:", errorText);
         throw new Error(`No se pudo eliminar: ${response.statusText}`);
-=======
-    public async eliminarAsignacion(id: number): Promise<void> {
-        const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('${this._listName}')/items(${id})`;
-
-        await this._context.spHttpClient.post(endpoint, SPHttpClient.configurations.v1, {
-            headers: {
-                'Accept': 'application/json;odata=nometadata',
-                'Content-type': 'application/json;odata=nometadata',
-                'X-HTTP-Method': 'DELETE',
-                'IF-MATCH': '*', 
-                'odata-version': '3.0'
-            }
-        });
->>>>>>> 9837ecf97417d00b837a63e8796f8b5a62d2270c
     }
 }
 
