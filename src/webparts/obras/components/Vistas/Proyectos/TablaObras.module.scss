@@ -3,10 +3,70 @@
 .container {
   padding: 20px;
 
-  // Estilos para el Panel cuando está abierto
+  .headerSection {
+    margin-bottom: 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .tituloPrincipal {
+    color: #004a99;
+    font-weight: 600;
+  }
+
+  /* Grid de Tarjetas */
+  .gridObras {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 25px;
+    margin-top: 20px;
+  }
+
+  .cardObra {
+    width: 100%;
+    max-width: none;
+    border-radius: 8px;
+    border: 1px solid #edebe9;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+    &:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    }
+  }
+
+  .cardContent {
+    padding: 20px;
+  }
+
+  .badgeEstado {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  .infoRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #444;
+    margin-top: 5px;
+
+    i {
+      color: #004a99;
+      font-size: 16px;
+    }
+  }
+
+  /* Estilos para el Panel (Tu configuración original) */
   :global {
     .ms-Panel-main {
-      background-color: #111111; // Fondo casi negro
+      background-color: #111111; 
       color: #ffffff;
     }
 
@@ -15,7 +75,6 @@
       font-weight: 600;
     }
 
-    // Estilo para los inputs dentro del panel oscuro
     .ms-TextField-fieldGroup, .ms-Dropdown-title, .ms-DatePicker-container {
       background-color: #252525;
       border-color: #444444;
@@ -24,6 +83,11 @@
 
     .ms-Label {
       color: #ffffff;
+    }
+    
+    // Ajuste para que el texto escrito en el panel oscuro se vea blanco
+    .ms-TextField-field, .ms-Dropdown-title {
+      color: white !important;
     }
   }
 }
