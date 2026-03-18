@@ -11,6 +11,7 @@ export interface IDiarioEntrada {
 export class DailyReportService {
     private _context: WebPartContext;
     private _baseUrl: string;
+    private _metadataListName: string = "Registro_Fotos_Diarias";
 
     constructor(context: WebPartContext) {
         this._context = context;
@@ -46,4 +47,15 @@ export class DailyReportService {
             throw new Error("No se pudo guardar el reporte diario en la lista.");
         }
     }
+
+    public async getHistorialGlobal(): Promise<any[]> {
+    const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('${this._metadataListName}')/items?$orderby=FechaRegistro desc`;
+
+    const response = await this._context.spHttpClient.get(endpoint, SPHttpClient.configurations.v1);
+    if (!response.ok) return [];
+    
+    const data = await response.json();
+    return data.value || [];
+}
+    
 }
