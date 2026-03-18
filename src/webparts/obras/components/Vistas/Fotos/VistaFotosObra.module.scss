@@ -1,173 +1,272 @@
+@import '~@fluentui/react/dist/sass/References.scss';
+
 .container {
+  background-color: #f4f7f9;
+  min-height: 100vh;
+  padding-bottom: 40px;
+}
+
+/* --- CABECERA --- */
+.appHeader {
+  background: #004a99; 
+  color: white;
+  padding: 15px 25px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.title {
+  font-weight: 700;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.subtitle {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 12px;
+}
+
+.iconCircle {
+  background: rgba(255,255,255,0.2);
+  padding: 8px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.userBadge {
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 20px;
+  transition: background 0.2s;
+  &:hover {
+    background: rgba(255,255,255,0.1);
+  }
+}
+
+/* --- CONTENIDO --- */
+.content {
+  max-width: 800px;
+  margin: 0 auto;
   padding: 20px;
+}
 
-  .titulo {
-    color: #004a99;
-    font-weight: 600;
-    margin-bottom: 20px;
+.loader {
+  margin-top: 100px;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.stepTitle {
+  font-weight: 700;
+  color: #333;
+  margin: 0;
+}
+
+/* --- PASO 1: PERSONAL --- */
+.gridPersonal {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.cardPersona {
+  background: white;
+  border: 1px solid #edebe9;
+  border-radius: 12px;
+  padding: 20px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+    border-color: #004a99;
   }
+}
 
-  /* Paso 1: Selección de Personal */
-  .gridPersonal {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
-    margin-top: 15px;
+.cardName { font-weight: 600; margin-top: 10px; color: #333; }
+.cardRole { color: #666; font-size: 12px; }
+
+/* --- PASO 2: OBRAS --- */
+.activityHoy {
+  background: white;
+  padding: 15px;
+  border-radius: 12px;
+  margin-bottom: 25px;
+  border: 1px solid #e1e1e1;
+}
+
+.sectionLabel {
+  font-weight: 600;
+  color: #004a99;
+  display: block;
+  margin-bottom: 10px;
+}
+
+.horizontalScroll {
+  display: flex;
+  gap: 15px;
+  overflow-x: auto;
+  padding: 10px 5px;
+  &::-webkit-scrollbar { height: 6px; }
+  &::-webkit-scrollbar-thumb { background: #004a9944; border-radius: 10px; }
+}
+
+.miniCard {
+  position: relative;
+  min-width: 140px;
+  height: 90px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  img { width: 100%; height: 100%; object-fit: cover; }
+}
+
+.miniCardOverlay {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  background: rgba(0,0,0,0.7);
+  color: white;
+  font-size: 10px;
+  padding: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gridObras {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cardObra {
+  background: white;
+  border: 1px solid #ddd;
+  padding: 18px;
+  border-radius: 10px;
+  text-align: left;
+  cursor: pointer;
+  transition: 0.2s;
+  width: 100%;
+
+  &:hover { 
+    border-color: #004a99; 
+    background: #f0f7ff; 
   }
+}
 
-  .personaCard {
-    cursor: pointer;
-    padding: 10px;
-    border-radius: 8px;
-    transition: background 0.2s ease;
+.asignada {
+  border-left: 6px solid #ffb900;
+  background: #fffdf5;
+}
 
-    &:hover {
-      background-color: #f3f2f1;
-    }
-  }
+.obraTitle { font-weight: 600; font-size: 16px; display: block; }
+.obraSub { color: #888; font-size: 12px; }
+.starIcon { color: #ffb900; font-size: 20px; }
+.badgeAsignada {
+  background: #ffb900;
+  color: #000;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
 
-  /* Paso 2: Selección de Obra e Historial */
-  .seccionHoy {
-    background: #f3f2f1;
-    padding: 15px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-    border-left: 4px solid #004a99;
-  }
+/* --- PASO 3: CÁMARA Y REPORTE --- */
+.workCard {
+  background: white;
+  padding: 25px;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+  border: 1px solid #edebe9;
+}
 
-  .subtituloHoy {
-    display: block;
-    margin-bottom: 12px;
-    color: #323130;
-    font-weight: 600;
-  }
+.cameraBox {
+  margin: 10px 0;
+}
 
-  .scrollHorizontal {
-    display: flex;
-    overflow-x: auto;
-    gap: 12px;
-    padding-bottom: 10px;
+.dropZone {
+  border: 2px dashed #004a99;
+  border-radius: 12px;
+  padding: 40px;
+  text-align: center;
+  color: #004a99;
+  background: #f0f7ff;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  transition: 0.2s;
 
-    /* Personalización de la barra de desplazamiento */
-    &::-webkit-scrollbar {
-      height: 6px;
-    }
+  &:hover { background: #e1efff; }
+}
 
-    &::-webkit-scrollbar-thumb {
-      background: #ccc;
-      border-radius: 10px;
-    }
-  }
+.bigIcon { font-size: 48px; }
 
-  .cardFotoHoy {
-    flex: 0 0 120px;
-    position: relative;
+.previewContainer {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 15px 0;
+}
 
-    img {
-      width: 120px;
-      height: 85px;
-      object-fit: cover;
-      border-radius: 4px;
-      border: 1px solid #ddd;
-    }
-  }
-
-  .tagObra {
-    display: block;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    font-size: 10px;
-    background: rgba(255, 255, 255, 0.9);
-    padding: 2px 4px;
-    text-align: center;
-    border-radius: 0 0 4px 4px;
+.previewItem {
+  position: relative;
+  width: 110px;
+  height: 110px;
+  img { 
+    width: 100%; 
+    height: 100%; 
+    object-fit: cover; 
+    border-radius: 8px; 
     border: 1px solid #ddd;
-    border-top: none;
-    color: #004a99;
-    font-weight: 600;
   }
+}
 
-  .listaObras {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-top: 15px;
-  }
+.removePhoto {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #fff !important;
+  border-radius: 50%;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+}
 
-  .botonObra {
-    height: auto !important;
-    padding: 15px !important;
-    text-align: left;
-    border: 1px solid #ccc;
-    background-color: white;
+.sendButton {
+  height: 55px;
+  margin-top: 10px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 16px;
+}
 
-    &.resaltada {
-      border: 2px solid #004a99;
-      background-color: #f0f7ff;
-    }
-  }
+/* --- ANIMACIONES --- */
+.fadein {
+  animation: fadeIn 0.4s ease-out;
+}
 
-  .badgeAsignada {
-    color: #004a99;
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-  }
-
-  /* Paso 3: Captura y Reporte */
-  .uploadCard {
-    border: 2px dashed #004a99;
-    padding: 30px;
-    text-align: center;
-    background: #f8f9fa;
-    border-radius: 8px;
-    margin-bottom: 20px;
-  }
-
-  .previewGrid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 15px;
-    margin: 20px 0;
-  }
-
-  .thumbContainer {
-    position: relative;
-    width: 110px;
-    height: 110px;
-
-    .previewImage {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      border-radius: 4px;
-      border: 1px solid #ddd;
-    }
-
-    .deleteIcon {
-      position: absolute;
-      top: -8px;
-      right: -8px;
-      background: #d13438;
-      color: white;
-      border-radius: 50%;
-      width: 24px;
-      height: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-      z-index: 10;
-
-      i {
-        font-size: 12px;
-      }
-
-      &:hover {
-        background: #a4262c;
-      }
-    }
-  }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
 }

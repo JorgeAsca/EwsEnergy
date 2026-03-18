@@ -2,12 +2,28 @@ import * as React from "react";
 import {
   Stack, Text, Persona, PersonaSize, Spinner, SpinnerSize, MessageBar, 
   MessageBarType, PrimaryButton, DefaultButton, Panel, TextField, Dropdown, 
-  IDropdownOption, Icon, Separator, PanelType, IconButton
+  IDropdownOption, Icon, Separator, PanelType, IconButton, Shimmer,
+  ShimmerElementType, Dialog, DialogType, DialogFooter
 } from "@fluentui/react";
 import { PersonalService } from "../../../service/PersonalService";
 import { IPersonal } from "../../../models/IPersonal";
 
 import styles from "./GaleriaPersonal.module.scss";
+
+const PersonaShimmer = () => (
+  <div className={styles.cardEmpleado} style={{ cursor: 'default' }}>
+    <Stack horizontalAlign="center" tokens={{ childrenGap: 15 }}>
+      <Shimmer shimmerElements={[{ type: ShimmerElementType.circle, height: 100 }]} />
+      <Shimmer shimmerElements={[{ type: ShimmerElementType.line, height: 16, width: '80%' }]} />
+      <Shimmer shimmerElements={[{ type: ShimmerElementType.line, height: 12, width: '60%' }]} />
+      <Separator styles={{ root: { margin: '15px 0', width: '100%' } }} />
+      <Stack horizontal horizontalAlign="space-between" styles={{ root: { width: '100%' } }}>
+        <Shimmer shimmerElements={[{ type: ShimmerElementType.line, height: 10, width: '30%' }]} />
+        <Shimmer shimmerElements={[{ type: ShimmerElementType.circle, height: 16 }]} />
+      </Stack>
+    </Stack>
+  </div>
+);
 
 export const GaleriaPersonal: React.FC<{ context: any }> = (props) => {
   const [empleados, setEmpleados] = React.useState<IPersonal[]>([]);
@@ -17,6 +33,9 @@ export const GaleriaPersonal: React.FC<{ context: any }> = (props) => {
   const [isOpen, setIsOpen] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
   const [editandoId, setEditandoId] = React.useState<number | null>(null);
+  
+  // Estado para el diálogo de confirmación de borrado
+  const [hideDeleteDialog, setHideDeleteDialog] = React.useState(true);
 
   const [formulario, setFormulario] = React.useState({
     NombreyApellido: "",
@@ -40,7 +59,7 @@ export const GaleriaPersonal: React.FC<{ context: any }> = (props) => {
     } catch (err) {
       console.error("Error cargando datos:", err);
     } finally {
-      setLoading(false);
+      setTimeout(() => setLoading(false), 500);
     }
   };
 
@@ -83,6 +102,22 @@ export const GaleriaPersonal: React.FC<{ context: any }> = (props) => {
     }
   };
 
+  const handleEliminar = async () => {
+    if (!editandoId) return;
+    try {
+      setSaving(true);
+      await service.eliminarTrabajador(editandoId);
+      setHideDeleteDialog(true);
+      setIsOpen(false);
+      await cargarDatos();
+    } catch (e) {
+      console.error("Error al eliminar:", e);
+      alert("Error al eliminar de SharePoint.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className={styles.container}>
       <Stack horizontal horizontalAlign="space-between" verticalAlign="center" className={styles.headerSection}>
@@ -98,11 +133,11 @@ export const GaleriaPersonal: React.FC<{ context: any }> = (props) => {
         />
       </Stack>
 
-      {loading ? (
-        <Spinner size={SpinnerSize.large} label="Sincronizando equipo..." style={{ marginTop: 40 }} />
-      ) : (
-        <div className={styles.gridPersonal}>
-          {empleados.map((emp) => (
+      <div className={styles.gridPersonal}>
+        {loading ? (
+          Array.from({ length: 6 }).map((_, i) => <PersonaShimmer key={i} />)
+        ) : empleados.length > 0 ? (
+          empleados.map((emp) => (
             <div key={emp.Id} className={styles.cardEmpleado}>
               <div className={styles.editOverlay}>
                 <IconButton 
@@ -128,11 +163,13 @@ export const GaleriaPersonal: React.FC<{ context: any }> = (props) => {
                 <Icon iconName="Contact" className={styles.iconContact} />
               </Stack>
             </div>
-          ))}
-        </div>
-      )}
+          ))
+        ) : (
+          <MessageBar messageBarType={MessageBarType.info}>No se encontraron empleados.</MessageBar>
+        )}
+      </div>
 
-      {/* PANEL CORREGIDO - Recuperamos la vista previa */}
+      {/* PANEL DE EDICIÓN / ALTA */}
       <Panel 
         isOpen={isOpen} 
         onDismiss={() => setIsOpen(false)} 
@@ -144,7 +181,6 @@ export const GaleriaPersonal: React.FC<{ context: any }> = (props) => {
           <TextField 
             label="Nombre y Apellido" 
             required 
-            placeholder="Nombre completo"
             value={formulario.NombreyApellido} 
             onChange={(_, v) => setFormulario({ ...formulario, NombreyApellido: v || "" })} 
           />
@@ -161,23 +197,18 @@ export const GaleriaPersonal: React.FC<{ context: any }> = (props) => {
             onChange={(_, opt) => setFormulario({ ...formulario, FotoPerfil: opt?.key as string })}
           />
 
-          {/* RECUPERADA: Vista previa del carnet estilo anterior */}
           {formulario.FotoPerfil && (
             <div className={styles.previewBox}>
               <Stack horizontalAlign="center" tokens={{ childrenGap: 10 }}>
                 <Text variant="small" style={{ fontWeight: 600 }}>Vista previa del carnet:</Text>
-                <Persona 
-                    imageUrl={formulario.FotoPerfil} 
-                    size={PersonaSize.size120} 
-                    hidePersonaDetails 
-                />
+                <Persona imageUrl={formulario.FotoPerfil} size={PersonaSize.size120} hidePersonaDetails />
               </Stack>
             </div>
           )}
 
           <Stack horizontal tokens={{ childrenGap: 10 }} style={{ marginTop: 30 }}>
             {saving ? (
-              <Spinner label="Guardando cambios..." />
+              <Spinner label="Procesando..." />
             ) : (
               <>
                 <PrimaryButton 
@@ -185,12 +216,36 @@ export const GaleriaPersonal: React.FC<{ context: any }> = (props) => {
                     onClick={handleGuardar} 
                     disabled={!formulario.NombreyApellido.trim()} 
                 />
+                {editandoId && (
+                  <DefaultButton 
+                    text="Eliminar" 
+                    onClick={() => setHideDeleteDialog(false)} 
+                    styles={{ root: { color: '#a4262c', borderColor: '#a4262c' } }}
+                  />
+                )}
                 <DefaultButton text="Cancelar" onClick={() => setIsOpen(false)} />
               </>
             )}
           </Stack>
         </Stack>
       </Panel>
+
+      {/* DIÁLOGO DE CONFIRMACIÓN */}
+      <Dialog
+        hidden={hideDeleteDialog}
+        onDismiss={() => setHideDeleteDialog(true)}
+        dialogContentProps={{
+          type: DialogType.normal,
+          title: 'Confirmar eliminación',
+          subText: `¿Estás seguro de que quieres eliminar a ${formulario.NombreyApellido}? Esta acción no se puede deshacer.`
+        }}
+        modalProps={{ isBlocking: true }}
+      >
+        <DialogFooter>
+          <PrimaryButton onClick={handleEliminar} text="Eliminar" styles={{ root: { backgroundColor: '#a4262c', borderColor: '#a4262c' } }} />
+          <DefaultButton onClick={() => setHideDeleteDialog(true)} text="Cancelar" />
+        </DialogFooter>
+      </Dialog>
     </div>
   );
 };

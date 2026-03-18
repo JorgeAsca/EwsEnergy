@@ -103,29 +103,57 @@ export class PersonalService {
     }
 
     public async actualizarTrabajador(id: number, datos: any): Promise<void> {
-    const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('Personal_EWS')/items(${id})`;
+        const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('${this._listName}')/items(${id})`;
 
-    const body = JSON.stringify({
-        NombreyApellido: datos.NombreyApellido,
-        Rol: datos.Rol,
-        FotoPerfil: datos.FotoPerfil
-    });
+        // SharePoint necesita saber el tipo de objeto que está actualizando. 
+        // Para una lista, el formato estándar es SP.Data.NombreDeLaListaListItem
+        // Como tu lista tiene espacios, SharePoint suele usar 'Personal_x0020_EWS'
+        const body = JSON.stringify({
+            '__metadata': { 'type': `SP.Data.Personal_x0020_EWSListItem` },
+            Title: datos.NombreyApellido,
+            Rol: datos.Rol,
+            FotoPerfil: datos.FotoPerfil ? {
+                '__metadata': { 'type': 'SP.FieldUrlValue' },
+                'Description': datos.NombreyApellido,
+                'Url': datos.FotoPerfil
+            } : null
+        });
 
-    const response = await this._context.spHttpClient.post(endpoint, SPHttpClient.configurations.v1, {
-        body: body,
-        headers: {
-            'Accept': 'application/json',
-            'Content-type': 'application/json',
-            'X-HTTP-Method': 'MERGE', // Indica a SharePoint que es una actualización
-            'IF-MATCH': '*',           // Sobrescribe sin importar la versión
-            'odata-version': ''
+        const response = await this._context.spHttpClient.post(endpoint, SPHttpClient.configurations.v1, {
+            body: body,
+            headers: {
+                'Accept': 'application/json;odata=verbose',
+                'Content-type': 'application/json;odata=verbose',
+                'X-HTTP-Method': 'MERGE',
+                'IF-MATCH': '*',
+                'odata-version': ''
+            }
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error("Error detallado al actualizar:", errorText);
+
+            // Si el error persiste por el nombre del tipo, probaremos una versión más simplificada
+            throw new Error("No se pudo actualizar el registro del trabajador.");
         }
-    });
-
-    if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Error al actualizar en SharePoint:", errorText);
-        throw new Error("No se pudo actualizar el registro del trabajador.");
     }
-}
+
+    public async eliminarTrabajador(id: number): Promise<void> {
+        const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('${this._listName}')/items(${id})`;
+
+        const response = await this._context.spHttpClient.post(endpoint, SPHttpClient.configurations.v1, {
+            headers: {
+                'Accept': 'application/json',
+                'X-HTTP-Method': 'DELETE',
+                'IF-MATCH': '*'
+            }
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error("Error al eliminar de SharePoint:", errorText);
+            throw new Error("No se pudo eliminar el registro.");
+        }
+    }
 }
