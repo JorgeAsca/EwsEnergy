@@ -101,4 +101,31 @@ export class PersonalService {
         const data = await response.json();
         return (data.value && data.value[0]) ? data.value[0].Choices : [];
     }
+
+    public async actualizarTrabajador(id: number, datos: any): Promise<void> {
+    const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('Personal_EWS')/items(${id})`;
+
+    const body = JSON.stringify({
+        NombreyApellido: datos.NombreyApellido,
+        Rol: datos.Rol,
+        FotoPerfil: datos.FotoPerfil
+    });
+
+    const response = await this._context.spHttpClient.post(endpoint, SPHttpClient.configurations.v1, {
+        body: body,
+        headers: {
+            'Accept': 'application/json',
+            'Content-type': 'application/json',
+            'X-HTTP-Method': 'MERGE', // Indica a SharePoint que es una actualización
+            'IF-MATCH': '*',           // Sobrescribe sin importar la versión
+            'odata-version': ''
+        }
+    });
+
+    if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Error al actualizar en SharePoint:", errorText);
+        throw new Error("No se pudo actualizar el registro del trabajador.");
+    }
+}
 }

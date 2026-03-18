@@ -59,20 +59,77 @@ export class ProjectService {
     }
 
     public async actualizarEstado(id: number, nuevoEstado: string): Promise<void> {
-    const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('${this._listName}')/items(${id})`;
+        const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('${this._listName}')/items(${id})`;
+
+        await this._context.spHttpClient.post(endpoint, SPHttpClient.configurations.v1, {
+            headers: {
+                'Accept': 'application/json',
+                'Content-type': 'application/json',
+                'X-HTTP-Method': 'MERGE',
+                'IF-MATCH': '*',
+                'odata-version': ''
+            },
+            body: JSON.stringify({
+                // Asegúrate de que 'Estado' sea el nombre interno de tu columna en SharePoint
+                Estado: nuevoEstado
+            })
+        });
+    }
+
+    public async getFotosPorObra(obraId: number): Promise<any[]> {
+        const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('Registro_Fotos_Diarias')/items?$filter=ObraId eq ${obraId}&$orderby=FechaRegistro desc`;
+
+        try {
+            const response = await this._context.spHttpClient.get(endpoint, SPHttpClient.configurations.v1);
+
+            if (!response.ok) {
+                // Esto nos imprimirá el error real de SharePoint en la consola
+                const errorText = await response.text();
+                console.error("Error detallado de SharePoint:", errorText);
+                return [];
+            }
+
+            const data = await response.json();
+            return data.value || [];
+        } catch (e) {
+            console.error("Error de red:", e);
+            return [];
+        }
+    }
+
+    public async getAsignacionesConPersonal(): Promise<any[]> {
+    const siteUrl = this._context.pageContext.web.absoluteUrl;
     
-    await this._context.spHttpClient.post(endpoint, SPHttpClient.configurations.v1, {
-        headers: {
-            'Accept': 'application/json',
-            'Content-type': 'application/json',
-            'X-HTTP-Method': 'MERGE',
-            'IF-MATCH': '*',
-            'odata-version': ''
-        },
-        body: JSON.stringify({
-            // Asegúrate de que 'Estado' sea el nombre interno de tu columna en SharePoint
-            Estado: nuevoEstado 
-        })
-    });
+    // 1. Obtenemos las asignaciones y expandimos el campo Personal (que debe ser un Lookup a la lista Personal_EWS)
+    // Usamos $expand para traer los datos del operario en la misma consulta
+    const endpoint = `${siteUrl}/_api/web/lists/getbytitle('Asignaciones_Obras')/items?$select=Id,ObraId,Personal/NombreyApellido,Personal/FotoPerfil&$expand=Personal`;
+
+    try {
+        const response = await this._context.spHttpClient.get(
+            endpoint,
+            SPHttpClient.configurations.v1
+        );
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error("Error al obtener asignaciones:", errorText);
+            return [];
+        }
+
+        const data = await response.json();
+        
+        // Mapeamos los datos para que el componente Facepile los entienda fácilmente
+        return (data.value || []).map((item: any) => ({
+            Id: item.Id,
+            ObraId: item.ObraId,
+            Personal: {
+                NombreyApellido: item.Personal ? item.Personal.NombreyApellido : "Sin nombre",
+                FotoPerfil: item.Personal ? item.Personal.FotoPerfil : ""
+            }
+        }));
+    } catch (error) {
+        console.error("Error en getAsignacionesConPersonal:", error);
+        return [];
+    }
 }
 }

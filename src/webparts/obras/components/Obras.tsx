@@ -9,6 +9,7 @@ import { TablaObras } from './Vistas/Proyectos/TablaObras';
 import { VistaAsignaciones } from './Vistas/Asignaciones/VistaAsignaciones';
 import { VistaFotosObra } from './Vistas/Fotos/VistaFotosObra';
 import { VistaPlanificacion } from './Vistas/Planificacion/VistaPlanificacion';
+import { VistaHistorialTarjetas } from './Vistas/historial/VistaHistorialReportes';
 
 export default class Obras extends React.Component<IObrasProps, { selectedKey: string }> {
   constructor(props: IObrasProps) {
@@ -29,14 +30,14 @@ export default class Obras extends React.Component<IObrasProps, { selectedKey: s
               <Text variant="medium">Usuario: <b>{this.props.userDisplayName}</b></Text>
             </header>
             <div className={styles.pageBody}>
-  {this.state.selectedKey === 'inventario' && <ListaMateriales context={this.props.context} />}
-  {this.state.selectedKey === 'personal' && <GaleriaPersonal context={this.props.context} />}
-  {this.state.selectedKey === 'obras' && <TablaObras context={this.props.context} />}
-  {/* VERIFICA QUE ESTA LÍNEA EXISTA Y LA KEY SEA 'planificacion' */}
-  {this.state.selectedKey === 'planificacion' && <VistaPlanificacion context={this.props.context} />} 
-  {this.state.selectedKey === 'asignaciones' && <VistaAsignaciones context={this.props.context} />}
-  {this.state.selectedKey === 'fotos' && <VistaFotosObra context={this.props.context} />}
-</div>
+              {this.state.selectedKey === 'inventario' && <ListaMateriales context={this.props.context} />}
+              {this.state.selectedKey === 'personal' && <GaleriaPersonal context={this.props.context} />}
+              {this.state.selectedKey === 'obras' && <TablaObras context={this.props.context} />}
+              {this.state.selectedKey === 'planificacion' && <VistaPlanificacion context={this.props.context} />} 
+              {this.state.selectedKey === 'asignaciones' && <VistaAsignaciones context={this.props.context} />}
+              {this.state.selectedKey === 'fotos' && <VistaFotosObra context={this.props.context} />}
+              {this.state.selectedKey === 'historial' && <VistaHistorialTarjetas context={this.props.context} />}
+            </div>
           </main>
         </Stack>
       </section>
