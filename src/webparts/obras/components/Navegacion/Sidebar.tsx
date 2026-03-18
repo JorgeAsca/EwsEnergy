@@ -17,6 +17,7 @@ const navGroups: INavLinkGroup[] = [
       { name: "Planificación", url: "", key: "planificacion", icon: "Calendar" }, 
       { name: "Asignaciones", url: "", key: "asignaciones", icon: "ContactLink" },
       { name: "Fotos Diarias", url: "", key: "fotos", icon: "Camera" },
+      { name: "Control de Obras", url: "", key: "historial", icon: "History" },
     ],
   },
 ];

@@ -48,11 +48,12 @@ export const VistaAsignaciones: React.FC<{ context: any }> = (props) => {
         try {
             setLoading(true);
             // Tipado explícito para asegurar compatibilidad con la interfaz que usa Date
-            const [o, p, a]: [IObra[], IPersonal[], IAsignacion[]] = await Promise.all([
-                services.obras.getObras(),
-                services.personal.getPersonal(),
-                services.asignaciones.getAsignaciones() as any, // Cast temporal para la conversión de tipos del servicio
-            ]);
+            const [o, p, a]: [IObra[], IPersonal[], IAsignacion[]] =
+                await Promise.all([
+                    services.obras.getObras(),
+                    services.personal.getPersonal(),
+                    services.asignaciones.getAsignaciones() as any, // Cast temporal para la conversión de tipos del servicio
+                ]);
             setObras(o || []);
             setPersonal(p || []);
             setAsignaciones(a || []);
@@ -70,19 +71,29 @@ export const VistaAsignaciones: React.FC<{ context: any }> = (props) => {
     const handleAsignar = async () => {
         if (!seleccion.obraId || !seleccion.personalId) return;
         try {
-            // Cumplimos con la interfaz IAsignacion enviando los campos requeridos
-            await services.asignaciones.asignarPersonal({
+            const payload: IAsignacion = {
                 ObraId: seleccion.obraId,
                 PersonalId: seleccion.personalId,
-                FechaInicio: new Date(), // Enviamos objeto Date como pide tu interfaz
+                FechaInicio: new Date(),
                 FechaFinPrevista: seleccion.fechaFin,
-                EstadoProgreso: 0 // Campo requerido en tu interfaz de modelos
-            } as IAsignacion);
-            
-            setSeleccion({ ...seleccion, obraId: 0, personalId: 0, fechaFin: new Date() });
+                EstadoProgreso: 0,
+            };
+
+            await services.asignaciones.asignarPersonal(payload);
+
+            setSeleccion({
+                ...seleccion,
+                obraId: 0,
+                personalId: 0,
+                fechaFin: new Date(),
+            });
             await cargarTodo();
+            alert("✅ Asignación realizada con éxito");
         } catch (e) {
-            alert("Error al asignar.");
+            console.error(e);
+            alert(
+                "❌ Error al asignar. Revisa que la columna 'EstadoProgreso' exista en SharePoint.",
+            );
         }
     };
 
@@ -100,7 +111,7 @@ export const VistaAsignaciones: React.FC<{ context: any }> = (props) => {
         const hoy = new Date();
         const fin = new Date(fechaFin);
         const difDias = (fin.getTime() - hoy.getTime()) / (1000 * 3600 * 24);
-        
+
         if (hoy > fin) return { color: "#d13438", label: "Retrasado" };
         if (difDias < 7) return { color: "#ffaa44", label: "Crítico" };
         return { color: "#107c10", label: "A tiempo" };
@@ -157,7 +168,9 @@ export const VistaAsignaciones: React.FC<{ context: any }> = (props) => {
             <div className={styles.grid}>
                 {obras.map((obra) => {
                     // Filtrado seguro convirtiendo IDs a Number
-                    const equipo = asignaciones.filter((a) => Number(a.ObraId) === Number(obra.Id));
+                    const equipo = asignaciones.filter(
+                        (a) => Number(a.ObraId) === Number(obra.Id),
+                    );
                     // Uso de la propiedad correcta según IObra.ts
                     const esFinalizada = obra.EstadoObra === "Finalizado";
 

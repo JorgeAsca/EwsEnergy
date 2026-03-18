@@ -110,12 +110,13 @@ export const VistaFotosObra: React.FC<{ context: any }> = (props) => {
         try {
             setSubiendo(true);
             for (const foto of fotos) {
-                await services.photos.subirFotoProyecto(foto, obraSeleccionada.Title, {
-                    operario: operario.NombreyApellido,
-                    operarioId: operario.Id,
-                    comentarios: comentarios,
-                });
-            }
+            await services.photos.subirFotoProyecto(foto, obraSeleccionada.Title, {
+                operario: operario.NombreyApellido,
+                operarioId: operario.Id,
+                obraId: obraSeleccionada.Id, 
+                comentarios: comentarios,
+            });
+        }
 
             alert("✅ Reporte enviado con éxito.");
             setFotos([]);

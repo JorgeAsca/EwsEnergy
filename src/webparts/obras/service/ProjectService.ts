@@ -3,7 +3,7 @@ import { IObra } from '../models/IObra';
 
 export class ProjectService {
     private _context: any;
-    private _listName: string = "Proyectos y Obras"; 
+    private _listName: string = "Proyectos y Obras";
 
     constructor(context: any) {
         this._context = context;
@@ -58,6 +58,7 @@ export class ProjectService {
         }
     }
 
+<<<<<<< HEAD
     public async actualizarEstado(id: number, nuevoEstado: string): Promise<void> {
     const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('${this._listName}')/items(${id})`;
     
@@ -75,4 +76,43 @@ export class ProjectService {
         })
     });
 }
+=======
+    public async getUltimaFotoObra(nombreObra: string): Promise<string | null> {
+        const carpeta = nombreObra.replace(/[/\\?%*:|"<>]/g, '-');
+        const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/getfolderbyserverrelativeurl('Fotos_Diario/${carpeta}')/files?$orderby=TimeLastModified desc&$top=1`;
+
+        try {
+            const response = await this._context.spHttpClient.get(endpoint, SPHttpClient.configurations.v1);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.value && data.value.length > 0) {
+                    return data.value[0].ServerRelativeUrl;
+                }
+            }
+        } catch (e) { console.error("Sin fotos para esta obra"); }
+        return null;
+    }
+    public async getAsignacionesConPersonal(): Promise<any[]> {
+        const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('Asignaciones EWS')/items?$select=Id,ObraId,PersonalId,Personal/NombreyApellido,Personal/FotoPerfil&$expand=Personal`;
+        const response = await this._context.spHttpClient.get(endpoint, SPHttpClient.configurations.v1);
+        const data = await response.json();
+        return data.value || [];
+    }
+
+    public async getFotosPorObra(obraId: number): Promise<any[]> {
+        // Filtramos por el nuevo campo ObraId
+        const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('Registro_Fotos_Diarias')/items?$filter=ObraId eq ${obraId}&$orderby=FechaRegistro desc`;
+
+        const response = await this._context.spHttpClient.get(endpoint, SPHttpClient.configurations.v1);
+
+        if (!response.ok) {
+            console.error("Error al obtener fotos de la obra.");
+            return [];
+        }
+
+        const data = await response.json();
+        return data.value || [];
+    }
+
+>>>>>>> 9837ecf97417d00b837a63e8796f8b5a62d2270c
 }

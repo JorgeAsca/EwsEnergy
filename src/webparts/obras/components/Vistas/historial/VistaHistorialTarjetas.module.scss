@@ -1,0 +1,43 @@
+.container {
+    padding: 20px;
+    .titulo { color: #004a99; font-weight: 600; }
+}
+
+.cardGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.reporteCard {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    overflow: hidden;
+    border: 1px solid #edebe9;
+    transition: transform 0.2s;
+
+    &:hover { transform: translateY(-5px); }
+
+    .cardHeader {
+        padding: 12px;
+        background: #f8f9fa;
+        border-bottom: 1px solid #eee;
+        .obraName { font-weight: 600; display: block; color: #004a99; }
+    }
+
+    .imageContainer { width: 100%; background: #000; }
+
+    .cardContent {
+        padding: 15px;
+        .comentarios {
+            font-style: italic;
+            color: #444;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+    }
+}
