@@ -80,4 +80,19 @@ export class ProjectService {
         return data.value || [];
     }
 
+    public async getFotosPorObra(obraId: number): Promise<any[]> {
+        // Filtramos por el nuevo campo ObraId
+        const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('Registro_Fotos_Diarias')/items?$filter=ObraId eq ${obraId}&$orderby=FechaRegistro desc`;
+
+        const response = await this._context.spHttpClient.get(endpoint, SPHttpClient.configurations.v1);
+
+        if (!response.ok) {
+            console.error("Error al obtener fotos de la obra.");
+            return [];
+        }
+
+        const data = await response.json();
+        return data.value || [];
+    }
+
 }

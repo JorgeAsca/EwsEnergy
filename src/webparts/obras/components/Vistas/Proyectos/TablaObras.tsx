@@ -1,9 +1,28 @@
 import * as React from "react";
 import {
-  Stack, Text, PrimaryButton, Panel, TextField, DatePicker, Dropdown,
-  IDropdownOption, Spinner, SpinnerSize, DefaultButton, MessageBar,
-  MessageBarType, Separator, Facepile, IFacepilePersona, ProgressIndicator,
-  PersonaSize, Icon, DocumentCard
+  Stack,
+  Text,
+  PrimaryButton,
+  Panel,
+  TextField,
+  DatePicker,
+  Dropdown,
+  IDropdownOption,
+  Spinner,
+  SpinnerSize,
+  DefaultButton,
+  MessageBar,
+  MessageBarType,
+  Separator,
+  Facepile,
+  IFacepilePersona,
+  ProgressIndicator,
+  PersonaSize,
+  Icon,
+  DocumentCard,
+  Image,
+  ImageFit,
+  PanelType
 } from "@fluentui/react";
 import { SPHttpClient } from "@microsoft/sp-http";
 import { ProjectService } from "../../../service/ProjectService";
@@ -26,6 +45,11 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
   const [isOpen, setIsOpen] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
 
+  // Estados para el Panel de Detalles
+  const [obraSeleccionada, setObraSeleccionada] = React.useState<IObraCard | null>(null);
+  const [fotosObra, setFotosObra] = React.useState<any[]>([]);
+  const [loadingFotos, setLoadingFotos] = React.useState(false);
+
   const [nuevaObra, setNuevaObra] = React.useState({
     Nombre: "",
     Descripcion: "",
@@ -35,50 +59,71 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
     FechaFin: new Date(),
   });
 
-  const projectService = React.useMemo(() => new ProjectService(props.context), [props.context]);
+  const projectService = React.useMemo(
+    () => new ProjectService(props.context),
+    [props.context]
+  );
+
+  const verDetallesObra = async (obra: IObraCard) => {
+    console.log("Consultando fotos para Obra ID:", obra.Id); // Mira si este ID coincide con el de la lista
+    setObraSeleccionada(obra);
+    setLoadingFotos(true);
+    try {
+      const fotos = await projectService.getFotosPorObra(obra.Id);
+      console.log("Fotos recuperadas de la lista:", fotos); // Si aquí sale [] el problema es SharePoint/Filtro
+      setFotosObra(fotos);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingFotos(false);
+    }
+  };
 
   const cargarDatos = async () => {
     try {
       setLoading(true);
       const [listaObras, respClientes, listaAsignaciones] = await Promise.all([
         projectService.getObras(),
-        props.context.spHttpClient.get(`${props.context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('Clientes')/items?$select=Id,Title`, SPHttpClient.configurations.v1),
-        projectService.getAsignacionesConPersonal()
+        props.context.spHttpClient.get(
+          `${props.context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('Clientes')/items?$select=Id,Title`,
+          SPHttpClient.configurations.v1
+        ),
+        projectService.getAsignacionesConPersonal(),
       ]);
 
       let opcionesClientes: IDropdownOption[] = [];
       if (respClientes.ok) {
         const dataC = await respClientes.json();
-        opcionesClientes = (dataC.value || []).map((c: any) => ({ key: c.Id, text: c.Title }));
+        opcionesClientes = (dataC.value || []).map((c: any) => ({
+          key: c.Id,
+          text: c.Title,
+        }));
         setClientes(opcionesClientes);
       }
 
       const hoy = new Date().getTime();
-      
+
       const obrasProcesadas: IObraCard[] = listaObras.map((o: IObra) => {
-        // Manejo seguro de fechas desde ISO String
         const inicio = o.FechaInicio ? new Date(o.FechaInicio).getTime() : hoy;
         const fin = o.FechaFinPrevista ? new Date(o.FechaFinPrevista).getTime() : hoy;
-        
+
         const total = fin - inicio;
         const transcurrido = hoy - inicio;
-        
-        // Evitamos división por cero y aseguramos rango 0 a 1 para el ProgressIndicator
         const porcentaje = total > 0 ? Math.min(Math.max(transcurrido / total, 0), 1) : 0;
 
         const operariosAsignados: IFacepilePersona[] = listaAsignaciones
           .filter((a: any) => Number(a.ObraId) === Number(o.Id))
           .map((a: any) => ({
             personaName: a.Personal?.NombreyApellido || "Operario",
-            imageUrl: a.Personal?.FotoPerfil || ""
+            imageUrl: a.Personal?.FotoPerfil || "",
           }));
 
         return {
           ...o,
-          clienteNombre: opcionesClientes.find(c => Number(c.key) === (o as any).ClienteId)?.text || "Cliente no definido",
+          clienteNombre: opcionesClientes.find((c) => Number(c.key) === (o as any).ClienteId)?.text || "Cliente no definido",
           porcentajeTiempo: porcentaje,
           operarios: operariosAsignados,
-          diasRestantes: Math.ceil((fin - hoy) / (1000 * 60 * 60 * 24))
+          diasRestantes: Math.ceil((fin - hoy) / (1000 * 60 * 60 * 24)),
         };
       });
 
@@ -90,17 +135,29 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
     }
   };
 
-  React.useEffect(() => { cargarDatos(); }, []);
+  React.useEffect(() => {
+    cargarDatos();
+  }, []);
 
   const handleGuardar = async () => {
     try {
       setSaving(true);
       await projectService.crearObra(nuevaObra);
       setIsOpen(false);
-      setNuevaObra({ Nombre: "", Descripcion: "", ClienteId: 0, Direccion: "", FechaInicio: new Date(), FechaFin: new Date() });
+      setNuevaObra({
+        Nombre: "",
+        Descripcion: "",
+        ClienteId: 0,
+        Direccion: "",
+        FechaInicio: new Date(),
+        FechaFin: new Date(),
+      });
       await cargarDatos();
-    } catch (e) { alert("Error al guardar obra."); } 
-    finally { setSaving(false); }
+    } catch (e) {
+      alert("Error al guardar obra.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (loading) return <Spinner size={SpinnerSize.large} label="Sincronizando Proyectos EWS..." />;
@@ -112,58 +169,70 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
           <Text variant="xxLarge" className={styles.tituloPrincipal}>Panel de Control de Obras</Text>
           <Text variant="small">Seguimiento de tiempos y personal asignado</Text>
         </Stack>
-        <PrimaryButton iconProps={{ iconName: "Add" }} text="Nueva Obra" onClick={() => setIsOpen(true)} />
+        <PrimaryButton
+          iconProps={{ iconName: "Add" }}
+          text="Nueva Obra"
+          onClick={() => setIsOpen(true)}
+        />
       </div>
 
       <div className={styles.gridObras}>
-        {obras.length > 0 ? obras.map((o) => (
-          <DocumentCard key={o.Id} className={styles.cardObra}>
-            <div className={styles.cardContent}>
-              <Stack tokens={{ childrenGap: 12 }}>
-                <Stack horizontal horizontalAlign="space-between">
-                  <Stack style={{ maxWidth: '70%' }}>
-                    <Text variant="large" style={{ fontWeight: 600, color: '#004a99' }}>{o.Title}</Text>
-                    <Text variant="small" style={{ color: '#666' }}>{o.clienteNombre}</Text>
+        {obras.length > 0 ? (
+          obras.map((o) => (
+            <DocumentCard
+              key={o.Id}
+              className={styles.cardObra}
+              onClick={() => verDetallesObra(o)}
+              styles={{ root: { cursor: 'pointer' } }}
+            >
+              <div className={styles.cardContent}>
+                <Stack tokens={{ childrenGap: 12 }}>
+                  <Stack horizontal horizontalAlign="space-between">
+                    <Stack style={{ maxWidth: "70%" }}>
+                      <Text variant="large" style={{ fontWeight: 600, color: "#004a99" }}>{o.Title}</Text>
+                      <Text variant="small" style={{ color: "#666" }}>{o.clienteNombre}</Text>
+                    </Stack>
+                    <div className={styles.badgeEstado} style={{
+                      background: o.EstadoObra === "Finalizado" ? "#dff6dd" : "#deecf9",
+                      color: o.EstadoObra === "Finalizado" ? "#107c10" : "#0078d4",
+                    }}
+                    >
+                      {o.EstadoObra}
+                    </div>
                   </Stack>
-                  <div className={styles.badgeEstado} style={{ 
-                    background: o.EstadoObra === 'Finalizado' ? '#dff6dd' : '#deecf9',
-                    color: o.EstadoObra === 'Finalizado' ? '#107c10' : '#0078d4'
-                  }}>
-                    {o.EstadoObra}
+
+                  <Separator />
+
+                  <Stack>
+                    <Text variant="small" style={{ fontWeight: 600, marginBottom: 8 }}>Personal en obra:</Text>
+                    <Facepile personas={o.operarios} personaSize={PersonaSize.size32} />
+                  </Stack>
+
+                  <div className={styles.infoRow}>
+                    <Icon iconName="MapPin" />
+                    <Text variant="small" nowrap>{o.DireccionObra || "Sin dirección"}</Text>
                   </div>
+
+                  <ProgressIndicator
+                    percentComplete={o.porcentajeTiempo}
+                    label="Tiempo transcurrido"
+                    description={o.diasRestantes > 0 ? `${o.diasRestantes} días restantes` : "Plazo finalizado"}
+                    styles={{
+                      itemProgress: {
+                        backgroundColor: o.porcentajeTiempo > 0.9 && o.EstadoObra !== "Finalizado" ? "#ffaa44" : undefined,
+                      },
+                    }}
+                  />
                 </Stack>
-
-                <Separator />
-
-                <Stack>
-                  <Text variant="small" style={{ fontWeight: 600, marginBottom: 8 }}>Personal en obra:</Text>
-                  <Facepile personas={o.operarios} personaSize={PersonaSize.size32} />
-                </Stack>
-
-                <div className={styles.infoRow}>
-                  <Icon iconName="MapPin" />
-                  <Text variant="small" nowrap>{o.DireccionObra || 'Sin dirección'}</Text>
-                </div>
-
-                {/* Línea 135 corregida con el tipo IObraCard */}
-                <ProgressIndicator 
-                  percentComplete={o.porcentajeTiempo} 
-                  label="Tiempo transcurrido"
-                  description={o.diasRestantes > 0 ? `${o.diasRestantes} días restantes` : 'Plazo finalizado'}
-                  styles={{ itemProgress: { 
-                    // Toque profesional: Si falta menos del 10% de tiempo, la barra se vuelve naranja
-                    backgroundColor: o.porcentajeTiempo > 0.9 && o.EstadoObra !== 'Finalizado' ? '#ffaa44' : undefined 
-                  }}}
-                />
-              </Stack>
-            </div>
-          </DocumentCard>
-        )) : (
+              </div>
+            </DocumentCard>
+          ))
+        ) : (
           <MessageBar>No hay proyectos activos registrados.</MessageBar>
         )}
       </div>
 
-      {/* Tu Panel Oscuro sigue igual */}
+      {/* PANEL PARA CREAR OBRA */}
       <Panel isOpen={isOpen} onDismiss={() => setIsOpen(false)} headerText="Nuevo Proyecto">
         <Stack tokens={{ childrenGap: 15 }} style={{ marginTop: 20 }}>
           <TextField label="Nombre" required value={nuevaObra.Nombre} onChange={(_, v) => setNuevaObra({ ...nuevaObra, Nombre: v || "" })} />
@@ -175,6 +244,49 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
           </Stack>
           <PrimaryButton text="Crear Proyecto" onClick={handleGuardar} disabled={saving || !nuevaObra.Nombre || !nuevaObra.ClienteId} />
         </Stack>
+      </Panel>
+
+      {/* PANEL DE DETALLES Y FOTOS (HISTORIAL) */}
+      <Panel
+        isOpen={!!obraSeleccionada}
+        onDismiss={() => { setObraSeleccionada(null); setFotosObra([]); }}
+        headerText={`Historial Visual: ${obraSeleccionada?.Title}`}
+        closeButtonAriaLabel="Cerrar"
+        type={PanelType.medium}
+      >
+        <div style={{ marginTop: 20 }}>
+          {loadingFotos ? (
+            <Spinner label="Cargando historial visual..." />
+          ) : fotosObra.length > 0 ? (
+            <Stack tokens={{ childrenGap: 20 }}>
+              {fotosObra.map((f, i) => (
+                <div key={i} style={{ border: '1px solid #edebe9', borderRadius: '4px', padding: '10px', background: '#f8f9fa' }}>
+                  <Stack tokens={{ childrenGap: 8 }}>
+                    <Stack horizontal horizontalAlign="space-between">
+                      <Text variant="small"><b>Fecha:</b> {new Date(f.FechaRegistro).toLocaleDateString()}</Text>
+                      <Text variant="small" style={{ color: '#004a99' }}>👤 {f.Operario}</Text>
+                    </Stack>
+                    <Image
+                      src={f.UrlFoto?.Url}
+                      alt="Progreso de obra"
+                      width="100%"
+                      height={250}
+                      imageFit={ImageFit.cover}
+                      style={{ borderRadius: '4px' }}
+                    />
+                    <Text variant="small" style={{ fontStyle: 'italic', color: '#444' }}>
+                      "{f.Comentarios || 'Sin comentarios adicionales'}"
+                    </Text>
+                  </Stack>
+                </div>
+              ))}
+            </Stack>
+          ) : (
+            <MessageBar messageBarType={MessageBarType.info}>
+              Esta obra aún no tiene reportes fotográficos registrados.
+            </MessageBar>
+          )}
+        </div>
       </Panel>
     </div>
   );

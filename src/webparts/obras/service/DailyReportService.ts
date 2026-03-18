@@ -32,7 +32,7 @@ export class DailyReportService {
             ObraId: reporte.ObraId,
             Comentarios: reporte.Comentarios,
             // Guardamos las URLs de las fotos como texto para que el Front pueda leerlas luego
-            FotosRelacionadas: reporte.FotosUrls.join('; ') 
+            FotosRelacionadas: reporte.FotosUrls.join('; ')
         });
 
         const response = await this._context.spHttpClient.post(endpoint, SPHttpClient.configurations.v1, {
@@ -49,13 +49,23 @@ export class DailyReportService {
     }
 
     public async getHistorialGlobal(): Promise<any[]> {
-    const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('${this._metadataListName}')/items?$orderby=FechaRegistro desc`;
+        const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('${this._metadataListName}')/items?$orderby=FechaRegistro desc`;
 
-    const response = await this._context.spHttpClient.get(endpoint, SPHttpClient.configurations.v1);
-    if (!response.ok) return [];
-    
-    const data = await response.json();
-    return data.value || [];
-}
-    
+        const response = await this._context.spHttpClient.get(endpoint, SPHttpClient.configurations.v1);
+        if (!response.ok) return [];
+
+        const data = await response.json();
+        return data.value || [];
+    }
+
+    public async getFotosPorObra(obraId: number): Promise<any[]> {
+        const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('Registro_Fotos_Diarias')/items?$filter=ObraId eq ${obraId}&$orderby=FechaRegistro desc`;
+
+        const response = await this._context.spHttpClient.get(endpoint, SPHttpClient.configurations.v1);
+        if (!response.ok) return [];
+        const data = await response.json();
+        return data.value || [];
+    }
+
+
 }
