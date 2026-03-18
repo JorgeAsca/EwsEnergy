@@ -1,11 +1,13 @@
+import { IPersonal } from "./IPersonal";
+
 export interface IAsignacion {
     Id?: number;
     ObraId: number;
     PersonalId: number;
+    Personal?: IPersonal; // Añadimos esta línea para que TS no de error
     FechaInicio: Date;
     FechaFinPrevista: Date;
-    EstadoProgreso: number; // 0-100%
-    // Para la funcionalidad de seguimiento, se podrían agregar campos adicionales como:
-    FechaFinReal?: Date; // Fecha real de finalización
-    Comentarios?: string; // Comentarios sobre el progreso o problemas encontrados
+    EstadoProgreso: number;
+    FechaFinReal?: Date;
+    Comentarios?: string;
 }

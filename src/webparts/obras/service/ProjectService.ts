@@ -57,4 +57,22 @@ export class ProjectService {
             throw new Error("Error de validación en columnas");
         }
     }
+
+    public async actualizarEstado(id: number, nuevoEstado: string): Promise<void> {
+    const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('${this._listName}')/items(${id})`;
+    
+    await this._context.spHttpClient.post(endpoint, SPHttpClient.configurations.v1, {
+        headers: {
+            'Accept': 'application/json',
+            'Content-type': 'application/json',
+            'X-HTTP-Method': 'MERGE',
+            'IF-MATCH': '*',
+            'odata-version': ''
+        },
+        body: JSON.stringify({
+            // Asegúrate de que 'Estado' sea el nombre interno de tu columna en SharePoint
+            Estado: nuevoEstado 
+        })
+    });
+}
 }
