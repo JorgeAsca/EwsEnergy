@@ -1,12 +1,20 @@
 // src/webparts/obras/components/Vistas/Planificacion/VistaPlanificacion.module.scss
 @import '~@microsoft/sp-office-ui-fabric-core/dist/sass/SPFabricCore.scss';
 
+// Variables de Identidad EWS Energy
+$verde-oscuro: #004d40;
+$verde-claro: #8bc34a;
+$blanco: #ffffff;
+$verde-fondo: #f9fbf9;
+
 .vistaPlanificacion {
   padding: 10px;
+  background-color: $verde-fondo;
 
   .titulo {
     margin-bottom: 20px;
-    color: #333;
+    color: $verde-oscuro; // Cambiado a verde corporativo
+    font-weight: 700;
   }
 }
 
@@ -15,7 +23,7 @@
   width: 260px;
   min-width: 260px;
   padding: 15px;
-  background-color: #fff;
+  background-color: $blanco;
   border-radius: 4px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   border: 1px solid #eee;
@@ -24,6 +32,7 @@
     font-weight: 600;
     margin-bottom: 5px;
     display: block;
+    color: $verde-oscuro;
   }
 
   .personalList {
@@ -45,13 +54,13 @@
 
   &:hover {
     background-color: #f3f2f1;
-    border-color: #0078d4;
+    border-color: $verde-claro; // Cambiado a verde claro
     transform: translateY(-1px);
   }
 
   &.dragging {
     opacity: 0.5;
-    border: 2px dashed #0078d4;
+    border: 2px dashed $verde-claro;
     cursor: grabbing;
   }
 }
@@ -60,7 +69,7 @@
 .tableContainer {
   flex-grow: 1;
   overflow-x: auto; // Scroll horizontal para la tabla si no cabe
-  background-color: #fff;
+  background-color: $blanco;
   border-radius: 4px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
@@ -81,8 +90,8 @@
 
   // Cabeceras
   thead th {
-    background-color: #f8f9fa;
-    color: #333;
+    background-color: $verde-oscuro; // Cambiado a verde oscuro
+    color: $blanco; // Texto en blanco para contraste
     font-weight: 600;
     height: 40px;
     vertical-align: middle;
@@ -96,6 +105,11 @@
     padding: 15px 10px;
     text-align: left;
     background-color: #fdfdfd;
+    
+    span {
+      color: $verde-oscuro;
+      font-weight: 600;
+    }
   }
 
   // Celda de Drop Zone (días)
@@ -105,8 +119,8 @@
     transition: background-color 0.2s;
 
     &.dropOver {
-      background-color: #e1f5fe !important; // Color azul claro al pasar por encima
-      border: 2px dashed #0078d4;
+      background-color: rgba(139, 195, 74, 0.1) !important; // Toque de verde claro
+      border: 2px dashed $verde-claro;
     }
   }
 }
