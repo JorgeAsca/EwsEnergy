@@ -11,13 +11,13 @@ import { IPersonal } from "../../../models/IPersonal";
 import styles from "./GaleriaPersonal.module.scss";
 
 const PersonaShimmer = () => (
-  <div className={styles.cardEmpleado} style={{ cursor: 'default' }}>
+  <div className={styles.cardEmpleadoShimmer}>
     <Stack horizontalAlign="center" tokens={{ childrenGap: 15 }}>
       <Shimmer shimmerElements={[{ type: ShimmerElementType.circle, height: 100 }]} />
       <Shimmer shimmerElements={[{ type: ShimmerElementType.line, height: 16, width: '80%' }]} />
       <Shimmer shimmerElements={[{ type: ShimmerElementType.line, height: 12, width: '60%' }]} />
-      <Separator styles={{ root: { margin: '15px 0', width: '100%' } }} />
-      <Stack horizontal horizontalAlign="space-between" styles={{ root: { width: '100%' } }}>
+      <Separator className={styles.shimmerSeparator} />
+      <Stack horizontal horizontalAlign="space-between" className={styles.fullWidth}>
         <Shimmer shimmerElements={[{ type: ShimmerElementType.line, height: 10, width: '30%' }]} />
         <Shimmer shimmerElements={[{ type: ShimmerElementType.circle, height: 16 }]} />
       </Stack>
@@ -33,8 +33,6 @@ export const GaleriaPersonal: React.FC<{ context: any }> = (props) => {
   const [isOpen, setIsOpen] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
   const [editandoId, setEditandoId] = React.useState<number | null>(null);
-  
-  // Estado para el diálogo de confirmación de borrado
   const [hideDeleteDialog, setHideDeleteDialog] = React.useState(true);
 
   const [formulario, setFormulario] = React.useState({
@@ -122,8 +120,8 @@ export const GaleriaPersonal: React.FC<{ context: any }> = (props) => {
     <div className={styles.container}>
       <Stack horizontal horizontalAlign="space-between" verticalAlign="center" className={styles.headerSection}>
         <Stack>
-          <Text variant="xxLarge" className={styles.tituloPrincipal}>Equipo EWS Energy</Text>
-          <Text variant="small" className={styles.subtitulo}>Gestión centralizada del personal</Text>
+          <Text variant="xxLarge" className={styles.tituloPrincipal}>Equipo Humano EWS</Text>
+          <Text variant="small" className={styles.subtitulo}>Gestión de talento para un futuro sostenible</Text>
         </Stack>
         <PrimaryButton
           text="Nuevo Personal"
@@ -157,7 +155,7 @@ export const GaleriaPersonal: React.FC<{ context: any }> = (props) => {
                   <Text className={styles.cargo}>{emp.Rol}</Text>
                 </Stack>
               </Stack>
-              <Separator styles={{ root: { margin: '15px 0' } }} />
+              <Separator className={styles.cardSeparator} />
               <Stack horizontal horizontalAlign="space-between" verticalAlign="center">
                 <Text className={styles.idEmpleado}>ID: {emp.Id}</Text>
                 <Icon iconName="Contact" className={styles.iconContact} />
@@ -169,7 +167,6 @@ export const GaleriaPersonal: React.FC<{ context: any }> = (props) => {
         )}
       </div>
 
-      {/* PANEL DE EDICIÓN / ALTA */}
       <Panel 
         isOpen={isOpen} 
         onDismiss={() => setIsOpen(false)} 
@@ -177,7 +174,7 @@ export const GaleriaPersonal: React.FC<{ context: any }> = (props) => {
         type={PanelType.smallFixedFar}
         isBlocking={false} 
       >
-        <Stack tokens={{ childrenGap: 15 }} style={{ marginTop: 20 }}>
+        <Stack tokens={{ childrenGap: 15 }} className={styles.panelFormStack}>
           <TextField 
             label="Nombre y Apellido" 
             required 
@@ -200,13 +197,13 @@ export const GaleriaPersonal: React.FC<{ context: any }> = (props) => {
           {formulario.FotoPerfil && (
             <div className={styles.previewBox}>
               <Stack horizontalAlign="center" tokens={{ childrenGap: 10 }}>
-                <Text variant="small" style={{ fontWeight: 600 }}>Vista previa del carnet:</Text>
+                <Text variant="small" className={styles.previewTitle}>Vista previa del carnet:</Text>
                 <Persona imageUrl={formulario.FotoPerfil} size={PersonaSize.size120} hidePersonaDetails />
               </Stack>
             </div>
           )}
 
-          <Stack horizontal tokens={{ childrenGap: 10 }} style={{ marginTop: 30 }}>
+          <Stack horizontal tokens={{ childrenGap: 10 }} className={styles.panelFooter}>
             {saving ? (
               <Spinner label="Procesando..." />
             ) : (
@@ -215,12 +212,13 @@ export const GaleriaPersonal: React.FC<{ context: any }> = (props) => {
                     text={editandoId ? "Actualizar" : "Registrar"} 
                     onClick={handleGuardar} 
                     disabled={!formulario.NombreyApellido.trim()} 
+                    className={styles.btnPanelPrimary}
                 />
                 {editandoId && (
                   <DefaultButton 
                     text="Eliminar" 
                     onClick={() => setHideDeleteDialog(false)} 
-                    styles={{ root: { color: '#a4262c', borderColor: '#a4262c' } }}
+                    className={styles.btnDelete}
                   />
                 )}
                 <DefaultButton text="Cancelar" onClick={() => setIsOpen(false)} />
@@ -230,7 +228,6 @@ export const GaleriaPersonal: React.FC<{ context: any }> = (props) => {
         </Stack>
       </Panel>
 
-      {/* DIÁLOGO DE CONFIRMACIÓN */}
       <Dialog
         hidden={hideDeleteDialog}
         onDismiss={() => setHideDeleteDialog(true)}
@@ -242,7 +239,7 @@ export const GaleriaPersonal: React.FC<{ context: any }> = (props) => {
         modalProps={{ isBlocking: true }}
       >
         <DialogFooter>
-          <PrimaryButton onClick={handleEliminar} text="Eliminar" styles={{ root: { backgroundColor: '#a4262c', borderColor: '#a4262c' } }} />
+          <PrimaryButton onClick={handleEliminar} text="Eliminar" className={styles.btnConfirmDelete} />
           <DefaultButton onClick={() => setHideDeleteDialog(true)} text="Cancelar" />
         </DialogFooter>
       </Dialog>

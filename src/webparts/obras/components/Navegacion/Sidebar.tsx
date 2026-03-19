@@ -2,10 +2,6 @@ import * as React from "react";
 import { Nav, INavLinkGroup, INavLink, Text } from "@fluentui/react";
 import styles from "../Obras.module.scss";
 
-// Nota: En el Sidebar no importamos las Vistas (como VistaHistorialTarjetas) 
-// porque este componente solo emite la "key" hacia el padre (Obras.tsx),
-// quien es el encargado de decidir qué componente mostrar.
-
 interface ISidebarProps {
   selectedKey: string;
   onLinkClick: (key: string) => void;
@@ -20,7 +16,6 @@ const navGroups: INavLinkGroup[] = [
       { name: "Planificación", url: "", key: "planificacion", icon: "Calendar" }, 
       { name: "Asignaciones", url: "", key: "asignaciones", icon: "ContactLink" },
       { name: "Fotos Diarias", url: "", key: "fotos", icon: "Camera" },
-      // Esta es la clave que activa el componente VistaHistorialTarjetas en Obras.tsx
       { name: "Control de Obras", url: "", key: "historial", icon: "History" },
     ],
   },

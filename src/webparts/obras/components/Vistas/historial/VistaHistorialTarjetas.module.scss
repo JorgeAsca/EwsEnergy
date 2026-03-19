@@ -1,43 +1,122 @@
+@import '~@fluentui/react/dist/sass/References.scss';
+
+$verde-oscuro: #004d40;
+$verde-claro: #8bc34a;
+$verde-fondo: #f9fbf9;
+$blanco: #ffffff;
+
 .container {
-    padding: 20px;
-    .titulo { color: #004a99; font-weight: 600; }
+    padding: 30px;
+    background-color: $verde-fondo;
+    min-height: 100vh;
 }
 
+.loader { margin-top: 100px; }
+
+.headerSection {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid rgba(0, 77, 64, 0.1);
+    padding-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.titulo {
+    color: $verde-oscuro;
+    font-weight: 700;
+}
+
+.subtitulo { color: #666; font-style: italic; }
+
+.searchBar {
+    width: 350px;
+    border-radius: 8px;
+    border-color: #e1e1e1;
+    &:hover { border-color: $verde-claro; }
+}
+
+/* Grid de Reportes */
 .cardGrid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 20px;
-    margin-top: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 30px;
+    margin-top: 10px;
 }
 
 .reporteCard {
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    background: $blanco;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.04);
     overflow: hidden;
     border: 1px solid #edebe9;
-    transition: transform 0.2s;
+    transition: all 0.3s ease;
 
-    &:hover { transform: translateY(-5px); }
-
-    .cardHeader {
-        padding: 12px;
-        background: #f8f9fa;
-        border-bottom: 1px solid #eee;
-        .obraName { font-weight: 600; display: block; color: #004a99; }
+    &:hover { 
+        transform: translateY(-8px); 
+        box-shadow: 0 12px 24px rgba(0, 77, 64, 0.1);
+        border-color: $verde-claro;
     }
 
-    .imageContainer { width: 100%; background: #000; }
+    .cardHeader {
+        padding: 15px 20px;
+        background: #ffffff;
+        border-bottom: 1px solid #f0f0f0;
+        
+        .obraName { 
+            font-weight: 700; 
+            display: block; 
+            color: $verde-oscuro; 
+            font-size: 16px;
+        }
+        .fechaText {
+            color: #888;
+            font-size: 11px;
+            font-weight: 600;
+        }
+    }
+
+    .imageContainer { 
+        width: 100%; 
+        background: #f3f2f1;
+        overflow: hidden;
+    }
+
+    .reporteImagen {
+        transition: transform 0.5s ease;
+        &:hover { transform: scale(1.05); }
+    }
 
     .cardContent {
-        padding: 15px;
+        padding: 20px;
+
+        .comentarioBox {
+            background: $verde-fondo;
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid $verde-claro;
+            margin-bottom: 15px;
+        }
+
         .comentarios {
             font-style: italic;
             color: #444;
+            font-size: 13px;
             display: -webkit-box;
-            -webkit-line-clamp: 3;
+            // -webkit-line-clamp: 3;
             -webkit-box-orient: vertical;
             overflow: hidden;
+        }
+
+        .footerOperario {
+            color: #666;
+            border-top: 1px solid #f0f0f0;
+            padding-top: 10px;
+
+            .iconOperario {
+                color: $verde-claro;
+            }
         }
     }
 }

@@ -1,93 +1,142 @@
 @import '~@fluentui/react/dist/sass/References.scss';
 
+
+$verde-oscuro: #004d40;
+$verde-claro: #8bc34a;
+$fondo-suave: #f9fbf9;
+$blanco: #ffffff;
+
 .container {
   padding: 20px;
+  background-color: $fondo-suave;
 
   .headerSection {
-    margin-bottom: 25px;
+    margin-bottom: 30px;
     display: flex;
     justify-content: space-between;
     align-items: center;
   }
 
   .tituloPrincipal {
-    color: #004a99;
-    font-weight: 600;
+    color: $verde-oscuro;
+    font-weight: 700;
   }
 
-  /* Grid de Tarjetas */
+  .subtituloHeader {
+    color: #666;
+  }
+
+  .btnNuevaObra {
+    background-color: $verde-oscuro;
+    border: none;
+    border-radius: 8px;
+    &:hover { background-color: $verde-claro; }
+  }
+
   .gridObras {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
     gap: 25px;
-    margin-top: 20px;
   }
 
   .cardObra {
-    width: 100%;
-    max-width: none;
-    border-radius: 8px;
-    border: 1px solid #edebe9;
-    background: white;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-
+    border-radius: 16px;
+    border: 1px solid #e1e1e1;
+    transition: all 0.3s ease;
     &:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+      transform: translateY(-6px);
+      border-color: $verde-claro;
     }
   }
 
-  .cardContent {
-    padding: 20px;
+  .cardContent { padding: 24px; }
+
+  .cardTitleArea { max-width: 70%; }
+
+  .obraTitle {
+    font-size: 18px;
+    font-weight: 600;
+    color: $verde-oscuro;
+  }
+
+  .clienteText {
+    font-size: 12px;
+    color: $verde-claro;
+    font-weight: 600;
   }
 
   .badgeEstado {
-    padding: 4px 10px;
-    border-radius: 12px;
-    font-size: 11px;
-    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 800;
     text-transform: uppercase;
+    border: 1px solid;
+    
+    &.finalizado { background: #e8f5e9; color: #2e7d32; border-color: #2e7d32; }
+    &.activo { background: #f1f8e9; color: $verde-oscuro; border-color: $verde-claro; }
+  }
+
+  .labelSeccion {
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: #333;
   }
 
   .infoRow {
     display: flex;
     align-items: center;
-    gap: 10px;
-    color: #444;
-    margin-top: 5px;
-
-    i {
-      color: #004a99;
-      font-size: 16px;
-    }
+    gap: 8px;
+    color: #555;
+    i { color: $verde-claro; }
   }
 
-  /* Estilos para el Panel (Tu configuración original) */
+
+  .progresoNormal { :global(.ms-ProgressIndicator-progressBar) { background-color: $verde-claro; } }
+  .progresoCritico { :global(.ms-ProgressIndicator-progressBar) { background-color: #d32f2f; } }
+
+
+  .btnLaunch {
+    margin-top: 10px;
+    background-color: $verde-claro;
+    border: none;
+    height: 45px;
+    border-radius: 8px;
+  }
+
+
+  .panelDetallesContainer { margin-top: 20px; }
+
+  .fotoCard {
+    border: 1px solid #e8eee8;
+    border-radius: 12px;
+    padding: 15px;
+    background: $blanco;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+
+  .fotoFecha { font-weight: 700; color: $verde-oscuro; }
+  .fotoOperario { color: $verde-claro; font-weight: 600; }
+  .fotoImagen { border-radius: 8px; }
+  
+  .fotoComentarioBox {
+    padding: 10px;
+    background: $fondo-suave;
+    border-radius: 6px;
+    border-left: 4px solid $verde-claro;
+  }
+
+  .fotoComentarioText { font-style: italic; color: #444; }
+
+
   :global {
-    .ms-Panel-main {
-      background-color: #111111; 
-      color: #ffffff;
-    }
-
-    .ms-Panel-headerText {
-      color: #ffffff;
-      font-weight: 600;
-    }
-
+    .ms-Panel-main { background-color: #111111; color: #ffffff; }
+    .ms-Panel-headerText { color: #ffffff; font-weight: 600; }
     .ms-TextField-fieldGroup, .ms-Dropdown-title, .ms-DatePicker-container {
-      background-color: #252525;
-      border-color: #444444;
-      color: white;
+      background-color: #252525; border-color: #444444; color: white;
     }
-
-    .ms-Label {
-      color: #ffffff;
-    }
-    
-    // Ajuste para que el texto escrito en el panel oscuro se vea blanco
-    .ms-TextField-field, .ms-Dropdown-title {
-      color: white !important;
-    }
+    .ms-Label { color: #ffffff; }
+    .ms-TextField-field, .ms-Dropdown-title { color: white !important; }
   }
 }

@@ -1,20 +1,26 @@
 @import '~@fluentui/react/dist/sass/References.scss';
 
+
+$verde-oscuro: #004d40;
+$verde-claro: #8bc34a;
+$fondo-suave: #f9fbf9;
+$blanco: #ffffff;
+
 .container {
     padding: 30px;
-    background-color: #f8f9fa;
+    background-color: $fondo-suave;
     min-height: 100vh;
     position: relative; 
 }
 
 .headerSection {
     margin-bottom: 40px;
-    border-bottom: 2px solid #004a991a;
+    border-bottom: 2px solid rgba(0, 77, 64, 0.1);
     padding-bottom: 20px;
 }
 
 .tituloPrincipal {
-    color: #002d5a;
+    color: $verde-oscuro;
     font-weight: 700;
     letter-spacing: -0.5px;
 }
@@ -25,21 +31,23 @@
 }
 
 .btnNuevo {
-    border-radius: 4px;
-    background-color: #004a99;
+    border-radius: 8px;
+    background-color: $verde-oscuro;
+    border: none;
+    &:hover { background-color: $verde-claro; }
 }
 
-/* Grid de Tarjetas */
+
 .gridPersonal {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
     gap: 30px;
 }
 
-.cardEmpleado {
+.cardEmpleado, .cardEmpleadoShimmer {
     position: relative;
-    background: white;
-    border-radius: 12px;
+    background: $blanco;
+    border-radius: 16px;
     border: 1px solid #edebe9;
     padding: 25px;
     text-align: center;
@@ -49,13 +57,11 @@
 
     &:hover {
         transform: translateY(-8px);
-        box-shadow: 0 12px 24px rgba(0, 74, 153, 0.12);
-        border-color: #004a99;
+        box-shadow: 0 12px 24px rgba(0, 77, 64, 0.12);
+        border-color: $verde-claro;
     }
 
-    &:hover .editOverlay {
-        opacity: 1;
-    }
+    &:hover .editOverlay { opacity: 1; }
 }
 
 .editOverlay {
@@ -67,23 +73,12 @@
     z-index: 5; 
 }
 
-.panelPersonal {
-    padding: 20px;
-    background: #f3f2f1;
-    border-radius: 8px;
-    border: 1px dashed #c8c6c4;
-}
-
 .editButton {
-    background-color: #ffffff;
+    background-color: $blanco;
     border-radius: 50%;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    color: #004a99;
-
-    &:hover {
-        background-color: #004a99;
-        color: #ffffff;
-    }
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    color: $verde-oscuro;
+    &:hover { background-color: $verde-oscuro; color: $blanco; }
 }
 
 .avatarArea {
@@ -94,40 +89,58 @@
 
 .nombre {
     font-size: 18px;
-    font-weight: 600;
-    color: #323130;
+    font-weight: 700;
+    color: $verde-oscuro;
 }
 
 .cargo {
-    font-size: 12px;
-    color: #004a99;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.iconCargo {
-    color: #004a99;
-    font-size: 14px;
-}
-
-.idEmpleado {
     font-size: 11px;
-    color: #a19f9d;
-    font-weight: 600;
+    color: $verde-claro;
+    font-weight: 700;
+    text-transform: uppercase;
 }
 
-.iconContact {
-    color: #edebe9;
-    font-size: 16px;
-}
+.iconCargo { color: $verde-claro; font-size: 14px; }
+.cardSeparator { margin: 15px 0; }
+.idEmpleado { font-size: 11px; color: #a19f9d; font-weight: 600; }
+.iconContact { color: #edebe9; font-size: 16px; }
 
+
+.shimmerSeparator { margin: 15px 0; width: 100%; }
+.fullWidth { width: 100%; }
+
+
+.panelFormStack { marginTop: 20px; }
 .previewBox {
-    margin-top: 10px;
     padding: 20px;
     background: #f3f2f1;
-    border-radius: 8px;
-    border: 2px dashed #004a99; 
-    display: flex;
-    justify-content: center;
+    border-radius: 12px;
+    border: 2px dashed $verde-claro;
+}
+.previewTitle { font-weight: 600; color: $verde-oscuro; }
+
+.panelFooter { marginTop: 30px; }
+.btnPanelPrimary { background-color: $verde-oscuro; border: none; }
+.btnDelete {
+    color: #a4262c;
+    border-color: #a4262c;
+    &:hover { background-color: #fff1f1; color: #a4262c; border-color: #a4262c; }
+}
+
+
+.btnConfirmDelete {
+    background-color: #a4262c;
+    border-color: #a4262c;
+    &:hover { background-color: #821d23; border-color: #821d23; }
+}
+
+
+:global {
+    .ms-Panel-main { background-color: #111111; color: #ffffff; }
+    .ms-Panel-headerText { color: #ffffff; font-weight: 600; }
+    .ms-TextField-fieldGroup, .ms-Dropdown-title, .ms-DatePicker-container {
+        background-color: #252525; border-color: #444444; color: white;
+    }
+    .ms-Label { color: #ffffff; }
+    .ms-TextField-field, .ms-Dropdown-title { color: white !important; }
 }

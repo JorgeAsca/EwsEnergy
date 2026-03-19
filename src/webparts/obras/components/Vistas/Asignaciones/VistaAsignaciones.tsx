@@ -47,12 +47,11 @@ export const VistaAsignaciones: React.FC<{ context: any }> = (props) => {
     const cargarTodo = async () => {
         try {
             setLoading(true);
-            // Tipado explícito para asegurar compatibilidad con la interfaz que usa Date
             const [o, p, a]: [IObra[], IPersonal[], IAsignacion[]] =
                 await Promise.all([
                     services.obras.getObras(),
                     services.personal.getPersonal(),
-                    services.asignaciones.getAsignaciones() as any, // Cast temporal para la conversión de tipos del servicio
+                    services.asignaciones.getAsignaciones() as any,
                 ]);
             setObras(o || []);
             setPersonal(p || []);
@@ -80,20 +79,10 @@ export const VistaAsignaciones: React.FC<{ context: any }> = (props) => {
             };
 
             await services.asignaciones.asignarPersonal(payload);
-
-            setSeleccion({
-                ...seleccion,
-                obraId: 0,
-                personalId: 0,
-                fechaFin: new Date(),
-            });
+            setSeleccion({ ...seleccion, obraId: 0, personalId: 0, fechaFin: new Date() });
             await cargarTodo();
-            alert("✅ Asignación realizada con éxito");
         } catch (e) {
             console.error(e);
-            alert(
-                "❌ Error al asignar. Revisa que la columna 'EstadoProgreso' exista en SharePoint.",
-            );
         }
     };
 
@@ -103,133 +92,102 @@ export const VistaAsignaciones: React.FC<{ context: any }> = (props) => {
             await services.asignaciones.eliminarAsignacion(id);
             await cargarTodo();
         } catch (e) {
-            alert("Error al eliminar la asignación.");
+            alert("Error al eliminar.");
         }
     };
 
-    const calcularSemaforo = (fechaFin: Date | string) => {
+    const getSemaforoInfo = (fechaFin: Date | string) => {
         const hoy = new Date();
         const fin = new Date(fechaFin);
         const difDias = (fin.getTime() - hoy.getTime()) / (1000 * 3600 * 24);
 
-        if (hoy > fin) return { color: "#d13438", label: "Retrasado" };
-        if (difDias < 7) return { color: "#ffaa44", label: "Crítico" };
-        return { color: "#107c10", label: "A tiempo" };
+        if (hoy > fin) return { clase: styles.retrasado, label: "Plazo Vencido" };
+        if (difDias < 7) return { clase: styles.critico, label: "Entrega Próxima" };
+        return { clase: styles.atiempo, label: "En Tiempo" };
     };
 
-    if (loading) return <Spinner label="Cargando sistema de asignaciones..." />;
+    if (loading) return <Spinner label="Cargando logística EWS..." className={styles.loader} />;
 
     return (
         <div className={styles.container}>
-            <Text className={styles.header}>📅 Panel de Asignaciones</Text>
+            <div className={styles.headerArea}>
+                <Text className={styles.header}>📅 Panel de Asignaciones</Text>
+            </div>
 
             <div className={styles.formContainer}>
-                <Stack horizontal verticalAlign="end" tokens={{ childrenGap: 15 }} wrap>
-                    <Dropdown
-                        label="Obra"
-                        selectedKey={seleccion.obraId}
-                        options={obras.map((o) => ({ key: o.Id, text: o.Title }))}
-                        onChange={(_, opt) =>
-                            setSeleccion({ ...seleccion, obraId: opt?.key as number })
-                        }
-                        style={{ width: 250 }}
-                    />
-                    <Dropdown
-                        label="Trabajador"
-                        selectedKey={seleccion.personalId}
-                        options={personal.map((p) => ({
-                            key: p.Id,
-                            text: p.NombreyApellido,
-                        }))}
-                        onChange={(_, opt) =>
-                            setSeleccion({ ...seleccion, personalId: opt?.key as number })
-                        }
-                        style={{ width: 250 }}
-                    />
-                    <DatePicker
-                        label="Fecha límite"
-                        value={seleccion.fechaFin}
-                        onSelectDate={(date) =>
-                            setSeleccion({ ...seleccion, fechaFin: date || new Date() })
-                        }
-                    />
+                <Stack horizontal verticalAlign="end" tokens={{ childrenGap: 20 }} wrap>
+                    <div className={styles.fieldWrapper}>
+                        <Dropdown
+                            label="Obra"
+                            selectedKey={seleccion.obraId}
+                            options={obras.map((o) => ({ key: o.Id, text: o.Title }))}
+                            onChange={(_, opt) => setSeleccion({ ...seleccion, obraId: opt?.key as number })}
+                            className={styles.dropdownLarge}
+                        />
+                    </div>
+                    <div className={styles.fieldWrapper}>
+                        <Dropdown
+                            label="Trabajador"
+                            selectedKey={seleccion.personalId}
+                            options={personal.map((p) => ({ key: p.Id, text: p.NombreyApellido }))}
+                            onChange={(_, opt) => setSeleccion({ ...seleccion, personalId: opt?.key as number })}
+                            className={styles.dropdownLarge}
+                        />
+                    </div>
+                    <div className={styles.fieldWrapper}>
+                        <DatePicker
+                            label="Fecha límite"
+                            value={seleccion.fechaFin}
+                            onSelectDate={(date) => setSeleccion({ ...seleccion, fechaFin: date || new Date() })}
+                            className={styles.datePicker}
+                        />
+                    </div>
                     <PrimaryButton
                         text="Asignar"
                         onClick={handleAsignar}
                         iconProps={{ iconName: "AddLink" }}
+                        className={styles.btnAsignar}
                     />
                 </Stack>
             </div>
 
-            {error && (
-                <MessageBar messageBarType={MessageBarType.error}>{error}</MessageBar>
-            )}
+            {error && <MessageBar messageBarType={MessageBarType.error}>{error}</MessageBar>}
 
             <div className={styles.grid}>
                 {obras.map((obra) => {
-                    // Filtrado seguro convirtiendo IDs a Number
-                    const equipo = asignaciones.filter(
-                        (a) => Number(a.ObraId) === Number(obra.Id),
-                    );
-                    // Uso de la propiedad correcta según IObra.ts
+                    const equipo = asignaciones.filter((a) => Number(a.ObraId) === Number(obra.Id));
                     const esFinalizada = obra.EstadoObra === "Finalizado";
 
                     return (
                         <div key={obra.Id} className={styles.obraCard}>
-                            <Stack tokens={{ childrenGap: 10 }}>
-                                <Stack
-                                    horizontal
-                                    horizontalAlign="space-between"
-                                    verticalAlign="center"
-                                >
+                            <Stack tokens={{ childrenGap: 15 }}>
+                                <Stack horizontal horizontalAlign="space-between" verticalAlign="center">
                                     <Text className={styles.obraTitle}>{obra.Title}</Text>
-                                    <div
-                                        className={styles.statusDot}
-                                        style={{ background: esFinalizada ? "#107c10" : "#0078d4" }}
-                                    />
+                                    <div className={`${styles.statusBadge} ${esFinalizada ? styles.bgFinalizado : styles.bgActivo}`}>
+                                        {obra.EstadoObra || "En Curso"}
+                                    </div>
                                 </Stack>
                                 <Separator />
-                                <Stack tokens={{ childrenGap: 5 }}>
+                                <Stack tokens={{ childrenGap: 12 }}>
                                     {equipo.length > 0 ? (
                                         equipo.map((asig) => {
-                                            const p = personal.find(
-                                                (pers) => Number(pers.Id) === Number(asig.PersonalId),
-                                            );
-                                            const semaforo = calcularSemaforo(asig.FechaFinPrevista);
+                                            const p = personal.find((pers) => Number(pers.Id) === Number(asig.PersonalId));
+                                            const semaforo = getSemaforoInfo(asig.FechaFinPrevista);
                                             return (
-                                                <div
-                                                    key={asig.Id}
-                                                    className={styles.assignmentItem}
-                                                    style={{ borderLeftColor: semaforo.color }}
-                                                >
-                                                    <Stack
-                                                        horizontal
-                                                        verticalAlign="center"
-                                                        horizontalAlign="space-between"
-                                                        style={{ width: "100%" }}
-                                                    >
-                                                        <Stack
-                                                            horizontal
-                                                            verticalAlign="center"
-                                                            tokens={{ childrenGap: 8 }}
-                                                        >
+                                                <div key={asig.Id} className={`${styles.assignmentItem} ${semaforo.clase}`}>
+                                                    <Stack horizontal verticalAlign="center" horizontalAlign="space-between">
+                                                        <Stack horizontal verticalAlign="center" tokens={{ childrenGap: 10 }}>
                                                             <Persona
                                                                 text={p?.NombreyApellido || "Desconocido"}
-                                                                size={PersonaSize.size24}
+                                                                size={PersonaSize.size32}
                                                             />
-                                                            <Text
-                                                                variant="tiny"
-                                                                style={{
-                                                                    color: semaforo.color,
-                                                                    fontWeight: "bold",
-                                                                }}
-                                                            >
-                                                                {semaforo.label}
-                                                            </Text>
+                                                            <Stack>
+                                                                <Text className={styles.personaName}>{p?.NombreyApellido}</Text>
+                                                                <Text className={styles.semaforoText}>{semaforo.label}</Text>
+                                                            </Stack>
                                                         </Stack>
                                                         <IconButton
-                                                            iconProps={{ iconName: "Delete" }}
-                                                            title="Eliminar"
+                                                            iconProps={{ iconName: "Cancel" }}
                                                             className={styles.deleteBtn}
                                                             onClick={() => handleEliminar(asig.Id!)}
                                                         />
@@ -238,9 +196,7 @@ export const VistaAsignaciones: React.FC<{ context: any }> = (props) => {
                                             );
                                         })
                                     ) : (
-                                        <Text className={styles.emptyText}>
-                                            Sin personal asignado
-                                        </Text>
+                                        <Text className={styles.emptyText}>Sin personal asignado actualmente</Text>
                                     )}
                                 </Stack>
                             </Stack>

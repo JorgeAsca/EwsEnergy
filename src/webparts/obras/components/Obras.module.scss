@@ -1,5 +1,10 @@
 @import '~@fluentui/react/dist/sass/References.scss';
 
+$verde-oscuro: #004d40; 
+$verde-claro: #8bc34a;  
+$fondo-suave: #f9fbf9;  
+$borde-suave: #e8eee8;
+
 .obras {
   min-height: 100vh;
   margin: -1em; 
@@ -10,35 +15,76 @@
     align-items: stretch;
   }
 
+ 
   .sidebar {
-    width: 220px;
+    width: 240px; 
     background-color: #ffffff;
-    border-right: 1px solid #edebe9;
+    border-right: 1px solid $borde-suave;
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.02);
 
     .logoArea {
-      background-color: #004a99;
-      padding: 20px;
+      background-color: $verde-oscuro;
+      padding: 30px 20px;
       text-align: center;
       color: white;
+      border-bottom: 4px solid $verde-claro; 
+      
+      span {
+        letter-spacing: 2px;
+        font-weight: 800;
+      }
+    }
+
+
+    :global(.ms-Nav-link) {
+      background-color: transparent;
+      color: $verde-oscuro;
+      height: 50px;
+      
+      &:hover {
+        background-color: rgba(139, 195, 74, 0.1); 
+        color: $verde-oscuro;
+      }
+    }
+
+    :global(.is-selected .ms-Nav-link) {
+      background-color: $fondo-suave;
+      color: $verde-claro !important;
+      font-weight: bold;
+      border-left: 4px solid $verde-claro;
+    }
+
+    :global(.ms-Nav-compositeLink .ms-Icon) {
+      color: $verde-oscuro;
+    }
+    
+    :global(.is-selected .ms-Icon) {
+      color: $verde-claro !important;
     }
   }
 
+
   .mainContent {
     flex-grow: 1;
-    background-color: #faf9f8;
+    background-color: $fondo-suave; 
     display: flex;
     flex-direction: column;
     overflow: hidden;
 
     .header {
       background-color: #ffffff;
-      padding: 12px 32px;
-      border-bottom: 1px solid #edebe9;
+      padding: 15px 32px;
+      border-bottom: 1px solid $borde-suave;
       display: flex;
       justify-content: flex-end;
+      align-items: center;
+
+      b {
+        color: $verde-oscuro;
+      }
     }
 
     .pageBody {
@@ -48,17 +94,19 @@
     }
   }
 
+ 
   .formCard {
     background-color: #ffffff;
     padding: 24px;
-    border-radius: 4px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    border: 1px solid #edebe9;
+    border-radius: 12px; 
+    box-shadow: 0 4px 20px rgba(0,77,64,0.05); 
+    border: 1px solid $borde-suave;
   }
 
   .tableContainer {
     background: white;
-    border: 1px solid #edebe9;
-    border-radius: 4px;
+    border: 1px solid $borde-suave;
+    border-radius: 12px;
+    overflow: hidden;
   }
 }

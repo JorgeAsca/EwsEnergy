@@ -1,53 +1,66 @@
 @import '~@fluentui/react/dist/sass/References.scss';
 
+
+$verde-oscuro: #004d40; 
+$verde-claro: #8bc34a;  
+$fondo-suave: #f9fbf9;  
+$borde-suave: #e8eee8;
+$blanco: #ffffff;
+
 .container {
-  background-color: #f4f7f9;
+  background-color: $fondo-suave;
   min-height: 100vh;
   padding-bottom: 40px;
 }
 
-/* --- CABECERA --- */
+
 .appHeader {
-  background: #004a99; 
-  color: white;
+  background: $verde-oscuro; 
+  color: $blanco;
   padding: 15px 25px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 12px rgba(0, 77, 64, 0.15);
+  border-bottom: 4px solid $verde-claro; 
 }
 
 .title {
   font-weight: 700;
   margin: 0;
   line-height: 1.2;
+  letter-spacing: 1px;
+  color: $blanco;
 }
 
 .subtitle {
   color: rgba(255, 255, 255, 0.8);
   font-size: 12px;
+  text-transform: uppercase;
 }
 
 .iconCircle {
-  background: rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.15);
   padding: 8px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
+  color: $verde-claro;
 }
 
 .userBadge {
   cursor: pointer;
   padding: 4px;
   border-radius: 20px;
-  transition: background 0.2s;
+  transition: all 0.2s ease;
   &:hover {
     background: rgba(255,255,255,0.1);
+    transform: scale(1.05);
   }
 }
 
-/* --- CONTENIDO --- */
+
 .content {
   max-width: 800px;
   margin: 0 auto;
@@ -56,22 +69,30 @@
 
 .loader {
   margin-top: 100px;
+  :global(.ms-Spinner-circle) {
+    border-color: $verde-claro $verde-oscuro $verde-oscuro;
+  }
 }
 
 .sectionHeader {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 20px;
+  margin-bottom: 25px;
+  
+  :global(.ms-Button) {
+    color: $verde-oscuro;
+    &:hover { color: $verde-claro; }
+  }
 }
 
 .stepTitle {
   font-weight: 700;
-  color: #333;
+  color: $verde-oscuro;
   margin: 0;
 }
 
-/* --- PASO 1: PERSONAL --- */
+
 .gridPersonal {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -80,42 +101,44 @@
 }
 
 .cardPersona {
-  background: white;
-  border: 1px solid #edebe9;
-  border-radius: 12px;
-  padding: 20px;
+  background: $blanco;
+  border: 1px solid $borde-suave;
+  border-radius: 16px;
+  padding: 25px;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.03);
   display: flex;
   flex-direction: column;
   align-items: center;
   width: 100%;
 
   &:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 15px rgba(0,0,0,0.1);
-    border-color: #004a99;
+    transform: translateY(-8px);
+    box-shadow: 0 12px 20px rgba(0, 77, 64, 0.08);
+    border-color: $verde-claro;
   }
 }
 
-.cardName { font-weight: 600; margin-top: 10px; color: #333; }
-.cardRole { color: #666; font-size: 12px; }
+.cardName { font-weight: 600; margin-top: 12px; color: $verde-oscuro; }
+.cardRole { color: #666; font-size: 11px; font-weight: 600; text-transform: uppercase; }
 
-/* --- PASO 2: OBRAS --- */
+
 .activityHoy {
-  background: white;
-  padding: 15px;
-  border-radius: 12px;
-  margin-bottom: 25px;
-  border: 1px solid #e1e1e1;
+  background: $blanco;
+  padding: 20px;
+  border-radius: 16px;
+  margin-bottom: 30px;
+  border: 1px solid $borde-suave;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
 }
 
 .sectionLabel {
-  font-weight: 600;
-  color: #004a99;
+  font-weight: 700;
+  color: $verde-oscuro;
   display: block;
-  margin-bottom: 10px;
+  margin-bottom: 15px;
+  font-size: 14px;
 }
 
 .horizontalScroll {
@@ -124,16 +147,20 @@
   overflow-x: auto;
   padding: 10px 5px;
   &::-webkit-scrollbar { height: 6px; }
-  &::-webkit-scrollbar-thumb { background: #004a9944; border-radius: 10px; }
+  &::-webkit-scrollbar-thumb { background: $verde-claro; border-radius: 10px; }
 }
 
 .miniCard {
   position: relative;
-  min-width: 140px;
-  height: 90px;
-  border-radius: 8px;
+  min-width: 150px;
+  height: 100px;
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  border: 2px solid transparent;
+  transition: border-color 0.2s;
+  
+  &:hover { border-color: $verde-claro; }
   img { width: 100%; height: 100%; object-fit: cover; }
 }
 
@@ -141,132 +168,142 @@
   position: absolute;
   bottom: 0;
   width: 100%;
-  background: rgba(0,0,0,0.7);
-  color: white;
-  font-size: 10px;
-  padding: 5px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  background: linear-gradient(transparent, rgba(0, 77, 64, 0.9));
+  color: $blanco;
+  font-size: 11px;
+  padding: 8px;
+  font-weight: 500;
 }
 
 .gridObras {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 15px;
 }
 
 .cardObra {
-  background: white;
-  border: 1px solid #ddd;
-  padding: 18px;
-  border-radius: 10px;
+  background: $blanco;
+  border: 1px solid $borde-suave;
+  padding: 20px;
+  border-radius: 12px;
   text-align: left;
   cursor: pointer;
-  transition: 0.2s;
+  transition: all 0.2s ease;
   width: 100%;
 
   &:hover { 
-    border-color: #004a99; 
-    background: #f0f7ff; 
+    border-color: $verde-claro; 
+    background: #f1f8e9; 
+    transform: translateX(5px);
   }
 }
 
 .asignada {
-  border-left: 6px solid #ffb900;
-  background: #fffdf5;
+  border-left: 6px solid $verde-claro;
+  background: #f9fbf2;
 }
 
-.obraTitle { font-weight: 600; font-size: 16px; display: block; }
-.obraSub { color: #888; font-size: 12px; }
-.starIcon { color: #ffb900; font-size: 20px; }
+.obraTitle { font-weight: 700; font-size: 17px; color: $verde-oscuro; display: block; }
+.obraSub { color: #666; font-size: 12px; margin-top: 4px; display: block;}
+.starIcon { color: $verde-claro; font-size: 20px; }
 .badgeAsignada {
-  background: #ffb900;
-  color: #000;
+  background: $verde-claro;
+  color: $blanco;
   font-size: 10px;
-  font-weight: 700;
-  padding: 2px 8px;
-  border-radius: 4px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 6px;
 }
 
 /* --- PASO 3: CÁMARA Y REPORTE --- */
 .workCard {
-  background: white;
-  padding: 25px;
-  border-radius: 15px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-  border: 1px solid #edebe9;
+  background: $blanco;
+  padding: 30px;
+  border-radius: 20px;
+  box-shadow: 0 15px 35px rgba(0, 77, 64, 0.05);
+  border: 1px solid $borde-suave;
 }
 
 .cameraBox {
-  margin: 10px 0;
+  margin: 15px 0;
 }
 
 .dropZone {
-  border: 2px dashed #004a99;
-  border-radius: 12px;
-  padding: 40px;
+  border: 2px dashed $verde-claro;
+  border-radius: 16px;
+  padding: 50px;
   text-align: center;
-  color: #004a99;
-  background: #f0f7ff;
+  color: $verde-oscuro;
+  background: #f1f8e9;
   cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  transition: 0.2s;
+  gap: 12px;
+  transition: all 0.3s ease;
 
-  &:hover { background: #e1efff; }
+  &:hover { 
+    background: #e8f5e9; 
+    border-style: solid;
+    transform: scale(1.01);
+  }
 }
 
-.bigIcon { font-size: 48px; }
+.bigIcon { font-size: 54px; color: $verde-claro; }
 
 .previewContainer {
   display: flex;
-  gap: 12px;
+  gap: 15px;
   flex-wrap: wrap;
-  margin: 15px 0;
+  margin: 20px 0;
 }
 
 .previewItem {
   position: relative;
-  width: 110px;
-  height: 110px;
+  width: 120px;
+  height: 120px;
   img { 
     width: 100%; 
     height: 100%; 
     object-fit: cover; 
-    border-radius: 8px; 
-    border: 1px solid #ddd;
+    border-radius: 12px; 
+    border: 2px solid $borde-suave;
   }
+  &:hover img { border-color: $verde-claro; }
 }
 
 .removePhoto {
   position: absolute;
-  top: -8px;
-  right: -8px;
-  background: #fff !important;
+  top: -10px;
+  right: -10px;
+  background: $blanco !important;
+  color: #d32f2f !important;
   border-radius: 50%;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-  width: 24px;
-  height: 24px;
-  min-width: 24px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  width: 28px;
+  height: 28px;
 }
 
 .sendButton {
-  height: 55px;
-  margin-top: 10px;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 16px;
+  height: 60px;
+  margin-top: 15px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 18px;
+  background-color: $verde-oscuro !important;
+  border: none;
+  
+  &:hover {
+    background-color: $verde-claro !important;
+  }
 }
 
 /* --- ANIMACIONES --- */
 .fadein {
-  animation: fadeIn 0.4s ease-out;
+  animation: fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(15px); }
+  from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
 }

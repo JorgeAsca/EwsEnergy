@@ -10,7 +10,6 @@ import {
   IDropdownOption,
   Spinner,
   SpinnerSize,
-  DefaultButton,
   MessageBar,
   MessageBarType,
   Separator,
@@ -30,7 +29,6 @@ import { IObra } from "../../../models/IObra";
 
 import styles from "./TablaObras.module.scss";
 
-// Interfaz extendida para el Dashboard
 interface IObraCard extends IObra {
   clienteNombre: string;
   porcentajeTiempo: number;
@@ -45,7 +43,6 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
   const [isOpen, setIsOpen] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
 
-  // Estados para el Panel de Detalles
   const [obraSeleccionada, setObraSeleccionada] = React.useState<IObraCard | null>(null);
   const [fotosObra, setFotosObra] = React.useState<any[]>([]);
   const [loadingFotos, setLoadingFotos] = React.useState(false);
@@ -65,12 +62,10 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
   );
 
   const verDetallesObra = async (obra: IObraCard) => {
-    console.log("Consultando fotos para Obra ID:", obra.Id); // Mira si este ID coincide con el de la lista
     setObraSeleccionada(obra);
     setLoadingFotos(true);
     try {
       const fotos = await projectService.getFotosPorObra(obra.Id);
-      console.log("Fotos recuperadas de la lista:", fotos); // Si aquí sale [] el problema es SharePoint/Filtro
       setFotosObra(fotos);
     } catch (e) {
       console.error(e);
@@ -167,12 +162,13 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
       <div className={styles.headerSection}>
         <Stack>
           <Text variant="xxLarge" className={styles.tituloPrincipal}>Panel de Control de Obras</Text>
-          <Text variant="small">Seguimiento de tiempos y personal asignado</Text>
+          <Text variant="small" className={styles.subtituloHeader}>Gestión de energías renovables y sostenibilidad</Text>
         </Stack>
         <PrimaryButton
           iconProps={{ iconName: "Add" }}
           text="Nueva Obra"
           onClick={() => setIsOpen(true)}
+          className={styles.btnNuevaObra}
         />
       </div>
 
@@ -183,108 +179,111 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
               key={o.Id}
               className={styles.cardObra}
               onClick={() => verDetallesObra(o)}
-              styles={{ root: { cursor: 'pointer' } }}
             >
               <div className={styles.cardContent}>
                 <Stack tokens={{ childrenGap: 12 }}>
-                  <Stack horizontal horizontalAlign="space-between">
-                    <Stack style={{ maxWidth: "70%" }}>
-                      <Text variant="large" style={{ fontWeight: 600, color: "#004a99" }}>{o.Title}</Text>
-                      <Text variant="small" style={{ color: "#666" }}>{o.clienteNombre}</Text>
+                  <Stack horizontal horizontalAlign="space-between" verticalAlign="start">
+                    <Stack className={styles.cardTitleArea}>
+                      <Text className={styles.obraTitle}>{o.Title}</Text>
+                      <Text className={styles.clienteText}>{o.clienteNombre}</Text>
                     </Stack>
-                    <div className={styles.badgeEstado} style={{
-                      background: o.EstadoObra === "Finalizado" ? "#dff6dd" : "#deecf9",
-                      color: o.EstadoObra === "Finalizado" ? "#107c10" : "#0078d4",
-                    }}
-                    >
-                      {o.EstadoObra}
+                    <div className={`${styles.badgeEstado} ${o.EstadoObra === "Finalizado" ? styles.finalizado : styles.activo}`}>
+                      {o.EstadoObra || "Activo"}
                     </div>
                   </Stack>
 
                   <Separator />
 
                   <Stack>
-                    <Text variant="small" style={{ fontWeight: 600, marginBottom: 8 }}>Personal en obra:</Text>
+                    <Text className={styles.labelSeccion}>Equipo en Campo:</Text>
                     <Facepile personas={o.operarios} personaSize={PersonaSize.size32} />
                   </Stack>
 
-                  <div className={styles.infoRow}>
-                    <Icon iconName="MapPin" />
-                    <Text variant="small" nowrap>{o.DireccionObra || "Sin dirección"}</Text>
-                  </div>
+                  <Stack tokens={{ childrenGap: 4 }}>
+                    <div className={styles.infoRow}>
+                      <Icon iconName="MapPin" />
+                      <Text variant="small" nowrap>{o.DireccionObra || "Sin dirección"}</Text>
+                    </div>
+                    <div className={styles.infoRow}>
+                      <Icon iconName="Calendar" />
+                      <Text variant="small">Días restantes: <b>{o.diasRestantes > 0 ? o.diasRestantes : 0}</b></Text>
+                    </div>
+                  </Stack>
 
                   <ProgressIndicator
                     percentComplete={o.porcentajeTiempo}
-                    label="Tiempo transcurrido"
-                    description={o.diasRestantes > 0 ? `${o.diasRestantes} días restantes` : "Plazo finalizado"}
-                    styles={{
-                      itemProgress: {
-                        backgroundColor: o.porcentajeTiempo > 0.9 && o.EstadoObra !== "Finalizado" ? "#ffaa44" : undefined,
-                      },
-                    }}
+                    label="Progreso Temporal"
+                    className={o.porcentajeTiempo > 0.9 && o.EstadoObra !== "Finalizado" ? styles.progresoCritico : styles.progresoNormal}
                   />
                 </Stack>
               </div>
             </DocumentCard>
           ))
         ) : (
-          <MessageBar>No hay proyectos activos registrados.</MessageBar>
+          <MessageBar messageBarType={MessageBarType.info}>No hay proyectos registrados.</MessageBar>
         )}
       </div>
 
-      {/* PANEL PARA CREAR OBRA */}
-      <Panel isOpen={isOpen} onDismiss={() => setIsOpen(false)} headerText="Nuevo Proyecto">
+      <Panel 
+        isOpen={isOpen} 
+        onDismiss={() => setIsOpen(false)} 
+        headerText="Configurar Nuevo Proyecto"
+        type={PanelType.medium}
+      >
         <Stack tokens={{ childrenGap: 15 }} style={{ marginTop: 20 }}>
-          <TextField label="Nombre" required value={nuevaObra.Nombre} onChange={(_, v) => setNuevaObra({ ...nuevaObra, Nombre: v || "" })} />
+          <TextField label="Nombre del Proyecto" required value={nuevaObra.Nombre} onChange={(_, v) => setNuevaObra({ ...nuevaObra, Nombre: v || "" })} />
           <Dropdown label="Cliente" required options={clientes} selectedKey={nuevaObra.ClienteId} onChange={(_, opt) => setNuevaObra({ ...nuevaObra, ClienteId: opt?.key as number })} />
-          <TextField label="Dirección" value={nuevaObra.Direccion} onChange={(_, v) => setNuevaObra({ ...nuevaObra, Direccion: v || "" })} />
+          <TextField label="Dirección de Obra" value={nuevaObra.Direccion} onChange={(_, v) => setNuevaObra({ ...nuevaObra, Direccion: v || "" })} />
           <Stack horizontal tokens={{ childrenGap: 10 }}>
-            <DatePicker label="Inicio" value={nuevaObra.FechaInicio} onSelectDate={(d) => setNuevaObra({ ...nuevaObra, FechaInicio: d || new Date() })} />
-            <DatePicker label="Fin" value={nuevaObra.FechaFin} onSelectDate={(d) => setNuevaObra({ ...nuevaObra, FechaFin: d || new Date() })} />
+            <DatePicker label="Fecha Inicio" value={nuevaObra.FechaInicio} onSelectDate={(d) => setNuevaObra({ ...nuevaObra, FechaInicio: d || new Date() })} />
+            <DatePicker label="Plazo Estimado" value={nuevaObra.FechaFin} onSelectDate={(d) => setNuevaObra({ ...nuevaObra, FechaFin: d || new Date() })} />
           </Stack>
-          <PrimaryButton text="Crear Proyecto" onClick={handleGuardar} disabled={saving || !nuevaObra.Nombre || !nuevaObra.ClienteId} />
+          <PrimaryButton 
+            text="Lanzar Proyecto" 
+            onClick={handleGuardar} 
+            disabled={saving || !nuevaObra.Nombre || !nuevaObra.ClienteId}
+            className={styles.btnLaunch}
+          />
         </Stack>
       </Panel>
 
-      {/* PANEL DE DETALLES Y FOTOS (HISTORIAL) */}
       <Panel
         isOpen={!!obraSeleccionada}
         onDismiss={() => { setObraSeleccionada(null); setFotosObra([]); }}
-        headerText={`Historial Visual: ${obraSeleccionada?.Title}`}
-        closeButtonAriaLabel="Cerrar"
+        headerText={`EWS Insight: ${obraSeleccionada?.Title}`}
         type={PanelType.medium}
       >
-        <div style={{ marginTop: 20 }}>
+        <div className={styles.panelDetallesContainer}>
           {loadingFotos ? (
-            <Spinner label="Cargando historial visual..." />
+            <Spinner size={SpinnerSize.large} label="Cargando evidencias de campo..." />
           ) : fotosObra.length > 0 ? (
-            <Stack tokens={{ childrenGap: 20 }}>
+            <Stack tokens={{ childrenGap: 25 }}>
               {fotosObra.map((f, i) => (
-                <div key={i} style={{ border: '1px solid #edebe9', borderRadius: '4px', padding: '10px', background: '#f8f9fa' }}>
-                  <Stack tokens={{ childrenGap: 8 }}>
-                    <Stack horizontal horizontalAlign="space-between">
-                      <Text variant="small"><b>Fecha:</b> {new Date(f.FechaRegistro).toLocaleDateString()}</Text>
-                      <Text variant="small" style={{ color: '#004a99' }}>👤 {f.Operario}</Text>
+                <div key={i} className={styles.fotoCard}>
+                  <Stack tokens={{ childrenGap: 12 }}>
+                    <Stack horizontal horizontalAlign="space-between" verticalAlign="center">
+                      <Text className={styles.fotoFecha}>📅 {new Date(f.FechaRegistro).toLocaleDateString()}</Text>
+                      <Text className={styles.fotoOperario}>👷 {f.Operario}</Text>
                     </Stack>
                     <Image
                       src={f.UrlFoto?.Url}
-                      alt="Progreso de obra"
+                      alt="Evidencia"
                       width="100%"
-                      height={250}
+                      height={280}
                       imageFit={ImageFit.cover}
-                      style={{ borderRadius: '4px' }}
+                      className={styles.fotoImagen}
                     />
-                    <Text variant="small" style={{ fontStyle: 'italic', color: '#444' }}>
-                      "{f.Comentarios || 'Sin comentarios adicionales'}"
-                    </Text>
+                    <div className={styles.fotoComentarioBox}>
+                      <Text className={styles.fotoComentarioText}>
+                        "{f.Comentarios || 'Sin observaciones técnicas'}"
+                      </Text>
+                    </div>
                   </Stack>
                 </div>
               ))}
             </Stack>
           ) : (
-            <MessageBar messageBarType={MessageBarType.info}>
-              Esta obra aún no tiene reportes fotográficos registrados.
-            </MessageBar>
+            <MessageBar messageBarType={MessageBarType.info}>Sin reportes fotográficos disponibles.</MessageBar>
           )}
         </div>
       </Panel>
