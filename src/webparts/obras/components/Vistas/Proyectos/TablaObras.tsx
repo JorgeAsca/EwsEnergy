@@ -21,7 +21,10 @@ import {
   DocumentCard,
   Image,
   ImageFit,
-  PanelType
+  PanelType,
+  Modal,
+  IconButton,
+  DefaultButton,
 } from "@fluentui/react";
 import { SPHttpClient } from "@microsoft/sp-http";
 import { ProjectService } from "../../../service/ProjectService";
@@ -43,7 +46,8 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
   const [isOpen, setIsOpen] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
 
-  const [obraSeleccionada, setObraSeleccionada] = React.useState<IObraCard | null>(null);
+  const [obraSeleccionada, setObraSeleccionada] =
+    React.useState<IObraCard | null>(null);
   const [fotosObra, setFotosObra] = React.useState<any[]>([]);
   const [loadingFotos, setLoadingFotos] = React.useState(false);
 
@@ -58,7 +62,7 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
 
   const projectService = React.useMemo(
     () => new ProjectService(props.context),
-    [props.context]
+    [props.context],
   );
 
   const verDetallesObra = async (obra: IObraCard) => {
@@ -81,7 +85,7 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
         projectService.getObras(),
         props.context.spHttpClient.get(
           `${props.context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('Clientes')/items?$select=Id,Title`,
-          SPHttpClient.configurations.v1
+          SPHttpClient.configurations.v1,
         ),
         projectService.getAsignacionesConPersonal(),
       ]);
@@ -100,11 +104,14 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
 
       const obrasProcesadas: IObraCard[] = listaObras.map((o: IObra) => {
         const inicio = o.FechaInicio ? new Date(o.FechaInicio).getTime() : hoy;
-        const fin = o.FechaFinPrevista ? new Date(o.FechaFinPrevista).getTime() : hoy;
+        const fin = o.FechaFinPrevista
+          ? new Date(o.FechaFinPrevista).getTime()
+          : hoy;
 
         const total = fin - inicio;
         const transcurrido = hoy - inicio;
-        const porcentaje = total > 0 ? Math.min(Math.max(transcurrido / total, 0), 1) : 0;
+        const porcentaje =
+          total > 0 ? Math.min(Math.max(transcurrido / total, 0), 1) : 0;
 
         const operariosAsignados: IFacepilePersona[] = listaAsignaciones
           .filter((a: any) => Number(a.ObraId) === Number(o.Id))
@@ -115,7 +122,9 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
 
         return {
           ...o,
-          clienteNombre: opcionesClientes.find((c) => Number(c.key) === (o as any).ClienteId)?.text || "Cliente no definido",
+          clienteNombre:
+            opcionesClientes.find((c) => Number(c.key) === (o as any).ClienteId)
+              ?.text || "Cliente no definido",
           porcentajeTiempo: porcentaje,
           operarios: operariosAsignados,
           diasRestantes: Math.ceil((fin - hoy) / (1000 * 60 * 60 * 24)),
@@ -155,14 +164,24 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
     }
   };
 
-  if (loading) return <Spinner size={SpinnerSize.large} label="Sincronizando Proyectos EWS..." />;
+  if (loading)
+    return (
+      <Spinner
+        size={SpinnerSize.large}
+        label="Sincronizando Proyectos EWS..."
+      />
+    );
 
   return (
     <div className={styles.container}>
       <div className={styles.headerSection}>
         <Stack>
-          <Text variant="xxLarge" className={styles.tituloPrincipal}>Panel de Control de Obras</Text>
-          <Text variant="small" className={styles.subtituloHeader}>Gestión de energías renovables y sostenibilidad</Text>
+          <Text variant="xxLarge" className={styles.tituloPrincipal}>
+            Panel de Control de Obras
+          </Text>
+          <Text variant="small" className={styles.subtituloHeader}>
+            Gestión de energías renovables y sostenibilidad
+          </Text>
         </Stack>
         <PrimaryButton
           iconProps={{ iconName: "Add" }}
@@ -182,12 +201,20 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
             >
               <div className={styles.cardContent}>
                 <Stack tokens={{ childrenGap: 12 }}>
-                  <Stack horizontal horizontalAlign="space-between" verticalAlign="start">
+                  <Stack
+                    horizontal
+                    horizontalAlign="space-between"
+                    verticalAlign="start"
+                  >
                     <Stack className={styles.cardTitleArea}>
                       <Text className={styles.obraTitle}>{o.Title}</Text>
-                      <Text className={styles.clienteText}>{o.clienteNombre}</Text>
+                      <Text className={styles.clienteText}>
+                        {o.clienteNombre}
+                      </Text>
                     </Stack>
-                    <div className={`${styles.badgeEstado} ${o.EstadoObra === "Finalizado" ? styles.finalizado : styles.activo}`}>
+                    <div
+                      className={`${styles.badgeEstado} ${o.EstadoObra === "Finalizado" ? styles.finalizado : styles.activo}`}
+                    >
                       {o.EstadoObra || "Activo"}
                     </div>
                   </Stack>
@@ -195,98 +222,232 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
                   <Separator />
 
                   <Stack>
-                    <Text className={styles.labelSeccion}>Equipo en Campo:</Text>
-                    <Facepile personas={o.operarios} personaSize={PersonaSize.size32} />
+                    <Text className={styles.labelSeccion}>
+                      Equipo en Campo:
+                    </Text>
+                    <Facepile
+                      personas={o.operarios}
+                      personaSize={PersonaSize.size32}
+                    />
                   </Stack>
 
                   <Stack tokens={{ childrenGap: 4 }}>
                     <div className={styles.infoRow}>
                       <Icon iconName="MapPin" />
-                      <Text variant="small" nowrap>{o.DireccionObra || "Sin dirección"}</Text>
+                      <Text variant="small" nowrap>
+                        {o.DireccionObra || "Sin dirección"}
+                      </Text>
                     </div>
                     <div className={styles.infoRow}>
                       <Icon iconName="Calendar" />
-                      <Text variant="small">Días restantes: <b>{o.diasRestantes > 0 ? o.diasRestantes : 0}</b></Text>
+                      <Text variant="small">
+                        Días restantes:{" "}
+                        <b>{o.diasRestantes > 0 ? o.diasRestantes : 0}</b>
+                      </Text>
                     </div>
                   </Stack>
 
                   <ProgressIndicator
                     percentComplete={o.porcentajeTiempo}
                     label="Progreso Temporal"
-                    className={o.porcentajeTiempo > 0.9 && o.EstadoObra !== "Finalizado" ? styles.progresoCritico : styles.progresoNormal}
+                    className={
+                      o.porcentajeTiempo > 0.9 && o.EstadoObra !== "Finalizado"
+                        ? styles.progresoCritico
+                        : styles.progresoNormal
+                    }
                   />
                 </Stack>
               </div>
             </DocumentCard>
           ))
         ) : (
-          <MessageBar messageBarType={MessageBarType.info}>No hay proyectos registrados.</MessageBar>
+          <MessageBar messageBarType={MessageBarType.info}>
+            No hay proyectos registrados.
+          </MessageBar>
         )}
       </div>
 
-      <Panel 
-        isOpen={isOpen} 
-        onDismiss={() => setIsOpen(false)} 
-        headerText="Configurar Nuevo Proyecto"
-        type={PanelType.medium}
+      {/* MODAL DE CREACIÓN DE OBRA */}
+      <Modal
+        isOpen={isOpen}
+        onDismiss={() => setIsOpen(false)}
+        isBlocking={false}
+        // Esta es la clave para que el CSS encuentre la caja de la modal
+        containerClassName={styles.modalFlotanteContainer}
       >
-        <Stack tokens={{ childrenGap: 15 }} style={{ marginTop: 20 }}>
-          <TextField label="Nombre del Proyecto" required value={nuevaObra.Nombre} onChange={(_, v) => setNuevaObra({ ...nuevaObra, Nombre: v || "" })} />
-          <Dropdown label="Cliente" required options={clientes} selectedKey={nuevaObra.ClienteId} onChange={(_, opt) => setNuevaObra({ ...nuevaObra, ClienteId: opt?.key as number })} />
-          <TextField label="Dirección de Obra" value={nuevaObra.Direccion} onChange={(_, v) => setNuevaObra({ ...nuevaObra, Direccion: v || "" })} />
-          <Stack horizontal tokens={{ childrenGap: 10 }}>
-            <DatePicker label="Fecha Inicio" value={nuevaObra.FechaInicio} onSelectDate={(d) => setNuevaObra({ ...nuevaObra, FechaInicio: d || new Date() })} />
-            <DatePicker label="Plazo Estimado" value={nuevaObra.FechaFin} onSelectDate={(d) => setNuevaObra({ ...nuevaObra, FechaFin: d || new Date() })} />
-          </Stack>
-          <PrimaryButton 
-            text="Lanzar Proyecto" 
-            onClick={handleGuardar} 
-            disabled={saving || !nuevaObra.Nombre || !nuevaObra.ClienteId}
-            className={styles.btnLaunch}
-          />
-        </Stack>
-      </Panel>
+        <div className={styles.modalContent}>
+          <div className={styles.modalHeader}>
+            <Text variant="xLarge" className={styles.modalTitle}>
+              Configurar Nuevo Proyecto
+            </Text>
+            <IconButton
+              iconProps={{ iconName: "Cancel" }}
+              ariaLabel="Cerrar"
+              onClick={() => setIsOpen(false)}
+              className={styles.btnClose}
+            />
+          </div>
 
-      <Panel
-        isOpen={!!obraSeleccionada}
-        onDismiss={() => { setObraSeleccionada(null); setFotosObra([]); }}
-        headerText={`EWS Insight: ${obraSeleccionada?.Title}`}
-        type={PanelType.medium}
-      >
-        <div className={styles.panelDetallesContainer}>
-          {loadingFotos ? (
-            <Spinner size={SpinnerSize.large} label="Cargando evidencias de campo..." />
-          ) : fotosObra.length > 0 ? (
-            <Stack tokens={{ childrenGap: 25 }}>
-              {fotosObra.map((f, i) => (
-                <div key={i} className={styles.fotoCard}>
-                  <Stack tokens={{ childrenGap: 12 }}>
-                    <Stack horizontal horizontalAlign="space-between" verticalAlign="center">
-                      <Text className={styles.fotoFecha}>📅 {new Date(f.FechaRegistro).toLocaleDateString()}</Text>
-                      <Text className={styles.fotoOperario}>👷 {f.Operario}</Text>
-                    </Stack>
-                    <Image
-                      src={f.UrlFoto?.Url}
-                      alt="Evidencia"
-                      width="100%"
-                      height={280}
-                      imageFit={ImageFit.cover}
-                      className={styles.fotoImagen}
-                    />
-                    <div className={styles.fotoComentarioBox}>
-                      <Text className={styles.fotoComentarioText}>
-                        "{f.Comentarios || 'Sin observaciones técnicas'}"
-                      </Text>
-                    </div>
-                  </Stack>
+          <Separator className={styles.modalSeparator} />
+
+          <div className={styles.modalBody}>
+            <Stack tokens={{ childrenGap: 15 }}>
+              <TextField
+                label="Nombre del Proyecto"
+                required
+                value={nuevaObra.Nombre}
+                onChange={(_, v) =>
+                  setNuevaObra({ ...nuevaObra, Nombre: v || "" })
+                }
+              />
+              <Dropdown
+                label="Cliente"
+                required
+                options={clientes}
+                selectedKey={nuevaObra.ClienteId}
+                onChange={(_, opt) =>
+                  setNuevaObra({ ...nuevaObra, ClienteId: opt?.key as number })
+                }
+              />
+              <TextField
+                label="Dirección de Obra"
+                value={nuevaObra.Direccion}
+                onChange={(_, v) =>
+                  setNuevaObra({ ...nuevaObra, Direccion: v || "" })
+                }
+              />
+              <Stack horizontal tokens={{ childrenGap: 20 }}>
+                <div style={{ flex: 1 }}>
+                  <DatePicker
+                    label="Fecha Inicio"
+                    value={nuevaObra.FechaInicio}
+                    onSelectDate={(d) =>
+                      setNuevaObra({
+                        ...nuevaObra,
+                        FechaInicio: d || new Date(),
+                      })
+                    }
+                  />
                 </div>
-              ))}
+                <div style={{ flex: 1 }}>
+                  <DatePicker
+                    label="Plazo Estimado"
+                    value={nuevaObra.FechaFin}
+                    onSelectDate={(d) =>
+                      setNuevaObra({ ...nuevaObra, FechaFin: d || new Date() })
+                    }
+                  />
+                </div>
+              </Stack>
             </Stack>
-          ) : (
-            <MessageBar messageBarType={MessageBarType.info}>Sin reportes fotográficos disponibles.</MessageBar>
-          )}
+          </div>
+
+          <div className={styles.modalFooter}>
+            <Stack
+              horizontal
+              tokens={{ childrenGap: 10 }}
+              horizontalAlign="end"
+            >
+              {saving ? (
+                <Spinner label="Lanzando proyecto..." />
+              ) : (
+                <>
+                  <PrimaryButton
+                    text="Lanzar Proyecto"
+                    onClick={handleGuardar}
+                    disabled={!nuevaObra.Nombre || !nuevaObra.ClienteId}
+                    className={styles.btnLaunch}
+                  />
+                  <DefaultButton
+                    text="Cancelar"
+                    onClick={() => setIsOpen(false)}
+                  />
+                </>
+              )}
+            </Stack>
+          </div>
         </div>
-      </Panel>
+      </Modal>
+
+      {/* MODAL 2: HISTORIAL VISUAL (Sustituye al Panel) */}
+      <Modal
+        isOpen={!!obraSeleccionada}
+        onDismiss={() => {
+          setObraSeleccionada(null);
+          setFotosObra([]);
+        }}
+        isBlocking={false}
+        containerClassName={styles.modalFlotanteContainer}
+      >
+        <div className={styles.modalContent}>
+          <div className={styles.modalHeader}>
+            <Text variant="xLarge" className={styles.modalTitle}>
+              EWS Insight: {obraSeleccionada?.Title}
+            </Text>
+            <IconButton
+              iconProps={{ iconName: "Cancel" }}
+              onClick={() => setObraSeleccionada(null)}
+              className={styles.btnClose}
+            />
+          </div>
+          <Separator className={styles.modalSeparator} />
+
+          <div className={styles.scrollableContent}>
+            {loadingFotos ? (
+              <Spinner
+                size={SpinnerSize.large}
+                label="Cargando evidencias..."
+              />
+            ) : fotosObra.length > 0 ? (
+              <Stack tokens={{ childrenGap: 20 }}>
+                {fotosObra.map((f, i) => (
+                  <div key={i} className={styles.fotoCard}>
+                    <Stack tokens={{ childrenGap: 12 }}>
+                      <Stack
+                        horizontal
+                        horizontalAlign="space-between"
+                        verticalAlign="center"
+                      >
+                        <Text className={styles.fotoFecha}>
+                          📅 {new Date(f.FechaRegistro).toLocaleDateString()}
+                        </Text>
+                        <Text className={styles.fotoOperario}>
+                          👷 {f.Operario}
+                        </Text>
+                      </Stack>
+                      <Image
+                        src={f.UrlFoto?.Url}
+                        alt="Evidencia"
+                        width="100%"
+                        height={250}
+                        imageFit={ImageFit.cover}
+                        className={styles.fotoImagen}
+                      />
+                      <div className={styles.fotoComentarioBox}>
+                        <Text className={styles.fotoComentarioText}>
+                          "{f.Comentarios || "Sin observaciones técnicas"}"
+                        </Text>
+                      </div>
+                    </Stack>
+                  </div>
+                ))}
+              </Stack>
+            ) : (
+              <MessageBar messageBarType={MessageBarType.info}>
+                No hay reportes para esta obra.
+              </MessageBar>
+            )}
+          </div>
+
+          <div className={styles.modalFooter}>
+            <PrimaryButton
+              text="Cerrar"
+              onClick={() => setObraSeleccionada(null)}
+              className={styles.btnLaunch}
+            />
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

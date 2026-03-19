@@ -1,6 +1,6 @@
 @import '~@fluentui/react/dist/sass/References.scss';
 
-
+// Identidad EWS
 $verde-oscuro: #004d40;
 $verde-claro: #8bc34a;
 $fondo-suave: #f9fbf9;
@@ -37,7 +37,7 @@ $blanco: #ffffff;
     &:hover { background-color: $verde-claro; }
 }
 
-
+/* Grid y Tarjetas */
 .gridPersonal {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -105,21 +105,45 @@ $blanco: #ffffff;
 .idEmpleado { font-size: 11px; color: #a19f9d; font-weight: 600; }
 .iconContact { color: #edebe9; font-size: 16px; }
 
+/* --- ESTILOS MODAL FLOTANTE --- */
+.modalFlotante {
+    :global(.ms-Modal-main) {
+        background-color: $blanco;
+        border-radius: 16px;
+        border: 2px solid $verde-oscuro;
+        box-shadow: 0 10px 40px rgba(0, 77, 64, 0.2);
+        max-width: 550px;
+        width: 100%;
+        animation: fadeInDown 0.3s ease-out;
+    }
+}
 
-.shimmerSeparator { margin: 15px 0; width: 100%; }
-.fullWidth { width: 100%; }
+.modalContent { padding: 30px; }
 
+.modalHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
 
-.panelFormStack { marginTop: 20px; }
+.modalTitle { color: $verde-oscuro; font-weight: 700; }
+.modalSeparator { margin: 10px 0 20px 0; }
+
+.modalBody {
+    :global(.ms-Label) { color: $verde-oscuro; font-weight: 600; }
+}
+
 .previewBox {
     padding: 20px;
-    background: #f3f2f1;
+    background: #f8faf8;
     border-radius: 12px;
     border: 2px dashed $verde-claro;
+    margin-top: 10px;
 }
 .previewTitle { font-weight: 600; color: $verde-oscuro; }
 
-.panelFooter { marginTop: 30px; }
+.modalFooter { margin-top: 30px; }
+
 .btnPanelPrimary { background-color: $verde-oscuro; border: none; }
 .btnDelete {
     color: #a4262c;
@@ -127,20 +151,16 @@ $blanco: #ffffff;
     &:hover { background-color: #fff1f1; color: #a4262c; border-color: #a4262c; }
 }
 
-
 .btnConfirmDelete {
     background-color: #a4262c;
     border-color: #a4262c;
-    &:hover { background-color: #821d23; border-color: #821d23; }
 }
 
+/* Helpers Shimmer */
+.shimmerSeparator { margin: 15px 0; width: 100%; }
+.fullWidth { width: 100%; }
 
-:global {
-    .ms-Panel-main { background-color: #111111; color: #ffffff; }
-    .ms-Panel-headerText { color: #ffffff; font-weight: 600; }
-    .ms-TextField-fieldGroup, .ms-Dropdown-title, .ms-DatePicker-container {
-        background-color: #252525; border-color: #444444; color: white;
-    }
-    .ms-Label { color: #ffffff; }
-    .ms-TextField-field, .ms-Dropdown-title { color: white !important; }
+@keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
 }

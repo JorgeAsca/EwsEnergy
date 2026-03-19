@@ -1,9 +1,9 @@
 import * as React from "react";
 import {
   Stack, Text, Persona, PersonaSize, Spinner, SpinnerSize, MessageBar, 
-  MessageBarType, PrimaryButton, DefaultButton, Panel, TextField, Dropdown, 
-  IDropdownOption, Icon, Separator, PanelType, IconButton, Shimmer,
-  ShimmerElementType, Dialog, DialogType, DialogFooter
+  MessageBarType, PrimaryButton, DefaultButton, TextField, Dropdown, 
+  IDropdownOption, Icon, Separator, IconButton, Shimmer,
+  ShimmerElementType, Dialog, DialogType, DialogFooter, Modal
 } from "@fluentui/react";
 import { PersonalService } from "../../../service/PersonalService";
 import { IPersonal } from "../../../models/IPersonal";
@@ -120,7 +120,7 @@ export const GaleriaPersonal: React.FC<{ context: any }> = (props) => {
     <div className={styles.container}>
       <Stack horizontal horizontalAlign="space-between" verticalAlign="center" className={styles.headerSection}>
         <Stack>
-          <Text variant="xxLarge" className={styles.tituloPrincipal}>Equipo Humano EWS</Text>
+          <Text variant="xxLarge" className={styles.tituloPrincipal}>Equipo EWS</Text>
           <Text variant="small" className={styles.subtitulo}>Gestión de talento para un futuro sostenible</Text>
         </Stack>
         <PrimaryButton
@@ -167,47 +167,62 @@ export const GaleriaPersonal: React.FC<{ context: any }> = (props) => {
         )}
       </div>
 
-      <Panel 
-        isOpen={isOpen} 
-        onDismiss={() => setIsOpen(false)} 
-        headerText={editandoId ? `Editar Perfil` : "Alta de Personal"}
-        type={PanelType.smallFixedFar}
-        isBlocking={false} 
+      {/* MODAL FLOTANTE (ESTILO CARD CENTRAL) */}
+      <Modal
+        isOpen={isOpen}
+        onDismiss={() => setIsOpen(false)}
+        isBlocking={false}
+        className={styles.modalFlotante}
       >
-        <Stack tokens={{ childrenGap: 15 }} className={styles.panelFormStack}>
-          <TextField 
-            label="Nombre y Apellido" 
-            required 
-            value={formulario.NombreyApellido} 
-            onChange={(_, v) => setFormulario({ ...formulario, NombreyApellido: v || "" })} 
-          />
-          <Dropdown 
-            label="Rol / Cargo" 
-            options={rolOptions} 
-            selectedKey={formulario.Rol}
-            onChange={(_, opt) => setFormulario({ ...formulario, Rol: opt?.key as string })} 
-          />
-          <Dropdown 
-            label="Fotografía"
-            options={fotoOptions}
-            selectedKey={formulario.FotoPerfil}
-            onChange={(_, opt) => setFormulario({ ...formulario, FotoPerfil: opt?.key as string })}
-          />
+        <div className={styles.modalContent}>
+          <div className={styles.modalHeader}>
+            <Text variant="xLarge" className={styles.modalTitle}>
+              {editandoId ? "Actualizar Perfil" : "Nuevo Miembro del Equipo"}
+            </Text>
+            <IconButton
+              iconProps={{ iconName: 'Cancel' }}
+              ariaLabel="Cerrar"
+              onClick={() => setIsOpen(false)}
+            />
+          </div>
 
-          {formulario.FotoPerfil && (
-            <div className={styles.previewBox}>
-              <Stack horizontalAlign="center" tokens={{ childrenGap: 10 }}>
-                <Text variant="small" className={styles.previewTitle}>Vista previa del carnet:</Text>
-                <Persona imageUrl={formulario.FotoPerfil} size={PersonaSize.size120} hidePersonaDetails />
-              </Stack>
-            </div>
-          )}
+          <Separator className={styles.modalSeparator} />
 
-          <Stack horizontal tokens={{ childrenGap: 10 }} className={styles.panelFooter}>
+          <Stack tokens={{ childrenGap: 15 }} className={styles.modalBody}>
+            <TextField 
+              label="Nombre y Apellido" 
+              required 
+              value={formulario.NombreyApellido} 
+              onChange={(_, v) => setFormulario({ ...formulario, NombreyApellido: v || "" })} 
+            />
+            <Dropdown 
+              label="Rol / Cargo" 
+              options={rolOptions} 
+              selectedKey={formulario.Rol}
+              onChange={(_, opt) => setFormulario({ ...formulario, Rol: opt?.key as string })} 
+            />
+            <Dropdown 
+              label="Fotografía"
+              options={fotoOptions}
+              selectedKey={formulario.FotoPerfil}
+              onChange={(_, opt) => setFormulario({ ...formulario, FotoPerfil: opt?.key as string })}
+            />
+
+            {formulario.FotoPerfil && (
+              <div className={styles.previewBox}>
+                <Stack horizontalAlign="center" tokens={{ childrenGap: 10 }}>
+                  <Text variant="small" className={styles.previewTitle}>Vista previa del carnet:</Text>
+                  <Persona imageUrl={formulario.FotoPerfil} size={PersonaSize.size120} hidePersonaDetails />
+                </Stack>
+              </div>
+            )}
+          </Stack>
+
+          <div className={styles.modalFooter}>
             {saving ? (
               <Spinner label="Procesando..." />
             ) : (
-              <>
+              <Stack horizontal tokens={{ childrenGap: 10 }} horizontalAlign="end">
                 <PrimaryButton 
                     text={editandoId ? "Actualizar" : "Registrar"} 
                     onClick={handleGuardar} 
@@ -222,12 +237,13 @@ export const GaleriaPersonal: React.FC<{ context: any }> = (props) => {
                   />
                 )}
                 <DefaultButton text="Cancelar" onClick={() => setIsOpen(false)} />
-              </>
+              </Stack>
             )}
-          </Stack>
-        </Stack>
-      </Panel>
+          </div>
+        </div>
+      </Modal>
 
+      {/* DIÁLOGO DE CONFIRMACIÓN (SE MANTIENE IGUAL) */}
       <Dialog
         hidden={hideDeleteDialog}
         onDismiss={() => setHideDeleteDialog(true)}
