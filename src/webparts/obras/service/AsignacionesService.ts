@@ -19,7 +19,7 @@ export class AsignacionesService {
 
     public async asignarPersonal(asignacion: IAsignacion): Promise<void> {
         const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('${this._listName}')/items`;
-        
+
         // SharePoint requiere strings ISO para las fechas
         const body = {
             Title: `Asignación Obra ${asignacion.ObraId}`,
@@ -40,7 +40,7 @@ export class AsignacionesService {
         };
 
         const response = await this._context.spHttpClient.post(endpoint, SPHttpClient.configurations.v1, options);
-        
+
         if (!response.ok) {
             const error = await response.text();
             console.error("Detalle del error:", error);
@@ -49,37 +49,37 @@ export class AsignacionesService {
     }
 
     // Eliminación de asignación (opcional, para funcionalidad de seguimiento)
-public async eliminarAsignacion(id: number): Promise<void> {
-    const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('Asignaciones EWS')/items(${id})`;
+    public async eliminarAsignacion(id: number): Promise<void> {
+        const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('Asignaciones EWS')/items(${id})`;
 
-    const response = await this._context.spHttpClient.post(endpoint, SPHttpClient.configurations.v1, {
-        headers: {
-            'Accept': 'application/json',
-            'Content-type': 'application/json',
-            'X-HTTP-Method': 'DELETE',
-            'IF-MATCH': '*',
-            'odata-version': '3.0' // <--- CAMBIO CRÍTICO AQUÍ
+        const response = await this._context.spHttpClient.post(endpoint, SPHttpClient.configurations.v1, {
+            headers: {
+                'Accept': 'application/json',
+                'Content-type': 'application/json',
+                'X-HTTP-Method': 'DELETE',
+                'IF-MATCH': '*',
+                'odata-version': '3.0' // <--- CAMBIO CRÍTICO AQUÍ
+            }
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error("Error detallado de SharePoint:", errorText);
+            throw new Error(`No se pudo eliminar: ${response.statusText}`);
         }
-    });
-
-    if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Error detallado de SharePoint:", errorText);
-        throw new Error(`No se pudo eliminar: ${response.statusText}`);
     }
-}
 
     public async actualizarAsignacion(id: number, datos: Partial<IAsignacion>): Promise<void> {
-    const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('${this._listName}')/items(${id})`;
-    await this._context.spHttpClient.post(endpoint, SPHttpClient.configurations.v1, {
-        headers: {
-            'Accept': 'application/json',
-            'Content-type': 'application/json',
-            'X-HTTP-Method': 'MERGE',
-            'IF-MATCH': '*',
-            'odata-version': ''
-        },
-        body: JSON.stringify(datos)
-    });
-}
+        const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('${this._listName}')/items(${id})`;
+        await this._context.spHttpClient.post(endpoint, SPHttpClient.configurations.v1, {
+            headers: {
+                'Accept': 'application/json',
+                'Content-type': 'application/json',
+                'X-HTTP-Method': 'MERGE',
+                'IF-MATCH': '*',
+                'odata-version': ''
+            },
+            body: JSON.stringify(datos)
+        });
+    }
 }

@@ -28,7 +28,6 @@ export class StockService {
         return data.value.map((item: any) => ({
             Id: item.Id,
             Title: item.Title,
-            // Mapeamos usando los nombres exactos que encontraste
             Categoria: item.Categor_x00ed_a || "General",
             StockActual: item.StockActual || 0,
             StockMinimo: item.StockM_x00ed_nimo || 0

@@ -1,6 +1,6 @@
 export interface IMaterial {
     Id: number;
-    Title: string; // Nombre del material
+    Title: string;
     Categoria: string;
     StockActual: number;
     StockMinimo: number;

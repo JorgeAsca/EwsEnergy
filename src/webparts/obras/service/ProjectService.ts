@@ -39,7 +39,7 @@ export class ProjectService {
             DireccionObra: nuevaObra.Direccion,
             FechaInicio: nuevaObra.FechaInicio.toISOString(),
             FechaFinPrevista: nuevaObra.FechaFin.toISOString(),
-            EstadoObra: "En Proceso"
+            EstadoObra: "Fase Previa"
         });
 
         const response = await this._context.spHttpClient.post(endpoint, SPHttpClient.configurations.v1, {
@@ -58,6 +58,28 @@ export class ProjectService {
         }
     }
 
+    public async updateObra(id: number, obraActualizada: any): Promise<void> {
+        const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('${this._listName}')/items(${id})`;
+        const body = JSON.stringify({
+            Title: obraActualizada.Nombre,
+            ClienteId: obraActualizada.ClienteId,
+            DireccionObra: obraActualizada.Direccion,
+            FechaInicio: obraActualizada.FechaInicio,
+            FechaFinPrevista: obraActualizada.FechaFin,
+        });
+
+        await this._context.spHttpClient.post(endpoint, SPHttpClient.configurations.v1, {
+            headers: {
+                'Accept': 'application/json;odata=nometadata',
+                'Content-type': 'application/json;odata=nometadata',
+                'odata-version': '',
+                'IF-MATCH': '*',
+                'X-HTTP-Method': 'MERGE'
+            },
+            body: body
+        });
+    }
+    
     public async actualizarEstado(id: number, nuevoEstado: string): Promise<void> {
         const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('${this._listName}')/items(${id})`;
 
@@ -98,38 +120,38 @@ export class ProjectService {
     }
 
     public async getAsignacionesConPersonal(): Promise<any[]> {
-    const siteUrl = this._context.pageContext.web.absoluteUrl;
-    
-    // 1. Obtenemos las asignaciones y expandimos el campo Personal (que debe ser un Lookup a la lista Personal_EWS)
-    // Usamos $expand para traer los datos del operario en la misma consulta
-    const endpoint = `${siteUrl}/_api/web/lists/getbytitle('Asignaciones_Obras')/items?$select=Id,ObraId,Personal/NombreyApellido,Personal/FotoPerfil&$expand=Personal`;
+        const siteUrl = this._context.pageContext.web.absoluteUrl;
 
-    try {
-        const response = await this._context.spHttpClient.get(
-            endpoint,
-            SPHttpClient.configurations.v1
-        );
+        // 1. Obtenemos las asignaciones y expandimos el campo Personal (que debe ser un Lookup a la lista Personal_EWS)
+        // Usamos $expand para traer los datos del operario en la misma consulta
+        const endpoint = `${siteUrl}/_api/web/lists/getbytitle('Asignaciones_Obras')/items?$select=Id,ObraId,Personal/NombreyApellido,Personal/FotoPerfil&$expand=Personal`;
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error("Error al obtener asignaciones:", errorText);
+        try {
+            const response = await this._context.spHttpClient.get(
+                endpoint,
+                SPHttpClient.configurations.v1
+            );
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error("Error al obtener asignaciones:", errorText);
+                return [];
+            }
+
+            const data = await response.json();
+
+            // Mapeamos los datos para que el componente Facepile los entienda fácilmente
+            return (data.value || []).map((item: any) => ({
+                Id: item.Id,
+                ObraId: item.ObraId,
+                Personal: {
+                    NombreyApellido: item.Personal ? item.Personal.NombreyApellido : "Sin nombre",
+                    FotoPerfil: item.Personal ? item.Personal.FotoPerfil : ""
+                }
+            }));
+        } catch (error) {
+            console.error("Error en getAsignacionesConPersonal:", error);
             return [];
         }
-
-        const data = await response.json();
-        
-        // Mapeamos los datos para que el componente Facepile los entienda fácilmente
-        return (data.value || []).map((item: any) => ({
-            Id: item.Id,
-            ObraId: item.ObraId,
-            Personal: {
-                NombreyApellido: item.Personal ? item.Personal.NombreyApellido : "Sin nombre",
-                FotoPerfil: item.Personal ? item.Personal.FotoPerfil : ""
-            }
-        }));
-    } catch (error) {
-        console.error("Error en getAsignacionesConPersonal:", error);
-        return [];
     }
-}
 }

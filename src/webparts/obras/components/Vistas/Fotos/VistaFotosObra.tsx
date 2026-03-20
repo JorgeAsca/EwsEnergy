@@ -12,243 +12,381 @@ import {
     MessageBarType,
     TextField,
     Icon,
-    Separator,
-    IconButton
+    Checkbox,
+    IconButton,
 } from "@fluentui/react";
 import { IPersonal } from "../../../models/IPersonal";
-import { IAsignacion } from "../../../models/IAsignacion";
 import { IObra } from "../../../models/IObra";
 import { PersonalService } from "../../../service/PersonalService";
 import { AsignacionesService } from "../../../service/AsignacionesService";
 import { ProjectService } from "../../../service/ProjectService";
-import { PhotoService } from "../../../service/PhotoService";
-
 import styles from "./VistaFotosObra.module.scss";
 
 export const VistaFotosObra: React.FC<{ context: any }> = (props) => {
+    // ESTADOS DEL WIZARD (Asistente)
     const [paso, setPaso] = React.useState(1);
     const [loading, setLoading] = React.useState(true);
     const [subiendo, setSubiendo] = React.useState(false);
-    const [fotosHoy, setFotosHoy] = React.useState<any[]>([]);
 
+    // Paso 1: Identidad
     const [operario, setOperario] = React.useState<IPersonal | null>(null);
-    const [obraSeleccionada, setObraSeleccionada] = React.useState<IObra | null>(null);
+    const [obraSeleccionada, setObraSeleccionada] = React.useState<IObra | null>(
+        null,
+    );
+
+    // Paso 2: Equipo
+    const [compañeros, setCompañeros] = React.useState<IPersonal[]>([]);
+    const [equipoConfirmado, setEquipoConfirmado] = React.useState<number[]>([]);
+
+    // Paso 3: Progreso
+    const [progresoDia, setProgresoDia] = React.useState<number | null>(null); // 100, 50, 0
+
+    // Paso 4: Evidencias
     const [fotos, setFotos] = React.useState<File[]>([]);
     const [comentarios, setComentarios] = React.useState("");
 
-    const [data, setData] = React.useState<{
-        personal: IPersonal[];
-        asignaciones: IAsignacion[];
-        obras: IObra[];
-    }>({ personal: [], asignaciones: [], obras: [] });
+    // Datos Base
+    const [listaPersonal, setListaPersonal] = React.useState<IPersonal[]>([]);
+    const [obrasActivas, setObrasActivas] = React.useState<IObra[]>([]);
+    const [asignacionesGlobales, setAsignacionesGlobales] = React.useState<any[]>(
+        [],
+    );
 
-    const services = React.useMemo(() => ({
-        personal: new PersonalService(props.context),
-        asignaciones: new AsignacionesService(props.context),
-        proyectos: new ProjectService(props.context),
-        photos: new PhotoService(props.context),
-    }), [props.context]);
+    const services = React.useMemo(
+        () => ({
+            personal: new PersonalService(props.context),
+            asig: new AsignacionesService(props.context),
+            obras: new ProjectService(props.context),
+        }),
+        [props.context],
+    );
 
     React.useEffect(() => {
-        const init = async () => {
+        const iniciar = async () => {
             try {
-                setLoading(true);
-                const [p, a, o] = await Promise.all([
+                const [pers, asigs, obs] = await Promise.all([
                     services.personal.getPersonal(),
-                    services.asignaciones.getAsignaciones(),
-                    services.proyectos.getObras(),
+                    services.asig.getAsignaciones(),
+                    services.obras.getObras(),
                 ]);
-                setData({ personal: p || [], asignaciones: a || [], obras: o || [] });
-            } catch (e) { console.error(e); } 
-            finally { setLoading(false); }
+                setListaPersonal(pers);
+                setAsignacionesGlobales(asigs);
+                setObrasActivas(obs.filter((o) => o.EstadoObra !== "Finalizado"));
+            } catch (e) {
+                console.error(e);
+            } finally {
+                setLoading(false);
+            }
         };
-        init();
-    }, [services]);
+        iniciar();
+    }, []);
 
-    const cargarActividadHoy = async (id: number) => {
-        const historial = await services.photos.getFotosHoyPorOperario(id);
-        setFotosHoy(historial || []);
+    // Cuando selecciona quién es y en qué obra está
+    const handleSeleccionarObra = (ob: IObra) => {
+        setObraSeleccionada(ob);
+
+        // Buscar quién más está en esta obra hoy
+        const asigsObra = asignacionesGlobales.filter(
+            (a) => Number(a.ObraId) === Number(ob.Id),
+        );
+        const compis = listaPersonal.filter(
+            (p) =>
+                asigsObra.some((a) => Number(a.PersonalId) === Number(p.Id)) &&
+                p.Id !== operario?.Id,
+        );
+
+        setCompañeros(compis);
+        setEquipoConfirmado(compis.map((c) => c.Id)); // Pre-marcamos todos por defecto
+        setPaso(2); // Avanzamos al paso de Equipo
     };
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const toggleCompañero = (id: number) => {
+        setEquipoConfirmado((prev) =>
+            prev.indexOf(id) !== -1 ? prev.filter((p) => p !== id) : [...prev, id],
+        );
+    };
+
+    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
-            const nuevasFotos = Array.from(e.target.files);
-            setFotos((prev) => [...prev, ...nuevasFotos].slice(0, 5));
+            const filesArray = Array.from(e.target.files);
+            setFotos((prev) => [...prev, ...filesArray].slice(0, 4)); // Máximo 4 fotos
         }
     };
 
     const enviarReporte = async () => {
-        if (!operario || !obraSeleccionada || fotos.length === 0) return;
+        setSubiendo(true);
         try {
-            setSubiendo(true);
-            for (const foto of fotos) {
-                await services.photos.subirFotoProyecto(foto, obraSeleccionada.Title, {
-                    operario: operario.NombreyApellido,
-                    operarioId: operario.Id,
-                    obraId: obraSeleccionada.Id,
-                    comentarios: comentarios,
-                });
-            }
+            // Aquí enviarás el payload a tu servicio (ej. DailyReportService)
+            const reporte = {
+                OperarioPrincipal: operario?.Id,
+                ObraId: obraSeleccionada?.Id,
+                EquipoConfirmado: equipoConfirmado,
+                ProgresoReportado: progresoDia,
+                Comentarios: comentarios,
+                Fotos: fotos,
+            };
+
+            console.log("Reporte a enviar:", reporte);
+            // Simulación de carga
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+
+            alert("¡Reporte enviado con éxito! Buen trabajo equipo.");
+
+            // Resetear para el día siguiente
+            setPaso(1);
+            setOperario(null);
+            setObraSeleccionada(null);
             setFotos([]);
             setComentarios("");
-            await cargarActividadHoy(operario.Id);
-            setPaso(2);
+            setProgresoDia(null);
         } catch (error) {
-            alert("❌ Error al subir reporte.");
-        } finally { setSubiendo(false); }
+            alert("Error al sincronizar.");
+        } finally {
+            setSubiendo(false);
+        }
     };
 
-    const esObraAsignada = (obraId: number | undefined): boolean => {
-        if (!operario || !obraId) return false;
-        return data.asignaciones.some(a => Number(a.PersonalId) === Number(operario.Id) && Number(a.ObraId) === Number(obraId));
-    };
-
-    if (loading) return <Spinner size={SpinnerSize.large} label="Iniciando terminal de reporte..." className={styles.loader} />;
+    if (loading)
+        return (
+            <Spinner
+                size={SpinnerSize.large}
+                label="Preparando cierre de jornada..."
+            />
+        );
 
     return (
         <div className={styles.container}>
-            {/* CABECERA DINÁMICA */}
             <header className={styles.appHeader}>
-                <Stack horizontal verticalAlign="center" tokens={{ childrenGap: 10 }}>
-                    <div className={styles.iconCircle}><Icon iconName="ViewDashboard" /></div>
-                    <Stack>
-                        <Text variant="xLarge" className={styles.title}>EWS Energy</Text>
-                        <Text variant="small" className={styles.subtitle}>Reporte Diario de Obra</Text>
-                    </Stack>
+                <Stack>
+                    <Text variant="xLarge" className={styles.title}>
+                        EWS 
+                    </Text>
+                    <Text className={styles.subtitle}>Reporte Diario de Avance</Text>
                 </Stack>
                 {operario && (
-                    <Persona 
-                        text={operario.NombreyApellido} 
-                        size={PersonaSize.size32} 
-                        className={styles.userBadge} 
-                        onClick={() => setPaso(1)}
+                    <Persona
+                        imageUrl={operario.FotoPerfil}
+                        size={PersonaSize.size32}
+                        hidePersonaDetails
                     />
                 )}
             </header>
 
-            <main className={styles.content}>
-                {/* PASO 1: SELECCIÓN DE PERSONAL */}
+            {/* BARRA DE PROGRESO DEL WIZARD */}
+            <div className={styles.wizardNav}>
+                {[1, 2, 3, 4].map((p) => (
+                    <div
+                        key={p}
+                        className={`${styles.dot} ${paso >= p ? styles.active : ""}`}
+                    />
+                ))}
+            </div>
+
+            <main className={styles.mainContent}>
+                {/* PASO 1: ¿Quién eres y dónde estás? */}
                 {paso === 1 && (
-                    <section className={styles.fadein}>
-                        <Text variant="xxLarge" className={styles.stepTitle}>¿Quién eres hoy?</Text>
-                        <div className={styles.gridPersonal}>
-                            {data.personal.map((p) => (
-                                <button key={p.Id} className={styles.cardPersona} onClick={() => {
-                                    setOperario(p);
-                                    cargarActividadHoy(p.Id);
-                                    setPaso(2);
-                                }}>
-                                    <Persona
-                                        text={p.NombreyApellido}
-                                        imageUrl={p.FotoPerfil}
-                                        size={PersonaSize.size100}
-                                        hidePersonaDetails
+                    <section className={styles.stepContainer}>
+                        <Text variant="large" className={styles.stepTitle}>
+                            1. Identificación
+                        </Text>
+                        {!operario ? (
+                            <Stack tokens={{ childrenGap: 10 }}>
+                                <Text>¿Quién está enviando el reporte?</Text>
+                                {listaPersonal.map((p) => (
+                                    <div
+                                        key={p.Id}
+                                        className={styles.userCard}
+                                        onClick={() => setOperario(p)}
+                                    >
+                                        <Persona
+                                            imageUrl={p.FotoPerfil}
+                                            text={p.NombreyApellido}
+                                            secondaryText={p.Rol}
+                                            size={PersonaSize.size40}
+                                        />
+                                    </div>
+                                ))}
+                            </Stack>
+                        ) : (
+                            <Stack tokens={{ childrenGap: 15 }}>
+                                <Text>
+                                    Hola {operario.NombreyApellido}, ¿En qué obra trabajaste hoy?
+                                </Text>
+                                {obrasActivas.map((o) => (
+                                    <div
+                                        key={o.Id}
+                                        className={styles.obraCard}
+                                        onClick={() => handleSeleccionarObra(o)}
+                                    >
+                                        <Text className={styles.obraTitle}>{o.Title}</Text>
+                                        <Text variant="small">
+                                            <Icon iconName="MapPin" /> {o.DireccionObra}
+                                        </Text>
+                                    </div>
+                                ))}
+                                <DefaultButton
+                                    text="Cambiar Operario"
+                                    onClick={() => setOperario(null)}
+                                />
+                            </Stack>
+                        )}
+                    </section>
+                )}
+
+                {/* PASO 2: Confirmar Equipo */}
+                {paso === 2 && (
+                    <section className={styles.stepContainer}>
+                        <Text variant="large" className={styles.stepTitle}>
+                            2. Confirmar Equipo
+                        </Text>
+                        <Text className={styles.instruccion}>
+                            El sistema previó que trabajarías con ellos hoy. Desmarca a quien
+                            no haya asistido:
+                        </Text>
+
+                        <div className={styles.teamList}>
+                            {compañeros.length > 0 ? (
+                                compañeros.map((c) => (
+                                    <div key={c.Id} className={styles.teamMemberItem}>
+                                        <Persona
+                                            imageUrl={c.FotoPerfil}
+                                            text={c.NombreyApellido}
+                                            size={PersonaSize.size32}
+                                        />
+                                        <Checkbox
+                                            checked={equipoConfirmado.indexOf(c.Id as number) !== -1}
+                                            onChange={() => toggleCompañero(c.Id as number)}
+                                        />
+                                    </div>
+                                ))
+                            ) : (
+                                <MessageBar>Trabajaste solo en esta obra.</MessageBar>
+                            )}
+                        </div>
+
+                        <Stack horizontal tokens={{ childrenGap: 10 }}>
+                            <DefaultButton text="Atrás" onClick={() => setPaso(1)} />
+                            <PrimaryButton
+                                text="Siguiente"
+                                onClick={() => setPaso(3)}
+                                className={styles.btnEws}
+                            />
+                        </Stack>
+                    </section>
+                )}
+
+                {/* PASO 3: Estado de la Obra (Botones Grandes) */}
+                {paso === 3 && (
+                    <section className={styles.stepContainer}>
+                        <Text variant="large" className={styles.stepTitle}>
+                            3. Rendimiento Diario
+                        </Text>
+                        <Text className={styles.instruccion}>
+                            ¿Cómo fue el avance de la obra el día de hoy?
+                        </Text>
+
+                        <Stack
+                            tokens={{ childrenGap: 15 }}
+                            className={styles.progressContainer}
+                        >
+                            <button
+                                className={`${styles.progressBtn} ${styles.btnVerde} ${progresoDia === 100 ? styles.selected : ""}`}
+                                onClick={() => setProgresoDia(100)}
+                            >
+                                <Icon iconName="CompletedSolid" /> Jornada Óptima (100%)
+                            </button>
+                            <button
+                                className={`${styles.progressBtn} ${styles.btnAmarillo} ${progresoDia === 50 ? styles.selected : ""}`}
+                                onClick={() => setProgresoDia(50)}
+                            >
+                                <Icon iconName="WarningSolid" /> Retraso Leve / Faltó Material
+                            </button>
+                            <button
+                                className={`${styles.progressBtn} ${styles.btnRojo} ${progresoDia === 0 ? styles.selected : ""}`}
+                                onClick={() => setProgresoDia(0)}
+                            >
+                                <Icon iconName="StatusErrorFull" /> Obra Bloqueada / Problemas
+                            </button>
+                        </Stack>
+
+                        <Stack
+                            horizontal
+                            tokens={{ childrenGap: 10 }}
+                            styles={{ root: { marginTop: 25 } }}
+                        >
+                            <DefaultButton text="Atrás" onClick={() => setPaso(2)} />
+                            <PrimaryButton
+                                text="Siguiente"
+                                onClick={() => setPaso(4)}
+                                disabled={progresoDia === null}
+                                className={styles.btnEws}
+                            />
+                        </Stack>
+                    </section>
+                )}
+
+                {/* PASO 4: Fotos y Dictado por voz */}
+                {paso === 4 && (
+                    <section className={styles.stepContainer}>
+                        <Text variant="large" className={styles.stepTitle}>
+                            4. Evidencia Visual
+                        </Text>
+
+                        <label className={styles.photoDropzone}>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                multiple
+                                onChange={handleFileUpload}
+                                style={{ display: "none" }}
+                            />
+                            <Icon iconName="Camera" className={styles.bigIcon} />
+                            <Text>Toca para tomar foto o abrir galería</Text>
+                        </label>
+
+                        <div className={styles.previewContainer}>
+                            {fotos.map((f, i) => (
+                                <div key={i} className={styles.previewItem}>
+                                    <img src={URL.createObjectURL(f)} alt="preview" />
+                                    <IconButton
+                                        iconProps={{ iconName: "Cancel" }}
+                                        className={styles.removePhoto}
+                                        onClick={() =>
+                                            setFotos((prev) => prev.filter((_, idx) => idx !== i))
+                                        }
                                     />
-                                    <Text variant="large" className={styles.cardName}>{p.NombreyApellido}</Text>
-                                    <Text variant="small" className={styles.cardRole}>{p.Rol || 'Operario'}</Text>
-                                </button>
+                                </div>
                             ))}
                         </div>
-                    </section>
-                )}
 
-                {/* PASO 2: SELECCIÓN DE OBRA */}
-                {paso === 2 && (
-                    <section className={styles.fadein}>
-                        <div className={styles.sectionHeader}>
-                            <IconButton iconProps={{iconName: 'Back'}} onClick={() => setPaso(1)} />
-                            <Text variant="xxLarge" className={styles.stepTitle}>Selecciona la Obra</Text>
-                        </div>
+                        <TextField
+                            label="Comentarios (Usa el micrófono de tu teclado 🎤)"
+                            multiline
+                            rows={3}
+                            value={comentarios}
+                            onChange={(_, v) => setComentarios(v || "")}
+                            placeholder="Ej. Dejamos el cuadro principal montado..."
+                        />
 
-                        {/* HISTORIAL RÁPIDO */}
-                        {fotosHoy.length > 0 && (
-                            <div className={styles.activityHoy}>
-                                <Text variant="mediumPlus" className={styles.sectionLabel}>Tu actividad de hoy</Text>
-                                <div className={styles.horizontalScroll}>
-                                    {fotosHoy.map((f, i) => (
-                                        <div key={i} className={styles.miniCard}>
-                                            <img src={f.UrlFoto?.Url} alt="Hoy" />
-                                            <div className={styles.miniCardOverlay}>{f.Title}</div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        <div className={styles.gridObras}>
-                            {data.obras.map((o) => {
-                                const asignada = esObraAsignada(o.Id);
-                                return (
-                                    <button 
-                                        key={o.Id} 
-                                        className={`${styles.cardObra} ${asignada ? styles.asignada : ""}`}
-                                        onClick={() => { setObraSeleccionada(o); setPaso(3); }}
-                                    >
-                                        <Stack horizontal horizontalAlign="space-between" verticalAlign="center">
-                                            <Stack>
-                                                <Text className={styles.obraTitle}>{o.Title}</Text>
-                                                <Text className={styles.obraSub}>{o.DireccionObra || "Sin dirección"}</Text>
-                                            </Stack>
-                                            {asignada && <Icon iconName="FavoriteStarFill" className={styles.starIcon} />}
-                                        </Stack>
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </section>
-                )}
-
-                {/* PASO 3: CAPTURA Y ENVÍO */}
-                {paso === 3 && (
-                    <section className={styles.fadein}>
-                        <div className={styles.sectionHeader}>
-                            <IconButton iconProps={{iconName: 'Back'}} onClick={() => setPaso(2)} />
-                            <Text variant="xxLarge" className={styles.stepTitle}>Captura de Progreso</Text>
-                        </div>
-
-                        <div className={styles.workCard}>
-                            <Stack tokens={{childrenGap: 10}}>
-                                <Text variant="large" style={{fontWeight: 600, color: '#004a99'}}>
-                                    Obra: {obraSeleccionada?.Title}
-                                </Text>
-                                <Separator />
-                                
-                                <div className={styles.cameraBox}>
-                                    <input type="file" accept="image/*" multiple id="camera-input" style={{ display: "none" }} onChange={handleFileChange} />
-                                    <div className={styles.dropZone} onClick={() => document.getElementById("camera-input")?.click()}>
-                                        <Icon iconName="Camera" className={styles.bigIcon} />
-                                        <Text variant="large">Tocar para añadir fotos</Text>
-                                        <Text variant="small">Máximo 5 fotos por reporte</Text>
-                                    </div>
-                                </div>
-
-                                <div className={styles.previewContainer}>
-                                    {fotos.map((f, i) => (
-                                        <div key={i} className={styles.previewItem}>
-                                            <img src={URL.createObjectURL(f)} />
-                                            <IconButton iconProps={{iconName: 'Cancel'}} className={styles.removePhoto} onClick={() => setFotos(prev => prev.filter((_, idx) => idx !== i))} />
-                                        </div>
-                                    ))}
-                                </div>
-
-                                <TextField
-                                    label="Observaciones"
-                                    multiline rows={3}
-                                    value={comentarios}
-                                    onChange={(_, v) => setComentarios(v || "")}
-                                    placeholder="¿Alguna novedad importante?"
-                                />
-
-                                <PrimaryButton 
-                                    text="Enviar Reporte a Oficina" 
-                                    iconProps={{iconName: 'Send'}} 
-                                    onClick={enviarReporte}
-                                    disabled={fotos.length === 0 || subiendo}
-                                    className={styles.sendButton}
-                                />
-                                {subiendo && <Spinner size={SpinnerSize.medium} label="Sincronizando con SharePoint..." />}
-                            </Stack>
-                        </div>
+                        <Stack
+                            horizontal
+                            tokens={{ childrenGap: 10 }}
+                            styles={{ root: { marginTop: 25 } }}
+                        >
+                            <DefaultButton
+                                text="Atrás"
+                                onClick={() => setPaso(3)}
+                                disabled={subiendo}
+                            />
+                            <PrimaryButton
+                                text={subiendo ? "Sincronizando..." : "Enviar Reporte Oficial"}
+                                iconProps={{ iconName: "Send" }}
+                                onClick={enviarReporte}
+                                disabled={fotos.length === 0 || subiendo}
+                                className={styles.btnEws}
+                                style={{ flex: 1 }}
+                            />
+                        </Stack>
                     </section>
                 )}
             </main>

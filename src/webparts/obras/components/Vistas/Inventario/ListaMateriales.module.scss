@@ -1,94 +1,103 @@
 @import '~@fluentui/react/dist/sass/References.scss';
 
+// Variables EWS Energy
 $verde-oscuro: #004d40;
 $verde-claro: #8bc34a;
 $blanco: #ffffff;
 $rojo-alerta: #d13438;
+$fondo-suave: #f9fbf9;
 
 .container {
-    padding: 20px;
-    background-color: #f9fbf9;
+  padding: 20px;
+  background-color: $fondo-suave;
+  min-height: 100vh;
 }
 
 .titulo {
-    color: $verde-oscuro;
-    font-weight: 700;
-    margin-bottom: 20px;
+  color: $verde-oscuro;
+  font-weight: 700;
+  margin-bottom: 25px;
 }
 
 /* Tarjeta del formulario superior */
 .formCard {
-    background-color: $blanco;
-    padding: 25px;
-    border-radius: 12px;
-    border: 1px solid #e1e1e1;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    margin-bottom: 25px;
+  background-color: $blanco;
+  padding: 25px;
+  border-radius: 12px;
+  border: 1px solid #e1e1e1;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 
-    :global(.ms-Label) {
-        color: $verde-oscuro;
-        font-weight: 600;
-    }
+  :global(.ms-Label) {
+    color: $verde-oscuro;
+    font-weight: 600;
+  }
 }
 
 .btnAdd {
-    background-color: $verde-oscuro;
-    border: none;
-    border-radius: 8px;
+  background-color: $verde-oscuro;
+  border: none;
+  border-radius: 8px;
+  color: $blanco;
 
-    &:hover {
-        background-color: $verde-claro;
-    }
+  &:hover {
+    background-color: $verde-claro;
+  }
 }
 
 /* Buscador y Tabla */
 .searchSection {
-    margin: 20px 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+  margin: 20px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .tableContainer {
-    background-color: $blanco;
-    border-radius: 12px;
-    border: 1px solid #edebe9;
-    overflow: hidden;
+  background-color: $blanco;
+  border-radius: 12px;
+  border: 1px solid #edebe9;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
 
-    :global(.ms-DetailsHeader) {
-        background-color: $verde-oscuro;
-        padding-top: 0;
+  :global(.ms-DetailsHeader) {
+    background-color: $verde-oscuro;
+    padding-top: 0;
 
-        :global(.ms-DetailsHeader-cellName) {
-            color: $blanco !important;
-            font-weight: 600;
-        }
+    :global(.ms-DetailsHeader-cellName) {
+      color: $blanco !important;
+      font-weight: 600;
     }
+  }
+  
+  :global(.ms-DetailsRow:hover) {
+    background-color: rgba(139, 195, 74, 0.05);
+  }
 }
 
 /* Estilos de celda especiales */
 .fotoProducto {
-    border-radius: 4px;
-    border: 1px solid #eee;
-    object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #eee;
+  object-fit: cover;
 }
 
 .stockCritico {
-    color: $rojo-alerta;
-    font-weight: 700;
+  color: $rojo-alerta;
+  font-weight: 800;
 }
 
 .stockNormal {
-    color: $verde-oscuro;
-    font-weight: 600;
+  color: $verde-oscuro;
+  font-weight: 600;
 }
 
 .badgeCategoria {
-    padding: 4px 10px;
-    border-radius: 20px;
-    background-color: #f0f4f0;
-    color: $verde-oscuro;
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: 20px;
+  background-color: #f1f8e9;
+  color: $verde-oscuro;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  border: 1px solid $verde-claro;
 }

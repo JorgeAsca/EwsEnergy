@@ -3,7 +3,6 @@ import {
   Stack,
   Text,
   PrimaryButton,
-  Panel,
   TextField,
   DatePicker,
   Dropdown,
@@ -15,21 +14,19 @@ import {
   Separator,
   Facepile,
   IFacepilePersona,
-  ProgressIndicator,
   PersonaSize,
   Icon,
-  DocumentCard,
   Image,
   ImageFit,
-  PanelType,
   Modal,
   IconButton,
   DefaultButton,
 } from "@fluentui/react";
 import { SPHttpClient } from "@microsoft/sp-http";
 import { ProjectService } from "../../../service/ProjectService";
+import { PersonalService } from "../../../service/PersonalService"; // <-- IMPORTANTE
+import { AsignacionesService } from "../../../service/AsignacionesService"; // <-- IMPORTANTE
 import { IObra } from "../../../models/IObra";
-
 import styles from "./TablaObras.module.scss";
 
 interface IObraCard extends IObra {
@@ -43,8 +40,12 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
   const [obras, setObras] = React.useState<IObraCard[]>([]);
   const [clientes, setClientes] = React.useState<IDropdownOption[]>([]);
   const [loading, setLoading] = React.useState(true);
+
   const [isOpen, setIsOpen] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
+  const [obraEditandoId, setObraEditandoId] = React.useState<number | null>(
+    null,
+  );
 
   const [obraSeleccionada, setObraSeleccionada] =
     React.useState<IObraCard | null>(null);
@@ -60,35 +61,34 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
     FechaFin: new Date(),
   });
 
+  // Instanciamos los tres servicios
   const projectService = React.useMemo(
     () => new ProjectService(props.context),
     [props.context],
   );
-
-  const verDetallesObra = async (obra: IObraCard) => {
-    setObraSeleccionada(obra);
-    setLoadingFotos(true);
-    try {
-      const fotos = await projectService.getFotosPorObra(obra.Id);
-      setFotosObra(fotos);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoadingFotos(false);
-    }
-  };
+  const personalService = React.useMemo(
+    () => new PersonalService(props.context),
+    [props.context],
+  );
+  const asigService = React.useMemo(
+    () => new AsignacionesService(props.context),
+    [props.context],
+  );
 
   const cargarDatos = async () => {
     try {
       setLoading(true);
-      const [listaObras, respClientes, listaAsignaciones] = await Promise.all([
-        projectService.getObras(),
-        props.context.spHttpClient.get(
-          `${props.context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('Clientes')/items?$select=Id,Title`,
-          SPHttpClient.configurations.v1,
-        ),
-        projectService.getAsignacionesConPersonal(),
-      ]);
+      // Descargamos TODA la información necesaria en paralelo
+      const [listaObras, respClientes, listaAsignaciones, listaPersonal] =
+        await Promise.all([
+          projectService.getObras(),
+          props.context.spHttpClient.get(
+            `${props.context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('Clientes')/items?$select=Id,Title`,
+            SPHttpClient.configurations.v1,
+          ),
+          asigService.getAsignaciones(), // Trae { ObraId, PersonalId }
+          personalService.getPersonal(), // Trae { Id, NombreyApellido, FotoPerfil }
+        ]);
 
       let opcionesClientes: IDropdownOption[] = [];
       if (respClientes.ok) {
@@ -107,24 +107,40 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
         const fin = o.FechaFinPrevista
           ? new Date(o.FechaFinPrevista).getTime()
           : hoy;
-
         const total = fin - inicio;
         const transcurrido = hoy - inicio;
         const porcentaje =
           total > 0 ? Math.min(Math.max(transcurrido / total, 0), 1) : 0;
 
-        const operariosAsignados: IFacepilePersona[] = listaAsignaciones
-          .filter((a: any) => Number(a.ObraId) === Number(o.Id))
-          .map((a: any) => ({
-            personaName: a.Personal?.NombreyApellido || "Operario",
-            imageUrl: a.Personal?.FotoPerfil || "",
-          }));
+        // 1. Filtramos las asignaciones de ESTA obra
+        const asigsObra = (listaAsignaciones as any[]).filter(
+          (a) => Number(a.ObraId) === Number(o.Id),
+        );
+
+        // 2. Extraemos IDs únicos de personal (evita fotos duplicadas si están asignados varios días)
+        const uniquePersonalIds = Array.from(
+          new Set(asigsObra.map((a) => Number(a.PersonalId))),
+        );
+
+        // 3. Mapeamos los IDs únicos a objetos de Facepile
+        const operariosAsignados: IFacepilePersona[] = uniquePersonalIds.map(
+          (pid) => {
+            const pers = (listaPersonal as any[]).find(
+              (p) => Number(p.Id) === pid,
+            );
+            return {
+              personaName: pers?.NombreyApellido || "Operario",
+              imageUrl: pers?.FotoPerfil || "",
+            };
+          },
+        );
 
         return {
           ...o,
           clienteNombre:
-            opcionesClientes.find((c) => Number(c.key) === (o as any).ClienteId)
-              ?.text || "Cliente no definido",
+            opcionesClientes.find(
+              (c) => Number(c.key) === (o as any).Cliente?.Id,
+            )?.text || "Cliente no definido",
           porcentajeTiempo: porcentaje,
           operarios: operariosAsignados,
           diasRestantes: Math.ceil((fin - hoy) / (1000 * 60 * 60 * 24)),
@@ -132,8 +148,15 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
       });
 
       setObras(obrasProcesadas);
+
+      if (obraSeleccionada) {
+        const actualizada = obrasProcesadas.find(
+          (o) => o.Id === obraSeleccionada.Id,
+        );
+        if (actualizada) setObraSeleccionada(actualizada);
+      }
     } catch (e) {
-      console.error("Error al cargar Dashboard:", e);
+      console.error(e);
     } finally {
       setLoading(false);
     }
@@ -143,11 +166,51 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
     cargarDatos();
   }, []);
 
+  const verDetallesObra = async (obra: IObraCard) => {
+    setObraSeleccionada(obra);
+    setLoadingFotos(true);
+    try {
+      const fotos = await projectService.getFotosPorObra(obra.Id);
+      setFotosObra(fotos || []);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingFotos(false);
+    }
+  };
+
+  const abrirEdicion = () => {
+    if (!obraSeleccionada) return;
+    const clId =
+      (clientes.find((c) => c.text === obraSeleccionada.clienteNombre)
+        ?.key as number) || 0;
+
+    setNuevaObra({
+      Nombre: obraSeleccionada.Title,
+      Descripcion: obraSeleccionada.Descripcion || "",
+      ClienteId: clId,
+      Direccion: obraSeleccionada.DireccionObra || "",
+      FechaInicio: obraSeleccionada.FechaInicio
+        ? new Date(obraSeleccionada.FechaInicio)
+        : new Date(),
+      FechaFin: obraSeleccionada.FechaFinPrevista
+        ? new Date(obraSeleccionada.FechaFinPrevista)
+        : new Date(),
+    });
+    setObraEditandoId(obraSeleccionada.Id);
+    setIsOpen(true);
+  };
+
   const handleGuardar = async () => {
     try {
       setSaving(true);
-      await projectService.crearObra(nuevaObra);
+      if (obraEditandoId) {
+        await projectService.updateObra(obraEditandoId, nuevaObra);
+      } else {
+        await projectService.crearObra(nuevaObra);
+      }
       setIsOpen(false);
+      setObraEditandoId(null);
       setNuevaObra({
         Nombre: "",
         Descripcion: "",
@@ -158,13 +221,38 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
       });
       await cargarDatos();
     } catch (e) {
-      alert("Error al guardar obra.");
+      alert("Error al guardar.");
     } finally {
       setSaving(false);
     }
   };
 
-  if (loading)
+  const obrasAgrupadas = obras.reduce(
+    (acc, obra) => {
+      const estado = obra.EstadoObra || "Sin Asignar";
+      if (!acc[estado]) acc[estado] = [];
+      acc[estado].push(obra);
+      return acc;
+    },
+    {} as Record<string, IObraCard[]>,
+  );
+
+  const renderProgressTracker = (porcentaje: number) => {
+    const totalBoxes = 10;
+    const filledBoxes = Math.round(porcentaje * totalBoxes);
+    return (
+      <div className={styles.progressTrackerBox}>
+        {Array.from({ length: totalBoxes }).map((_, idx) => (
+          <div
+            key={idx}
+            className={`${styles.trackerDot} ${idx < filledBoxes ? styles.filled : ""}`}
+          />
+        ))}
+      </div>
+    );
+  };
+
+  if (loading && obras.length === 0)
     return (
       <Spinner
         size={SpinnerSize.large}
@@ -180,116 +268,221 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
             Panel de Control de Obras
           </Text>
           <Text variant="small" className={styles.subtituloHeader}>
-            Gestión de energías renovables y sostenibilidad
+            Gestión y seguimiento de proyectos EWS Energy
           </Text>
         </Stack>
         <PrimaryButton
           iconProps={{ iconName: "Add" }}
           text="Nueva Obra"
-          onClick={() => setIsOpen(true)}
+          onClick={() => {
+            setObraEditandoId(null);
+            setIsOpen(true);
+          }}
           className={styles.btnNuevaObra}
         />
       </div>
 
-      <div className={styles.gridObras}>
-        {obras.length > 0 ? (
-          obras.map((o) => (
-            <DocumentCard
-              key={o.Id}
-              className={styles.cardObra}
-              onClick={() => verDetallesObra(o)}
-            >
-              <div className={styles.cardContent}>
-                <Stack tokens={{ childrenGap: 12 }}>
-                  <Stack
-                    horizontal
-                    horizontalAlign="space-between"
-                    verticalAlign="start"
+      <div className={styles.splitLayout}>
+        <div className={styles.listColumn}>
+          <div className={styles.listContainer}>
+            {Object.keys(obrasAgrupadas).length === 0 && (
+              <MessageBar>No hay proyectos registrados.</MessageBar>
+            )}
+            {Object.keys(obrasAgrupadas).map((estado) => (
+              <div key={estado}>
+                <Text className={styles.listGroupHeader}>{estado}</Text>
+                {obrasAgrupadas[estado].map((o) => (
+                  <div
+                    key={o.Id}
+                    className={`${styles.listItem} ${obraSeleccionada?.Id === o.Id ? styles.selected : ""}`}
+                    onClick={() => verDetallesObra(o)}
                   >
-                    <Stack className={styles.cardTitleArea}>
-                      <Text className={styles.obraTitle}>{o.Title}</Text>
-                      <Text className={styles.clienteText}>
-                        {o.clienteNombre}
-                      </Text>
-                    </Stack>
-                    <div
-                      className={`${styles.badgeEstado} ${o.EstadoObra === "Finalizado" ? styles.finalizado : styles.activo}`}
-                    >
-                      {o.EstadoObra || "Activo"}
-                    </div>
-                  </Stack>
+                    <Text className={styles.obraTitle}>{o.Title}</Text>
+                    {renderProgressTracker(o.porcentajeTiempo)}
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
 
-                  <Separator />
+        <div className={styles.detailColumn}>
+          {obraSeleccionada ? (
+            <div className={styles.detailContent}>
+              <Stack
+                horizontal
+                horizontalAlign="space-between"
+                verticalAlign="center"
+              >
+                <Stack>
+                  <Text variant="xLarge" className={styles.detailTitle}>
+                    {obraSeleccionada.Title}
+                  </Text>
+                  <Text variant="small" style={{ color: "#666" }}>
+                    {obraSeleccionada.clienteNombre}
+                  </Text>
+                </Stack>
+                <div
+                  className={`${styles.badgeEstado} ${obraSeleccionada.EstadoObra === "Finalizado" ? styles.finalizado : styles.activo}`}
+                >
+                  {obraSeleccionada.EstadoObra || "Fase Previa"}
+                </div>
+                <DefaultButton
+                  iconProps={{ iconName: "Edit" }}
+                  text="Editar"
+                  onClick={abrirEdicion}
+                />
+              </Stack>
+              <Separator />
 
-                  <Stack>
-                    <Text className={styles.labelSeccion}>
-                      Equipo en Campo:
-                    </Text>
+              <Stack
+                horizontal
+                tokens={{ childrenGap: 40 }}
+                className={styles.infoSection}
+              >
+                <Stack>
+                  <Text className={styles.labelSeccion}>Dirección</Text>
+                  <Text>
+                    <Icon iconName="MapPin" className={styles.iconVerde} />{" "}
+                    {obraSeleccionada.DireccionObra || "Sin dirección"}
+                  </Text>
+                </Stack>
+                <Stack>
+                  <Text className={styles.labelSeccion}>Días Restantes</Text>
+                  <Text>
+                    <Icon iconName="Calendar" className={styles.iconVerde} />{" "}
+                    {obraSeleccionada.diasRestantes > 0
+                      ? obraSeleccionada.diasRestantes
+                      : 0}{" "}
+                    días
+                  </Text>
+                </Stack>
+                <Stack>
+                  <Text className={styles.labelSeccion}>Equipo en Campo</Text>
+                  {obraSeleccionada.operarios &&
+                  obraSeleccionada.operarios.length > 0 ? (
                     <Facepile
-                      personas={o.operarios}
+                      personas={obraSeleccionada.operarios}
                       personaSize={PersonaSize.size32}
                     />
-                  </Stack>
+                  ) : (
+                    <Text
+                      variant="small"
+                      style={{ color: "#888", fontStyle: "italic" }}
+                    >
+                      Sin personal asignado
+                    </Text>
+                  )}
+                </Stack>
+              </Stack>
 
-                  <Stack tokens={{ childrenGap: 4 }}>
-                    <div className={styles.infoRow}>
-                      <Icon iconName="MapPin" />
-                      <Text variant="small" nowrap>
-                        {o.DireccionObra || "Sin dirección"}
-                      </Text>
-                    </div>
-                    <div className={styles.infoRow}>
-                      <Icon iconName="Calendar" />
-                      <Text variant="small">
-                        Días restantes:{" "}
-                        <b>{o.diasRestantes > 0 ? o.diasRestantes : 0}</b>
-                      </Text>
-                    </div>
-                  </Stack>
-
-                  <ProgressIndicator
-                    percentComplete={o.porcentajeTiempo}
-                    label="Progreso Temporal"
-                    className={
-                      o.porcentajeTiempo > 0.9 && o.EstadoObra !== "Finalizado"
-                        ? styles.progresoCritico
-                        : styles.progresoNormal
-                    }
-                  />
+              <div className={styles.planosSection}>
+                <Stack
+                  horizontal
+                  horizontalAlign="space-between"
+                  verticalAlign="center"
+                  styles={{ root: { marginBottom: 15 } }}
+                >
+                  <Text variant="large" className={styles.sectionTitle}>
+                    Planos y Documentación
+                  </Text>
+                  <DefaultButton
+                    iconProps={{ iconName: "Upload" }}
+                    className={styles.btnUpload}
+                  >
+                    Añadir Archivo
+                  </DefaultButton>
+                </Stack>
+                <Stack horizontal tokens={{ childrenGap: 15 }} wrap>
+                  <div className={styles.planoCard}>
+                    <Icon iconName="PDFSolid" className={styles.pdfIcon} />
+                    <Text variant="smallPlus">Esquema_Eléctrico_v2.pdf</Text>
+                  </div>
+                  <div className={styles.planoCard}>
+                    <Icon iconName="VisioDocument" className={styles.dwgIcon} />
+                    <Text variant="smallPlus">Topografía_Terreno.dwg</Text>
+                  </div>
                 </Stack>
               </div>
-            </DocumentCard>
-          ))
-        ) : (
-          <MessageBar messageBarType={MessageBarType.info}>
-            No hay proyectos registrados.
-          </MessageBar>
-        )}
+
+              <div className={styles.historialSection}>
+                <Text variant="large" className={styles.sectionTitle}>
+                  Reportes de Jornada
+                </Text>
+                {loadingFotos ? (
+                  <Spinner
+                    size={SpinnerSize.large}
+                    label="Cargando reportes..."
+                  />
+                ) : fotosObra.length > 0 ? (
+                  <Stack
+                    tokens={{ childrenGap: 15 }}
+                    styles={{ root: { marginTop: 15 } }}
+                  >
+                    {fotosObra.map((f, i) => (
+                      <div key={i} className={styles.fotoCard}>
+                        <Stack horizontal tokens={{ childrenGap: 15 }}>
+                          <Image
+                            src={f.UrlFoto?.Url}
+                            width={120}
+                            height={90}
+                            imageFit={ImageFit.cover}
+                            className={styles.fotoThumb}
+                          />
+                          <Stack>
+                            <Text className={styles.fotoFecha}>
+                              📅{" "}
+                              {new Date(f.FechaRegistro).toLocaleDateString()} -
+                              👷 {f.Operario}
+                            </Text>
+                            <div className={styles.fotoComentarioBox}>
+                              <Text className={styles.fotoComentarioText}>
+                                "{f.Comentarios || "Sin observaciones técnicas"}
+                                "
+                              </Text>
+                            </div>
+                          </Stack>
+                        </Stack>
+                      </div>
+                    ))}
+                  </Stack>
+                ) : (
+                  <MessageBar messageBarType={MessageBarType.info}>
+                    No hay reportes para esta obra.
+                  </MessageBar>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className={styles.emptyState}>
+              <Icon iconName="ProjectCollection" className={styles.emptyIcon} />
+              <Text variant="xLarge">Selecciona una obra</Text>
+              <Text variant="medium">
+                Pincha en un proyecto de la lista para ver su información.
+              </Text>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* MODAL DE CREACIÓN DE OBRA */}
       <Modal
         isOpen={isOpen}
         onDismiss={() => setIsOpen(false)}
         isBlocking={false}
-        // Esta es la clave para que el CSS encuentre la caja de la modal
         containerClassName={styles.modalFlotanteContainer}
       >
         <div className={styles.modalContent}>
           <div className={styles.modalHeader}>
             <Text variant="xLarge" className={styles.modalTitle}>
-              Configurar Nuevo Proyecto
+              {obraEditandoId ? "Editar Proyecto" : "Configurar Nuevo Proyecto"}
             </Text>
             <IconButton
               iconProps={{ iconName: "Cancel" }}
-              ariaLabel="Cerrar"
               onClick={() => setIsOpen(false)}
               className={styles.btnClose}
             />
           </div>
-
           <Separator className={styles.modalSeparator} />
-
           <div className={styles.modalBody}>
             <Stack tokens={{ childrenGap: 15 }}>
               <TextField
@@ -341,7 +534,6 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
               </Stack>
             </Stack>
           </div>
-
           <div className={styles.modalFooter}>
             <Stack
               horizontal
@@ -349,14 +541,14 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
               horizontalAlign="end"
             >
               {saving ? (
-                <Spinner label="Lanzando proyecto..." />
+                <Spinner label="Guardando..." />
               ) : (
                 <>
                   <PrimaryButton
-                    text="Lanzar Proyecto"
+                    text={obraEditandoId ? "Actualizar" : "Lanzar Proyecto"}
                     onClick={handleGuardar}
-                    disabled={!nuevaObra.Nombre || !nuevaObra.ClienteId}
                     className={styles.btnLaunch}
+                    disabled={!nuevaObra.Nombre || !nuevaObra.ClienteId}
                   />
                   <DefaultButton
                     text="Cancelar"
@@ -365,86 +557,6 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
                 </>
               )}
             </Stack>
-          </div>
-        </div>
-      </Modal>
-
-      {/* MODAL 2: HISTORIAL VISUAL (Sustituye al Panel) */}
-      <Modal
-        isOpen={!!obraSeleccionada}
-        onDismiss={() => {
-          setObraSeleccionada(null);
-          setFotosObra([]);
-        }}
-        isBlocking={false}
-        containerClassName={styles.modalFlotanteContainer}
-      >
-        <div className={styles.modalContent}>
-          <div className={styles.modalHeader}>
-            <Text variant="xLarge" className={styles.modalTitle}>
-              EWS Insight: {obraSeleccionada?.Title}
-            </Text>
-            <IconButton
-              iconProps={{ iconName: "Cancel" }}
-              onClick={() => setObraSeleccionada(null)}
-              className={styles.btnClose}
-            />
-          </div>
-          <Separator className={styles.modalSeparator} />
-
-          <div className={styles.scrollableContent}>
-            {loadingFotos ? (
-              <Spinner
-                size={SpinnerSize.large}
-                label="Cargando evidencias..."
-              />
-            ) : fotosObra.length > 0 ? (
-              <Stack tokens={{ childrenGap: 20 }}>
-                {fotosObra.map((f, i) => (
-                  <div key={i} className={styles.fotoCard}>
-                    <Stack tokens={{ childrenGap: 12 }}>
-                      <Stack
-                        horizontal
-                        horizontalAlign="space-between"
-                        verticalAlign="center"
-                      >
-                        <Text className={styles.fotoFecha}>
-                          📅 {new Date(f.FechaRegistro).toLocaleDateString()}
-                        </Text>
-                        <Text className={styles.fotoOperario}>
-                          👷 {f.Operario}
-                        </Text>
-                      </Stack>
-                      <Image
-                        src={f.UrlFoto?.Url}
-                        alt="Evidencia"
-                        width="100%"
-                        height={250}
-                        imageFit={ImageFit.cover}
-                        className={styles.fotoImagen}
-                      />
-                      <div className={styles.fotoComentarioBox}>
-                        <Text className={styles.fotoComentarioText}>
-                          "{f.Comentarios || "Sin observaciones técnicas"}"
-                        </Text>
-                      </div>
-                    </Stack>
-                  </div>
-                ))}
-              </Stack>
-            ) : (
-              <MessageBar messageBarType={MessageBarType.info}>
-                No hay reportes para esta obra.
-              </MessageBar>
-            )}
-          </div>
-
-          <div className={styles.modalFooter}>
-            <PrimaryButton
-              text="Cerrar"
-              onClick={() => setObraSeleccionada(null)}
-              className={styles.btnLaunch}
-            />
           </div>
         </div>
       </Modal>

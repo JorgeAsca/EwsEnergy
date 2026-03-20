@@ -167,7 +167,6 @@ export const GaleriaPersonal: React.FC<{ context: any }> = (props) => {
         )}
       </div>
 
-      {/* MODAL FLOTANTE (ESTILO CARD CENTRAL) */}
       <Modal
         isOpen={isOpen}
         onDismiss={() => setIsOpen(false)}
@@ -242,8 +241,6 @@ export const GaleriaPersonal: React.FC<{ context: any }> = (props) => {
           </div>
         </div>
       </Modal>
-
-      {/* DIÁLOGO DE CONFIRMACIÓN (SE MANTIENE IGUAL) */}
       <Dialog
         hidden={hideDeleteDialog}
         onDismiss={() => setHideDeleteDialog(true)}
