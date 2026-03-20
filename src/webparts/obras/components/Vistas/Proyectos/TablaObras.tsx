@@ -24,29 +24,47 @@ import {
 } from "@fluentui/react";
 import { SPHttpClient } from "@microsoft/sp-http";
 import { ProjectService } from "../../../service/ProjectService";
-import { PersonalService } from "../../../service/PersonalService"; // <-- IMPORTANTE
-import { AsignacionesService } from "../../../service/AsignacionesService"; // <-- IMPORTANTE
+import { PersonalService } from "../../../service/PersonalService";
+import { AsignacionesService } from "../../../service/AsignacionesService";
 import { IObra } from "../../../models/IObra";
 import styles from "./TablaObras.module.scss";
 
 interface IObraCard extends IObra {
   clienteNombre: string;
   porcentajeTiempo: number;
+  porcentajeReal: number;
   operarios: IFacepilePersona[];
   diasRestantes: number;
 }
+
+// --- FUNCIÓN MATEMÁTICA ---
+const calcularDiasLaborables = (fechaInicio: Date, fechaFin: Date): number => {
+  if (fechaInicio > fechaFin) return 0;
+  let count = 0;
+  let curDate = new Date(fechaInicio.getTime());
+  curDate.setHours(0, 0, 0, 0);
+  const endDate = new Date(fechaFin.getTime());
+  endDate.setHours(0, 0, 0, 0);
+
+  while (curDate <= endDate) {
+    const dayOfWeek = curDate.getDay();
+    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+      count++;
+    }
+    curDate.setDate(curDate.getDate() + 1);
+  }
+  return count;
+};
 
 export const TablaObras: React.FC<{ context: any }> = (props) => {
   const [obras, setObras] = React.useState<IObraCard[]>([]);
   const [clientes, setClientes] = React.useState<IDropdownOption[]>([]);
   const [loading, setLoading] = React.useState(true);
-
   const [isOpen, setIsOpen] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
   const [obraEditandoId, setObraEditandoId] = React.useState<number | null>(
     null,
   );
-
   const [obraSeleccionada, setObraSeleccionada] =
     React.useState<IObraCard | null>(null);
   const [fotosObra, setFotosObra] = React.useState<any[]>([]);
@@ -61,7 +79,6 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
     FechaFin: new Date(),
   });
 
-  // Instanciamos los tres servicios
   const projectService = React.useMemo(
     () => new ProjectService(props.context),
     [props.context],
@@ -78,7 +95,6 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
   const cargarDatos = async () => {
     try {
       setLoading(true);
-      // Descargamos TODA la información necesaria en paralelo
       const [listaObras, respClientes, listaAsignaciones, listaPersonal] =
         await Promise.all([
           projectService.getObras(),
@@ -86,8 +102,8 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
             `${props.context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('Clientes')/items?$select=Id,Title`,
             SPHttpClient.configurations.v1,
           ),
-          asigService.getAsignaciones(), // Trae { ObraId, PersonalId }
-          personalService.getPersonal(), // Trae { Id, NombreyApellido, FotoPerfil }
+          asigService.getAsignaciones(),
+          personalService.getPersonal(),
         ]);
 
       let opcionesClientes: IDropdownOption[] = [];
@@ -100,29 +116,46 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
         setClientes(opcionesClientes);
       }
 
-      const hoy = new Date().getTime();
+      const hoyDate = new Date();
+      hoyDate.setHours(0, 0, 0, 0);
 
       const obrasProcesadas: IObraCard[] = listaObras.map((o: IObra) => {
-        const inicio = o.FechaInicio ? new Date(o.FechaInicio).getTime() : hoy;
-        const fin = o.FechaFinPrevista
-          ? new Date(o.FechaFinPrevista).getTime()
-          : hoy;
-        const total = fin - inicio;
-        const transcurrido = hoy - inicio;
-        const porcentaje =
-          total > 0 ? Math.min(Math.max(transcurrido / total, 0), 1) : 0;
+        // 1. CÁLCULO DE TIEMPO EXACTO SIN FINES DE SEMANA
+        const inicioDate = o.FechaInicio ? new Date(o.FechaInicio) : new Date();
+        const finDate = o.FechaFinPrevista
+          ? new Date(o.FechaFinPrevista)
+          : new Date();
 
-        // 1. Filtramos las asignaciones de ESTA obra
+        const totalLaborables = Math.max(
+          calcularDiasLaborables(inicioDate, finDate),
+          1,
+        );
+
+        let transcurridosLaborables = 0;
+        if (hoyDate > inicioDate) {
+          // Si hoy es mayor que la fecha fin, asumimos que han pasado todos los días
+          const fechaCorte = hoyDate > finDate ? finDate : hoyDate;
+          transcurridosLaborables = calcularDiasLaborables(
+            inicioDate,
+            fechaCorte,
+          );
+        }
+
+        const porcentajeTiempo = Math.min(
+          Math.max(transcurridosLaborables / totalLaborables, 0),
+          1,
+        );
+
+        // 2. Progreso REAL extraído de SharePoint
+        const porcentajeReal = (o.ProgresoReal || 0) / 100;
+
         const asigsObra = (listaAsignaciones as any[]).filter(
           (a) => Number(a.ObraId) === Number(o.Id),
         );
-
-        // 2. Extraemos IDs únicos de personal (evita fotos duplicadas si están asignados varios días)
         const uniquePersonalIds = Array.from(
           new Set(asigsObra.map((a) => Number(a.PersonalId))),
         );
 
-        // 3. Mapeamos los IDs únicos a objetos de Facepile
         const operariosAsignados: IFacepilePersona[] = uniquePersonalIds.map(
           (pid) => {
             const pers = (listaPersonal as any[]).find(
@@ -141,14 +174,14 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
             opcionesClientes.find(
               (c) => Number(c.key) === (o as any).Cliente?.Id,
             )?.text || "Cliente no definido",
-          porcentajeTiempo: porcentaje,
+          porcentajeTiempo: porcentajeTiempo,
+          porcentajeReal: Math.min(Math.max(porcentajeReal, 0), 1),
           operarios: operariosAsignados,
-          diasRestantes: Math.ceil((fin - hoy) / (1000 * 60 * 60 * 24)),
+          diasRestantes: Math.max(0, calcularDiasLaborables(hoyDate, finDate)), // Días restantes laborables
         };
       });
 
       setObras(obrasProcesadas);
-
       if (obraSeleccionada) {
         const actualizada = obrasProcesadas.find(
           (o) => o.Id === obraSeleccionada.Id,
@@ -170,7 +203,7 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
     setObraSeleccionada(obra);
     setLoadingFotos(true);
     try {
-      const fotos = await projectService.getFotosPorObra(obra.Id);
+      const fotos = await projectService.getFotosPorObra(obra.Id as number);
       setFotosObra(fotos || []);
     } catch (e) {
       console.error(e);
@@ -184,7 +217,6 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
     const clId =
       (clientes.find((c) => c.text === obraSeleccionada.clienteNombre)
         ?.key as number) || 0;
-
     setNuevaObra({
       Nombre: obraSeleccionada.Title,
       Descripcion: obraSeleccionada.Descripcion || "",
@@ -197,7 +229,7 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
         ? new Date(obraSeleccionada.FechaFinPrevista)
         : new Date(),
     });
-    setObraEditandoId(obraSeleccionada.Id);
+    setObraEditandoId(obraSeleccionada.Id as number);
     setIsOpen(true);
   };
 
@@ -237,15 +269,28 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
     {} as Record<string, IObraCard[]>,
   );
 
-  const renderProgressTracker = (porcentaje: number) => {
+  const renderProgressTracker = (pTiempo: number, pReal: number) => {
     const totalBoxes = 10;
-    const filledBoxes = Math.round(porcentaje * totalBoxes);
+    const filledBoxes = Math.round(pReal * totalBoxes);
+
+    let colorClass = styles.filledOnTrack;
+    const desviacion = pReal - pTiempo;
+
+    if (desviacion <= -0.15) {
+      colorClass = styles.filledDelayed;
+    } else if (desviacion >= 0.15) {
+      colorClass = styles.filledAhead;
+    }
+
     return (
-      <div className={styles.progressTrackerBox}>
+      <div
+        className={styles.progressTrackerBox}
+        title={`Tiempo: ${(pTiempo * 100).toFixed(0)}% | Avance Real: ${(pReal * 100).toFixed(0)}%`}
+      >
         {Array.from({ length: totalBoxes }).map((_, idx) => (
           <div
             key={idx}
-            className={`${styles.trackerDot} ${idx < filledBoxes ? styles.filled : ""}`}
+            className={`${styles.trackerDot} ${idx < filledBoxes ? colorClass : ""}`}
           />
         ))}
       </div>
@@ -260,6 +305,7 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
       />
     );
 
+  // ... EL COMPONENTE RETURN SE MANTIENE EXACTAMENTE IGUAL ...
   return (
     <div className={styles.container}>
       <div className={styles.headerSection}>
@@ -298,7 +344,10 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
                     onClick={() => verDetallesObra(o)}
                   >
                     <Text className={styles.obraTitle}>{o.Title}</Text>
-                    {renderProgressTracker(o.porcentajeTiempo)}
+                    {renderProgressTracker(
+                      o.porcentajeTiempo,
+                      o.porcentajeReal,
+                    )}
                   </div>
                 ))}
               </div>
@@ -355,6 +404,17 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
                       ? obraSeleccionada.diasRestantes
                       : 0}{" "}
                     días
+                  </Text>
+                </Stack>
+                <Stack>
+                  <Text className={styles.labelSeccion}>Avance Físico</Text>
+                  <Text>
+                    <Icon
+                      iconName="CompletedSolid"
+                      className={styles.iconVerde}
+                    />{" "}
+                    {(obraSeleccionada.porcentajeReal * 100).toFixed(0)}%
+                    Ejecutado
                   </Text>
                 </Stack>
                 <Stack>

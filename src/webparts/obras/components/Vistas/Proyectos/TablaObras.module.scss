@@ -1,6 +1,5 @@
 @import '~@fluentui/react/dist/sass/References.scss';
 
-// Variables de Identidad EWS Energy
 $verde-oscuro: #004d40;
 $verde-claro: #8bc34a;
 $fondo-suave: #f9fbf9;
@@ -9,7 +8,7 @@ $texto-negro: #323130;
 
 .container {
   padding: 20px;
-  background-color: $fondo-suave;
+  background-color: $blanco; /* <-- CAMBIADO A BLANCO PARA QUE SEA UNA PIEZA ÚNICA */
   min-height: 100vh;
 
   .headerSection {
@@ -48,7 +47,7 @@ $texto-negro: #323130;
 
 /* COLUMNA IZQUIERDA (LISTA DELGADA Y AGRUPADA) */
 .listColumn {
-  width: 25%; // Reducido para que sea más sutil
+  width: 25%; 
   min-width: 260px;
   background: $blanco;
   border-radius: 12px;
@@ -76,7 +75,7 @@ $texto-negro: #323130;
 }
 
 .listItem {
-  padding: 10px 12px; // Más delgado
+  padding: 10px 12px; 
   border: 1px solid #f0f0f0;
   border-radius: 6px;
   margin-bottom: 6px;
@@ -95,7 +94,6 @@ $texto-negro: #323130;
     background-color: rgba(139, 195, 74, 0.05);
   }
 
-  // Título solo
   .obraTitle { 
     font-size: 14px; 
     font-weight: 700; 
@@ -115,13 +113,15 @@ $texto-negro: #323130;
 }
 
 .trackerDot {
-  height: 6px; // Más delgado
+  height: 6px; 
   flex: 1;
   background-color: #eee;
   border-radius: 3px;
   transition: background-color 0.3s;
   
-  &.filled { background-color: $verde-claro; }
+  &.filledOnTrack { background-color: $verde-claro; } 
+  &.filledDelayed { background-color: #d13438; }     
+  &.filledAhead { background-color: #0078d4; }       
 }
 
 .badgeEstado {

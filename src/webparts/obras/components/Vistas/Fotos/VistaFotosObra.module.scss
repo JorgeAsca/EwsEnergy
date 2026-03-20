@@ -107,7 +107,7 @@ $blanco: #ffffff;
 
 /* Lista Equipo Paso 2 */
 .teamList {
-  margin-bottom: 25px;
+  margin-bottom: 10px;
 }
 
 .teamMemberItem {
@@ -116,6 +116,18 @@ $blanco: #ffffff;
   align-items: center;
   padding: 12px;
   border-bottom: 1px solid #eee;
+}
+
+/* Sección para añadir personal extra */
+.extraSection {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px dashed #ccc;
+
+  :global(.ms-Dropdown-title) {
+    border-color: $verde-claro;
+    border-radius: 6px;
+  }
 }
 
 /* Botones Grandes Paso 3 */
@@ -128,7 +140,7 @@ $blanco: #ffffff;
   padding: 20px;
   border-radius: 12px;
   border: 2px solid transparent;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
   cursor: pointer;
   display: flex;
@@ -139,7 +151,7 @@ $blanco: #ffffff;
   transition: all 0.2s;
 
   i {
-    font-size: 24px;
+    font-size: 22px;
   }
 
   &.selected {
@@ -157,6 +169,12 @@ $blanco: #ffffff;
     background-color: #fff8e1;
     border-color: #fbc02d;
     color: #f57f17;
+  }
+
+  &.btnNaranja.selected {
+    background-color: #fff3e0;
+    border-color: #f57c00;
+    color: #e65100;
   }
 
   &.btnRojo.selected {
