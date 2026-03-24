@@ -11,8 +11,7 @@ export class ProjectService {
 
     public async getObras(): Promise<IObra[]> {
         try {
-            // AÑADIDO: ProgresoReal en el $select
-            const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('${this._listName}')/items?$select=Id,Title,Descripcion,DireccionObra,FechaInicio,FechaFinPrevista,EstadoObra,ProgresoReal,Cliente/Id,Cliente/Title&$expand=Cliente`;
+            const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('${this._listName}')/items?$select=Id,Title,Descripcion,DireccionObra,FechaInicio,FechaFinPrevista,EstadoObra,ProgresoReal,JornadasTotales,Cliente/Id,Cliente/Title&$expand=Cliente`;
 
             const response = await this._context.spHttpClient.get(endpoint, SPHttpClient.configurations.v1);
 
@@ -38,6 +37,7 @@ export class ProjectService {
             DireccionObra: nuevaObra.Direccion,
             FechaInicio: nuevaObra.FechaInicio,
             FechaFinPrevista: nuevaObra.FechaFin,
+            JornadasTotales: nuevaObra.Jornadas,
             EstadoObra: "Fase Previa",
             ProgresoReal: 0
         });
@@ -60,6 +60,7 @@ export class ProjectService {
             DireccionObra: obraActualizada.Direccion,
             FechaInicio: obraActualizada.FechaInicio,
             FechaFinPrevista: obraActualizada.FechaFin,
+            JornadasTotales: obraActualizada.Jornadas
         });
 
         await this._context.spHttpClient.post(endpoint, SPHttpClient.configurations.v1, {
@@ -73,6 +74,7 @@ export class ProjectService {
             body: body
         });
     }
+    
     public async actualizarProgresoObra(id: number, nuevoProgreso: number): Promise<void> {
         const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('${this._listName}')/items(${id})`;
         const body = JSON.stringify({
