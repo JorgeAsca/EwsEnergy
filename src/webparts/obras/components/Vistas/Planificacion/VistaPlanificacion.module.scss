@@ -161,3 +161,50 @@ $verde-fondo: #f9fbf9;
     z-index: 10;
   }
 }
+
+.pendingPanel {
+  width: 280px;
+  min-width: 280px;
+  padding: 15px;
+  background-color: #fff4f4; // Un tono rojizo muy suave para diferenciar
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  border: 1px solid #fbcaca;
+
+  .pendingList {
+    margin-top: 10px;
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+
+  .emptyText {
+    color: #888;
+    font-style: italic;
+    display: block;
+    text-align: center;
+    margin-top: 20px;
+  }
+}
+
+.pendingItem {
+  background-color: $blanco;
+  border-left: 4px solid #d13438; // Rojo de error/pendiente
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 0 4px 4px 0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+
+  .pendingName {
+    font-weight: 700;
+    color: $verde-oscuro;
+    display: block;
+  }
+
+  .pendingReason {
+    font-size: 13px;
+    color: #444;
+    margin-top: 5px;
+    display: block;
+    word-wrap: break-word;
+  }
+}
