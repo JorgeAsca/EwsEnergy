@@ -15,7 +15,7 @@ import {
     Checkbox,
     IconButton,
     Dropdown,
-    IDropdownOption, // <-- Añadido Dropdown
+    IDropdownOption,
 } from "@fluentui/react";
 import { IPersonal } from "../../../models/IPersonal";
 import { IObra } from "../../../models/IObra";
@@ -24,25 +24,6 @@ import { AsignacionesService } from "../../../service/AsignacionesService";
 import { ProjectService } from "../../../service/ProjectService";
 import { PhotoService } from "../../../service/PhotoService";
 import styles from "./VistaFotosObra.module.scss";
-
-// --- FUNCIÓN MATEMÁTICA ---
-const calcularDiasLaborables = (fechaInicio: Date, fechaFin: Date): number => {
-    if (fechaInicio > fechaFin) return 0;
-    let count = 0;
-    let curDate = new Date(fechaInicio.getTime());
-    curDate.setHours(0, 0, 0, 0);
-    const endDate = new Date(fechaFin.getTime());
-    endDate.setHours(0, 0, 0, 0);
-
-    while (curDate <= endDate) {
-        const dayOfWeek = curDate.getDay();
-        if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-            count++;
-        }
-        curDate.setDate(curDate.getDate() + 1);
-    }
-    return count;
-};
 
 export const VistaFotosObra: React.FC<{ context: any }> = (props) => {
     const [paso, setPaso] = React.useState(1);
@@ -56,7 +37,7 @@ export const VistaFotosObra: React.FC<{ context: any }> = (props) => {
     const [compañeros, setCompañeros] = React.useState<IPersonal[]>([]);
     const [equipoConfirmado, setEquipoConfirmado] = React.useState<number[]>([]);
 
-    // Progreso ahora medirá HORAS (5, 2.5, 1, 0)
+    // El progreso guarda directamente el porcentaje reportado (100, 60, 40, 0)
     const [progresoDia, setProgresoDia] = React.useState<number | null>(null);
     const [fotos, setFotos] = React.useState<File[]>([]);
     const [comentarios, setComentarios] = React.useState("");
@@ -118,7 +99,6 @@ export const VistaFotosObra: React.FC<{ context: any }> = (props) => {
         );
     };
 
-    // --- NUEVO: Añadir personal imprevisto a la lista del día ---
     const opcionesNoAsignados: IDropdownOption[] = listaPersonal
         .filter(
             (p) => p.Id !== operario?.Id && !compañeros.some((c) => c.Id === p.Id),
@@ -147,7 +127,6 @@ export const VistaFotosObra: React.FC<{ context: any }> = (props) => {
         try {
             if (!obraSeleccionada || !operario) throw new Error("Faltan datos");
 
-            // 1. Subida de fotos e historial
             for (let i = 0; i < fotos.length; i++) {
                 await services.fotos.subirFotoProyecto(
                     fotos[i],
@@ -161,31 +140,20 @@ export const VistaFotosObra: React.FC<{ context: any }> = (props) => {
                 );
             }
 
-            // 2. CÁLCULO DE AVANCE WRENCH TIME (Rendimiento por Cuadrilla)
-            const inicioDate = new Date(obraSeleccionada.FechaInicio || Date.now());
-            const finDate = new Date(
-                obraSeleccionada.FechaFinPrevista ||
-                Date.now() + 30 * 24 * 60 * 60 * 1000,
-            );
-            const diasLaborables = Math.max(
-                1,
-                calcularDiasLaborables(inicioDate, finDate),
-            );
-            const pesoDiario = 100 / diasLaborables;
+            // LÓGICA DE JORNADAS FLEXIBLES
+            const jornadasTotales =
+                obraSeleccionada.JornadasTotales && obraSeleccionada.JornadasTotales > 0
+                    ? obraSeleccionada.JornadasTotales
+                    : 30; // Fallback de seguridad
 
-            // Constante: 5 horas efectivas equivalen al 100% del día
-            const HORAS_OPTIMAS_DIARIAS = 5;
-            const horasReportadas = progresoDia === null ? 0 : progresoDia;
-
-            // Si hacen 5h = Factor 1. Si hacen 2.5h = Factor 0.5
-            const factorRendimiento = horasReportadas / HORAS_OPTIMAS_DIARIAS;
-            const incrementoAvance = pesoDiario * Math.min(factorRendimiento, 1);
+            const pesoUnaJornada = 100 / jornadasTotales;
+            const porcentajeRendido = progresoDia === null ? 0 : progresoDia;
+            const incrementoAvance = (porcentajeRendido / 100) * pesoUnaJornada;
 
             const progresoAnterior = obraSeleccionada.ProgresoReal || 0;
             let nuevoProgresoReal = progresoAnterior + incrementoAvance;
             if (nuevoProgresoReal > 100) nuevoProgresoReal = 100;
 
-            // 3. Actualizar la obra en SharePoint
             await services.obras.actualizarProgresoObra(
                 obraSeleccionada.Id as number,
                 parseFloat(nuevoProgresoReal.toFixed(2)),
@@ -325,7 +293,6 @@ export const VistaFotosObra: React.FC<{ context: any }> = (props) => {
                             )}
                         </div>
 
-                        {/* DESPLEGABLE DE IMPREVISTOS */}
                         <div className={styles.extraSection}>
                             <Dropdown
                                 placeholder="+ Añadir personal imprevisto"
@@ -353,41 +320,39 @@ export const VistaFotosObra: React.FC<{ context: any }> = (props) => {
                 {paso === 3 && (
                     <section className={styles.stepContainer}>
                         <Text variant="large" className={styles.stepTitle}>
-                            3. Rendimiento de Cuadrilla
+                            3. Avance de la Jornada
                         </Text>
                         <Text className={styles.instruccion}>
-                            ¿Cuántas horas de instalación / montaje EFECTIVAS logró el equipo
-                            hoy?
+                            ¿Qué porcentaje de una jornada típica lograron completar hoy?
                         </Text>
 
-                        {/* NUEVOS BOTONES DE HORAS (Wrench Time) */}
                         <Stack
                             tokens={{ childrenGap: 15 }}
                             className={styles.progressContainer}
                         >
                             <button
-                                className={`${styles.progressBtn} ${styles.btnVerde} ${progresoDia === 5 ? styles.selected : ""}`}
-                                onClick={() => setProgresoDia(5)}
+                                className={`${styles.progressBtn} ${styles.btnVerde} ${progresoDia === 100 ? styles.selected : ""}`}
+                                onClick={() => setProgresoDia(100)}
                             >
-                                <Icon iconName="CompletedSolid" /> Jornada Completa (~5h o más)
+                                <Icon iconName="CompletedSolid" /> Jornada Óptima (100%)
                             </button>
                             <button
-                                className={`${styles.progressBtn} ${styles.btnAmarillo} ${progresoDia === 2.5 ? styles.selected : ""}`}
-                                onClick={() => setProgresoDia(2.5)}
+                                className={`${styles.progressBtn} ${styles.btnAmarillo} ${progresoDia === 60 ? styles.selected : ""}`}
+                                onClick={() => setProgresoDia(60)}
                             >
-                                <Icon iconName="HalfAlpha" /> Media Jornada (~2.5h a 3h)
+                                <Icon iconName="HalfAlpha" /> Avance Notable (60%)
                             </button>
                             <button
-                                className={`${styles.progressBtn} ${styles.btnNaranja} ${progresoDia === 1 ? styles.selected : ""}`}
-                                onClick={() => setProgresoDia(1)}
+                                className={`${styles.progressBtn} ${styles.btnNaranja} ${progresoDia === 40 ? styles.selected : ""}`}
+                                onClick={() => setProgresoDia(40)}
                             >
-                                <Icon iconName="Clock" /> Intervención Corta (~1h)
+                                <Icon iconName="Clock" /> Avance Menor (40%)
                             </button>
                             <button
                                 className={`${styles.progressBtn} ${styles.btnRojo} ${progresoDia === 0 ? styles.selected : ""}`}
                                 onClick={() => setProgresoDia(0)}
                             >
-                                <Icon iconName="StatusErrorFull" /> Obra Bloqueada (0h)
+                                <Icon iconName="StatusErrorFull" /> Obra Bloqueada (0%)
                             </button>
                         </Stack>
 

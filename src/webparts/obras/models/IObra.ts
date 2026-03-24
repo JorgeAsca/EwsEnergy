@@ -8,7 +8,8 @@ export interface IObra {
     DireccionObra?: string;
     FechaInicio?: string;   
     FechaFinPrevista?: string; 
-    EstadoObra: EstadoObra;       
+    EstadoObra: EstadoObra;
+    JornadasTotales?: number;       
     Cliente?: {
         Title: string;
     };

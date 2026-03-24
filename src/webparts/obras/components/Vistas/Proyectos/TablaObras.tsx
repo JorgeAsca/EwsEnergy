@@ -31,30 +31,10 @@ import styles from "./TablaObras.module.scss";
 
 interface IObraCard extends IObra {
   clienteNombre: string;
-  porcentajeTiempo: number;
   porcentajeReal: number;
   operarios: IFacepilePersona[];
-  diasRestantes: number;
+  jornadasConsumidas: number;
 }
-
-// --- FUNCIÓN MATEMÁTICA ---
-const calcularDiasLaborables = (fechaInicio: Date, fechaFin: Date): number => {
-  if (fechaInicio > fechaFin) return 0;
-  let count = 0;
-  let curDate = new Date(fechaInicio.getTime());
-  curDate.setHours(0, 0, 0, 0);
-  const endDate = new Date(fechaFin.getTime());
-  endDate.setHours(0, 0, 0, 0);
-
-  while (curDate <= endDate) {
-    const dayOfWeek = curDate.getDay();
-    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-      count++;
-    }
-    curDate.setDate(curDate.getDate() + 1);
-  }
-  return count;
-};
 
 export const TablaObras: React.FC<{ context: any }> = (props) => {
   const [obras, setObras] = React.useState<IObraCard[]>([]);
@@ -77,6 +57,7 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
     Direccion: "",
     FechaInicio: new Date(),
     FechaFin: new Date(),
+    JornadasTotales: 30, // Nuevo campo
   });
 
   const projectService = React.useMemo(
@@ -116,38 +97,12 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
         setClientes(opcionesClientes);
       }
 
-      const hoyDate = new Date();
-      hoyDate.setHours(0, 0, 0, 0);
-
       const obrasProcesadas: IObraCard[] = listaObras.map((o: IObra) => {
-        // 1. CÁLCULO DE TIEMPO EXACTO SIN FINES DE SEMANA
-        const inicioDate = o.FechaInicio ? new Date(o.FechaInicio) : new Date();
-        const finDate = o.FechaFinPrevista
-          ? new Date(o.FechaFinPrevista)
-          : new Date();
-
-        const totalLaborables = Math.max(
-          calcularDiasLaborables(inicioDate, finDate),
-          1,
-        );
-
-        let transcurridosLaborables = 0;
-        if (hoyDate > inicioDate) {
-          // Si hoy es mayor que la fecha fin, asumimos que han pasado todos los días
-          const fechaCorte = hoyDate > finDate ? finDate : hoyDate;
-          transcurridosLaborables = calcularDiasLaborables(
-            inicioDate,
-            fechaCorte,
-          );
-        }
-
-        const porcentajeTiempo = Math.min(
-          Math.max(transcurridosLaborables / totalLaborables, 0),
-          1,
-        );
-
-        // 2. Progreso REAL extraído de SharePoint
         const porcentajeReal = (o.ProgresoReal || 0) / 100;
+
+        // Jornadas
+        const totalJornadas = o.JornadasTotales || 30;
+        const consumidas = porcentajeReal * totalJornadas;
 
         const asigsObra = (listaAsignaciones as any[]).filter(
           (a) => Number(a.ObraId) === Number(o.Id),
@@ -174,10 +129,9 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
             opcionesClientes.find(
               (c) => Number(c.key) === (o as any).Cliente?.Id,
             )?.text || "Cliente no definido",
-          porcentajeTiempo: porcentajeTiempo,
           porcentajeReal: Math.min(Math.max(porcentajeReal, 0), 1),
           operarios: operariosAsignados,
-          diasRestantes: Math.max(0, calcularDiasLaborables(hoyDate, finDate)), // Días restantes laborables
+          jornadasConsumidas: parseFloat(consumidas.toFixed(1)),
         };
       });
 
@@ -217,6 +171,7 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
     const clId =
       (clientes.find((c) => c.text === obraSeleccionada.clienteNombre)
         ?.key as number) || 0;
+
     setNuevaObra({
       Nombre: obraSeleccionada.Title,
       Descripcion: obraSeleccionada.Descripcion || "",
@@ -228,6 +183,7 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
       FechaFin: obraSeleccionada.FechaFinPrevista
         ? new Date(obraSeleccionada.FechaFinPrevista)
         : new Date(),
+      JornadasTotales: obraSeleccionada.JornadasTotales || 30,
     });
     setObraEditandoId(obraSeleccionada.Id as number);
     setIsOpen(true);
@@ -250,6 +206,7 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
         Direccion: "",
         FechaInicio: new Date(),
         FechaFin: new Date(),
+        JornadasTotales: 30,
       });
       await cargarDatos();
     } catch (e) {
@@ -269,28 +226,19 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
     {} as Record<string, IObraCard[]>,
   );
 
-  const renderProgressTracker = (pTiempo: number, pReal: number) => {
+  const renderProgressTracker = (pReal: number) => {
     const totalBoxes = 10;
     const filledBoxes = Math.round(pReal * totalBoxes);
-
-    let colorClass = styles.filledOnTrack;
-    const desviacion = pReal - pTiempo;
-
-    if (desviacion <= -0.15) {
-      colorClass = styles.filledDelayed;
-    } else if (desviacion >= 0.15) {
-      colorClass = styles.filledAhead;
-    }
 
     return (
       <div
         className={styles.progressTrackerBox}
-        title={`Tiempo: ${(pTiempo * 100).toFixed(0)}% | Avance Real: ${(pReal * 100).toFixed(0)}%`}
+        title={`Avance de Jornadas: ${(pReal * 100).toFixed(0)}%`}
       >
         {Array.from({ length: totalBoxes }).map((_, idx) => (
           <div
             key={idx}
-            className={`${styles.trackerDot} ${idx < filledBoxes ? colorClass : ""}`}
+            className={`${styles.trackerDot} ${idx < filledBoxes ? styles.filledOnTrack : ""}`}
           />
         ))}
       </div>
@@ -305,7 +253,6 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
       />
     );
 
-  // ... EL COMPONENTE RETURN SE MANTIENE EXACTAMENTE IGUAL ...
   return (
     <div className={styles.container}>
       <div className={styles.headerSection}>
@@ -344,10 +291,7 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
                     onClick={() => verDetallesObra(o)}
                   >
                     <Text className={styles.obraTitle}>{o.Title}</Text>
-                    {renderProgressTracker(
-                      o.porcentajeTiempo,
-                      o.porcentajeReal,
-                    )}
+                    {renderProgressTracker(o.porcentajeReal)}
                   </div>
                 ))}
               </div>
@@ -397,13 +341,13 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
                   </Text>
                 </Stack>
                 <Stack>
-                  <Text className={styles.labelSeccion}>Días Restantes</Text>
+                  <Text className={styles.labelSeccion}>
+                    Jornadas Consumidas
+                  </Text>
                   <Text>
                     <Icon iconName="Calendar" className={styles.iconVerde} />{" "}
-                    {obraSeleccionada.diasRestantes > 0
-                      ? obraSeleccionada.diasRestantes
-                      : 0}{" "}
-                    días
+                    {obraSeleccionada.jornadasConsumidas} /{" "}
+                    {obraSeleccionada.JornadasTotales || 30}
                   </Text>
                 </Stack>
                 <Stack>
@@ -570,6 +514,21 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
                 }
               />
               <Stack horizontal tokens={{ childrenGap: 20 }}>
+                {/* CAMPO DE JORNADAS */}
+                <div style={{ flex: 1 }}>
+                  <TextField
+                    label="Jornadas Presupuestadas"
+                    type="number"
+                    required
+                    value={nuevaObra.JornadasTotales.toString()}
+                    onChange={(_, v) =>
+                      setNuevaObra({
+                        ...nuevaObra,
+                        JornadasTotales: parseInt(v || "0"),
+                      })
+                    }
+                  />
+                </div>
                 <div style={{ flex: 1 }}>
                   <DatePicker
                     label="Fecha Inicio"
@@ -579,15 +538,6 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
                         ...nuevaObra,
                         FechaInicio: d || new Date(),
                       })
-                    }
-                  />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <DatePicker
-                    label="Plazo Estimado"
-                    value={nuevaObra.FechaFin}
-                    onSelectDate={(d) =>
-                      setNuevaObra({ ...nuevaObra, FechaFin: d || new Date() })
                     }
                   />
                 </div>
