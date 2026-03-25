@@ -1,103 +1,124 @@
 @import '~@fluentui/react/dist/sass/References.scss';
 
-// Variables EWS Energy
-$verde-oscuro: #004d40;
+
+$verde-ews: #004d40;
 $verde-claro: #8bc34a;
 $blanco: #ffffff;
+$gris-borde: #edebe9;
 $rojo-alerta: #d13438;
-$fondo-suave: #f9fbf9;
+
+
+:global {
+  .ms-TextField-fieldGroup:after,
+  .ms-Dropdown-container:after,
+  .ms-SearchBox::after {
+    border-color: $verde-ews !important; 
+  }
+  
+  .is-focused .ms-TextField-fieldGroup {
+    border-color: $verde-ews !important;
+  }
+}
 
 .container {
   padding: 20px;
-  background-color: $fondo-suave;
+  background-color: #f4f4f4;
   min-height: 100vh;
 }
 
-.titulo {
-  color: $verde-oscuro;
-  font-weight: 700;
-  margin-bottom: 25px;
-}
-
-/* Tarjeta del formulario superior */
 .formCard {
   background-color: $blanco;
-  padding: 25px;
-  border-radius: 12px;
-  border: 1px solid #e1e1e1;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  padding: 24px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  margin-bottom: 25px;
+  border-top: 4px solid $verde-ews;
+}
 
-  :global(.ms-Label) {
-    color: $verde-oscuro;
-    font-weight: 600;
+.formTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  color: $verde-ews;
+  i { font-size: 24px; }
+}
+
+.gridForm {
+  display: grid;
+  grid-template-columns: 2fr 1fr 0.8fr 0.8fr 1fr;
+  gap: 15px;
+  align-items: end;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr 1fr;
   }
 }
 
 .btnAdd {
-  background-color: $verde-oscuro;
+  height: 32px;
+  background-color: $verde-ews;
   border: none;
-  border-radius: 8px;
-  color: $blanco;
-
+  border-radius: 4px;
   &:hover {
-    background-color: $verde-claro;
+    background-color: $verde-claro !important;
   }
 }
 
-/* Buscador y Tabla */
 .searchSection {
-  margin: 20px 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  margin: 15px 0;
+  width: 350px; 
 }
 
 .tableContainer {
   background-color: $blanco;
-  border-radius: 12px;
-  border: 1px solid #edebe9;
+  border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  border: 1px solid $gris-borde;
 
-  :global(.ms-DetailsHeader) {
-    background-color: $verde-oscuro;
-    padding-top: 0;
+  :global {
+    .ms-DetailsHeader {
+      background-color: $verde-ews;
+      padding-top: 0;
+      .ms-DetailsHeader-cell {
+        color: $blanco !important;
+        background-color: $verde-ews !important;
+        font-weight: 700;
+        .ms-DetailsHeader-filterChevron, 
+        .ms-DetailsHeader-cellName {
+          color: $blanco !important;
+        }
+      }
+    }
 
-    :global(.ms-DetailsHeader-cellName) {
-      color: $blanco !important;
-      font-weight: 600;
+    .ms-DetailsRow {
+      border-bottom: 1px solid $gris-borde;
+      &:hover {
+        background-color: rgba($verde-claro, 0.1) !important;
+        color: $verde-ews !important;
+        .ms-DetailsRow-cell {
+          background-color: transparent !important;
+          color: $verde-ews !important;
+        }
+      }
     }
   }
-  
-  :global(.ms-DetailsRow:hover) {
-    background-color: rgba(139, 195, 74, 0.05);
-  }
 }
 
-/* Estilos de celda especiales */
-.fotoProducto {
-  border-radius: 6px;
-  border: 1px solid #eee;
-  object-fit: cover;
-}
-
-.stockCritico {
+.stockCellAlerta {
   color: $rojo-alerta;
-  font-weight: 800;
-}
-
-.stockNormal {
-  color: $verde-oscuro;
-  font-weight: 600;
-}
-
-.badgeCategoria {
-  padding: 4px 12px;
-  border-radius: 20px;
-  background-color: #f1f8e9;
-  color: $verde-oscuro;
-  font-size: 11px;
   font-weight: 700;
-  text-transform: uppercase;
-  border: 1px solid $verde-claro;
+}
+
+.stockCellNormal {
+  color: $verde-ews;
+  font-weight: 700;
+}
+
+.actionBtn { color: $verde-ews; }
+.deleteBtn { color: $rojo-alerta; }
+
+.panelStack {
+  margin-top: 20px;
 }

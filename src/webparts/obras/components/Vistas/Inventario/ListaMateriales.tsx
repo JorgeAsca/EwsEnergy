@@ -15,10 +15,12 @@ import {
   Separator,
   Spinner,
   SpinnerSize,
-  Image,
-  ImageFit,
+  Icon,
+  Panel,
+  PanelType,
+  DefaultButton,
 } from "@fluentui/react";
-import styles from "./ListaMateriales.module.scss"; // Cambiado a su propio CSS
+import styles from "./ListaMateriales.module.scss";
 import { StockService } from "../../../service/StockService";
 
 const categorias: IDropdownOption[] = [
@@ -31,288 +33,186 @@ const categorias: IDropdownOption[] = [
 export const ListaMateriales: React.FC<{ context: any }> = (props) => {
   const [items, setItems] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
-
-  // Añadimos imagenUrl al estado de creación
+  const [filterText, setFilterText] = React.useState("");
+  const [isPanelOpen, setIsPanelOpen] = React.useState(false);
+  const [selectedItem, setSelectedItem] = React.useState<any>(null);
+  
   const [nuevo, setNuevo] = React.useState({
     nombre: "",
     stock: 0,
     stockMin: 0,
     cat: "Consumible",
-    imagenUrl: "",
+    file: null as File | null
   });
-  const [filterText, setFilterText] = React.useState("");
-  const [editId, setEditId] = React.useState<number | null>(null);
-  const [editData, setEditData] = React.useState<any>(null);
 
-  const service = new StockService(props.context);
+  const service = React.useMemo(() => new StockService(props.context), [props.context]);
 
-  const cargarDatos = async (): Promise<void> => {
+  const cargarMateriales = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
       const data = await service.getInventario();
       setItems(data);
     } catch (e) {
-      console.error(e);
+      console.error("Error al cargar inventario", e);
     } finally {
       setLoading(false);
     }
   };
 
   React.useEffect(() => {
-    cargarDatos().catch((err) => console.error(err));
+    cargarMateriales();
   }, []);
 
-  const handleAdd = async (): Promise<void> => {
+  const handleAdd = async () => {
     if (!nuevo.nombre) return;
     try {
       await service.crearMaterial({
         Title: nuevo.nombre,
-        Categoria: nuevo.cat,
         StockActual: nuevo.stock,
         StockMinimo: nuevo.stockMin,
-        ImagenUrl: nuevo.imagenUrl, // Guardamos la URL de la imagen en SharePoint
+        Categoria: nuevo.cat
       });
-      setNuevo({
-        nombre: "",
-        stock: 0,
-        stockMin: 0,
-        cat: "Consumible",
-        imagenUrl: "",
-      });
-      await cargarDatos();
-    } catch (e: any) {
-      alert("Error al guardar: " + e.message);
-    }
-  };
-
-  const handleEdit = async (id: number): Promise<void> => {
-    try {
-      await service.actualizarMaterial(id, editData);
-      setEditId(null);
-      await cargarDatos();
+      setNuevo({ nombre: "", stock: 0, stockMin: 0, cat: "Consumible", file: null });
+      cargarMateriales();
     } catch (e) {
-      alert("Error al actualizar");
+      console.error(e);
     }
   };
 
-  const handleDelete = async (id: number): Promise<void> => {
-    if (confirm("¿Eliminar material permanentemente?")) {
+  const handleDelete = async (id: number) => {
+    if (confirm("¿Seguro que desea eliminar este registro?")) {
       await service.eliminarMaterial(id);
-      await cargarDatos();
+      cargarMateriales();
     }
   };
 
-  const itemsFiltrados = items.filter((i) =>
-    (i.Title || "").toLowerCase().includes(filterText.toLowerCase()),
-  );
+  const handleUpdate = async () => {
+    if (!selectedItem) return;
+    try {
+      setLoading(true);
+      await service.actualizarMaterial(selectedItem.Id, {
+        Title: selectedItem.Title,
+        Categoria: selectedItem.Categoria,
+        StockActual: selectedItem.StockActual,
+        StockMinimo: selectedItem.StockMinimo
+      });
+      setIsPanelOpen(false);
+      await cargarMateriales();
+    } catch (e) {
+      console.error("Error al actualizar", e);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const columns: IColumn[] = [
     {
-      key: "c0",
-      name: "Foto",
-      fieldName: "ImagenUrl",
-      minWidth: 50,
-      maxWidth: 50,
-      onRender: (item) =>
-        editId === item.Id ? (
-          <TextField
-            value={editData.ImagenUrl || ""}
-            onChange={(_, v) => setEditData({ ...editData, ImagenUrl: v })}
-            placeholder="URL Foto"
-          />
-        ) : (
-          <Image
-            src={item.ImagenUrl || "https://via.placeholder.com/40?text=Img"}
-            width={40}
-            height={40}
-            imageFit={ImageFit.cover}
-            className={styles.fotoProducto}
-          />
-        ),
-    },
-    {
-      key: "c1",
+      key: "col1",
       name: "Material",
       fieldName: "Title",
       minWidth: 150,
-      onRender: (item) =>
-        editId === item.Id ? (
-          <TextField
-            value={editData.Title}
-            onChange={(_, v) => setEditData({ ...editData, Title: v })}
-          />
-        ) : (
-          <span style={{ fontWeight: 600, color: "#333" }}>{item.Title}</span>
-        ),
+      isResizable: true,
+      onRender: (item) => <Text>{item.Title}</Text>
     },
     {
-      key: "c2",
+      key: "col2",
       name: "Categoría",
       fieldName: "Categoria",
       minWidth: 100,
-      onRender: (item) =>
-        editId === item.Id ? (
-          <Dropdown
-            options={categorias}
-            selectedKey={editData.Categoria}
-            onChange={(_, o) => setEditData({ ...editData, Categoria: o?.key })}
-          />
-        ) : (
-          <span className={styles.badgeCategoria}>
-            {item.Categoria || "General"}
-          </span>
-        ),
     },
     {
-      key: "c3",
+      key: "col3",
       name: "Stock Actual",
       fieldName: "StockActual",
       minWidth: 80,
-      onRender: (item) =>
-        editId === item.Id ? (
-          <TextField
-            type="number"
-            value={(editData.StockActual || 0).toString()}
-            onChange={(_, v) =>
-              setEditData({ ...editData, StockActual: parseInt(v || "0") })
-            }
-          />
-        ) : (
-          <span
-            className={
-              item.StockActual <= item.StockMinimo
-                ? styles.stockCritico
-                : styles.stockNormal
-            }
-          >
-            {item.StockActual || 0}
-          </span>
-        ),
+      onRender: (item) => (
+        <span className={item.StockActual <= item.StockMinimo ? styles.stockCellAlerta : styles.stockCellNormal}>
+          {item.StockActual}
+        </span>
+      )
     },
     {
-      key: "c4",
+      key: "col4",
       name: "Mínimo",
       fieldName: "StockMinimo",
       minWidth: 80,
-      onRender: (item) =>
-        editId === item.Id ? (
-          <TextField
-            type="number"
-            value={(editData.StockMinimo || 0).toString()}
-            onChange={(_, v) =>
-              setEditData({ ...editData, StockMinimo: parseInt(v || "0") })
-            }
-          />
-        ) : (
-          <span>{item.StockMinimo || 0}</span>
-        ),
     },
     {
-      key: "actions",
+      key: "col5",
       name: "Acciones",
       minWidth: 100,
       onRender: (item) => (
-        <Stack horizontal tokens={{ childrenGap: 5 }}>
-          {editId === item.Id ? (
-            <>
-              <IconButton
-                iconProps={{ iconName: "CheckMark" }}
-                onClick={() => handleEdit(item.Id)}
-                styles={{ root: { color: "#2e7d32" } }}
-              />
-              <IconButton
-                iconProps={{ iconName: "Cancel" }}
-                onClick={() => setEditId(null)}
-                styles={{ root: { color: "#d13438" } }}
-              />
-            </>
-          ) : (
-            <>
-              <IconButton
-                iconProps={{ iconName: "Edit" }}
-                onClick={() => {
-                  setEditData({ ...item });
-                  setEditId(item.Id);
-                }}
-              />
-              <IconButton
-                iconProps={{ iconName: "Delete" }}
-                onClick={() => handleDelete(item.Id)}
-                styles={{ root: { color: "#d13438" } }}
-              />
-            </>
-          )}
+        <Stack horizontal gap={5}>
+          <IconButton 
+            iconProps={{ iconName: "Edit" }} 
+            onClick={() => { setSelectedItem({...item}); setIsPanelOpen(true); }}
+            className={styles.actionBtn}
+          />
+          <IconButton 
+            iconProps={{ iconName: "Delete" }} 
+            onClick={() => handleDelete(item.Id)}
+            className={styles.deleteBtn}
+          />
         </Stack>
       ),
     },
   ];
 
+  const itemsFiltrados = items.filter(i => 
+    i.Title?.toLowerCase().includes(filterText.toLowerCase())
+  );
+
   return (
     <div className={styles.container}>
-      <Text variant="xxLarge" className={styles.titulo}>
-        📦 Gestión de Materiales y Herramientas
-      </Text>
-
-      <Stack className={styles.formCard} tokens={{ childrenGap: 10 }}>
-        <Text variant="large" style={{ fontWeight: 600, color: "#004d40" }}>
-          Dar de alta nuevo material
-        </Text>
-        <Stack horizontal wrap tokens={{ childrenGap: 15 }} verticalAlign="end">
+      <div className={styles.formCard}>
+        <div className={styles.formTitle}>
+          <Icon iconName="BoxAdditionSolid" />
+          <Text variant="xLarge">Dar de alta nuevo material</Text>
+        </div>
+        
+        <div className={styles.gridForm}>
           <TextField
-            label="Nombre del artículo"
+            label="Nombre"
             value={nuevo.nombre}
-            onChange={(_, v) => setNuevo({ ...nuevo, nombre: v || "" })}
+            onChange={(_, v) => setNuevo({...nuevo, nombre: v || ""})}
+            required
           />
           <Dropdown
             label="Categoría"
             options={categorias}
             selectedKey={nuevo.cat}
-            onChange={(_, o) => setNuevo({ ...nuevo, cat: o?.key as string })}
-            styles={{ root: { width: 140 } }}
+            onChange={(_, o) => setNuevo({...nuevo, cat: o?.key as string})}
           />
           <TextField
-            label="URL de Imagen (Opcional)"
-            value={nuevo.imagenUrl}
-            onChange={(_, v) => setNuevo({ ...nuevo, imagenUrl: v || "" })}
-            placeholder="https://..."
-            styles={{ root: { width: 180 } }}
-          />
-          <TextField
-            label="Stock Actual"
+            label="Stock"
             type="number"
             value={nuevo.stock.toString()}
-            onChange={(_, v) =>
-              setNuevo({ ...nuevo, stock: parseInt(v || "0") })
-            }
-            styles={{ root: { width: 90 } }}
+            onChange={(_, v) => setNuevo({...nuevo, stock: parseInt(v || "0")})}
           />
           <TextField
-            label="Stock Mínimo"
+            label="Alerta Mín."
             type="number"
             value={nuevo.stockMin.toString()}
-            onChange={(_, v) =>
-              setNuevo({ ...nuevo, stockMin: parseInt(v || "0") })
-            }
-            styles={{ root: { width: 90 } }}
+            onChange={(_, v) => setNuevo({...nuevo, stockMin: parseInt(v || "0")})}
           />
           <PrimaryButton
-            text="Registrar Artículo"
+            text="Registrar"
+            iconProps={{ iconName: "Save" }}
             onClick={handleAdd}
             className={styles.btnAdd}
           />
-        </Stack>
-      </Stack>
+        </div>
+      </div>
 
       <div className={styles.searchSection}>
         <SearchBox
-          placeholder="Buscar por nombre de material..."
+          placeholder="Filtrar materiales..."
           onChange={(_, v) => setFilterText(v || "")}
-          styles={{ root: { width: 350 } }}
         />
       </div>
 
       {loading ? (
-        <Spinner size={SpinnerSize.large} label="Consultando almacén..." />
+        <Spinner size={SpinnerSize.large} label="Cargando almacén..." />
       ) : (
         <div className={styles.tableContainer}>
           <DetailsList
@@ -323,6 +223,48 @@ export const ListaMateriales: React.FC<{ context: any }> = (props) => {
           />
         </div>
       )}
+
+      <Panel
+        isOpen={isPanelOpen}
+        onDismiss={() => setIsPanelOpen(false)}
+        headerText="Editar Material"
+        type={PanelType.medium}
+      >
+        {selectedItem && (
+          <Stack gap={15} className={styles.panelStack}>
+            <TextField 
+              label="Nombre" 
+              value={selectedItem.Title} 
+              onChange={(_, v) => setSelectedItem({...selectedItem, Title: v || ""})}
+            />
+            <Dropdown 
+              label="Categoría" 
+              options={categorias} 
+              selectedKey={selectedItem.Categoria} 
+              onChange={(_, o) => setSelectedItem({...selectedItem, Categoria: o?.key as string})}
+            />
+            <TextField 
+              label="Stock Actual" 
+              type="number" 
+              value={selectedItem.StockActual?.toString()} 
+              onChange={(_, v) => setSelectedItem({...selectedItem, StockActual: parseInt(v || "0")})}
+            />
+            <TextField 
+              label="Stock Mínimo" 
+              type="number" 
+              value={selectedItem.StockMinimo?.toString()} 
+              onChange={(_, v) => setSelectedItem({...selectedItem, StockMinimo: parseInt(v || "0")})}
+            />
+            
+            <Separator />
+            
+            <Stack horizontal gap={10}>
+              <PrimaryButton text="Guardar Cambios" onClick={handleUpdate} />
+              <DefaultButton text="Cancelar" onClick={() => setIsPanelOpen(false)} />
+            </Stack>
+          </Stack>
+        )}
+      </Panel>
     </div>
   );
 };
