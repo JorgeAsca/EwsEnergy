@@ -21,26 +21,21 @@ interface IObraPendiente {
 }
 
 export const VistaPlanificacion: React.FC<{ context: WebPartContext }> = ({ context }) => {
-  // 1. ESTADOS
   const [obras, setObras] = React.useState<IObra[]>([]);
   const [personalDisponible, setPersonalDisponible] = React.useState<IPersonal[]>([]);
   const [asignaciones, setAsignaciones] = React.useState<IAsignacion[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [selectedAsig, setSelectedAsig] = React.useState<{asig: IAsignacion, persona: IPersonal} | null>(null);
-  
-  // Estados para obras pendientes
   const [obrasPendientes, setObrasPendientes] = React.useState<IObraPendiente[]>([]);
   const [showAddPending, setShowAddPending] = React.useState(false);
   const [newPending, setNewPending] = React.useState<IObraPendiente>({ nombre: '', motivo: '' });
 
-  // 2. SERVICIOS
   const services = React.useMemo(() => ({
     project: new ProjectService(context),
     personal: new PersonalService(context),
     asig: new AsignacionesService(context)
   }), [context]);
 
-  // 3. FUNCIONES DE LÓGICA
   const getFechaPorDia = (nombreDia: string): Date => {
     const hoy = new Date();
     const lunes = new Date(hoy.setDate(hoy.getDate() - (hoy.getDay() || 7) + 1));
@@ -61,82 +56,57 @@ export const VistaPlanificacion: React.FC<{ context: WebPartContext }> = ({ cont
       setObras(o);
       setPersonalDisponible(p);
       setAsignaciones(a);
-    } catch (error) {
-      console.error("Error cargando datos:", error);
-    } finally {
-      setLoading(false);
-    }
+    } catch (error) { console.error(error); } finally { setLoading(false); }
   };
 
   React.useEffect(() => { cargarDatos(); }, []);
 
-  // 4. MANEJADORES DE EVENTOS
   const onDrop = async (ev: React.DragEvent, obraId: number, dia: string) => {
     ev.preventDefault();
     const personId = parseInt(ev.dataTransfer.getData("personId"));
     const fecha = getFechaPorDia(dia);
-
     await services.asig.asignarPersonal({
-      ObraId: obraId,
-      PersonalId: personId,
-      FechaInicio: fecha,
-      FechaFinPrevista: fecha,
-      EstadoProgreso: 0
+      ObraId: obraId, PersonalId: personId, FechaInicio: fecha, FechaFinPrevista: fecha, EstadoProgreso: 0
     });
     await cargarDatos();
   };
 
   const eliminarAsignacion = async () => {
     if (!selectedAsig?.asig.Id) return;
-    try {
-      setLoading(true);
-      await services.asig.eliminarAsignacion(selectedAsig.asig.Id);
-      setSelectedAsig(null);
-      await cargarDatos();
-    } catch (error) {
-      console.error("Error al eliminar:", error);
-    } finally {
-      setLoading(false);
-    }
+    await services.asig.eliminarAsignacion(selectedAsig.asig.Id);
+    setSelectedAsig(null);
+    await cargarDatos();
   };
 
-  const agregarObraPendiente = () => {
-    if (newPending.nombre && newPending.motivo) {
-      setObrasPendientes([...obrasPendientes, newPending]);
-      setNewPending({ nombre: '', motivo: '' });
-      setShowAddPending(false);
-    }
-  };
-
-  if (loading) return <Spinner label="Actualizando cuadrante..." size={SpinnerSize.large} />;
+  if (loading) return <Spinner label="Cargando planificación..." size={SpinnerSize.large} />;
 
   return (
-    <Stack tokens={{ childrenGap: 20 }} className={styles.vistaPlanificacion}>
+    <Stack tokens={{ childrenGap: 15 }} className={styles.vistaPlanificacion}>
+      {/* HEADER */}
       <Stack horizontal horizontalAlign="space-between" verticalAlign="center">
-        <Text variant="xxLarge">Planificación Semanal Real</Text>
-        <PrimaryButton iconProps={{ iconName: 'Add' }} text="Anotar Obra Pendiente" onClick={() => setShowAddPending(true)} />
+        <Text variant="xLarge" className={styles.titulo}>Planificación Semanal</Text>
+        <PrimaryButton iconProps={{ iconName: 'Add' }} text="Nota Pendiente" onClick={() => setShowAddPending(true)} />
       </Stack>
-      
-      <Stack horizontal tokens={{ childrenGap: 20 }}>
-        {/* Panel Personal */}
-        <div className={styles.personalPanel}>
-          <Text variant="large" className={styles.panelTitulo}>Personal</Text>
-          <div className={styles.personalList}>
-            {personalDisponible.map(p => (
-              <div key={p.Id} draggable onDragStart={(e) => e.dataTransfer.setData("personId", p.Id.toString())} className={styles.draggablePersona}>
-                <Persona text={p.NombreyApellido} imageUrl={p.FotoPerfil} size={PersonaSize.size32} />
-              </div>
-            ))}
-          </div>
-        </div>
 
-        {/* Tabla principal */}
+      {/* PANEL PERSONAL ARRIBA */}
+      <div className={styles.personalPanelTop}>
+        <div className={styles.personalListHorizontal}>
+          {personalDisponible.map(p => (
+            <div key={p.Id} draggable onDragStart={(e) => e.dataTransfer.setData("personId", p.Id.toString())} className={styles.draggablePersonaCard}>
+              <Persona text={p.NombreyApellido} imageUrl={p.FotoPerfil} size={PersonaSize.size24} />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* CUERPO: TABLA Y PENDIENTES */}
+      <Stack horizontal tokens={{ childrenGap: 15 }} styles={{ root: { width: '100%', alignItems: 'start' }}}>
         <div className={styles.tableContainer}>
           <table className={styles.planTable}>
             <thead>
               <tr>
-                <th style={{ width: '200px' }}>Obra</th>
-                {DIAS_SEMANA.map(d => <th key={d}>{d}</th>)}
+                <th className={styles.colObra}>Obra</th>
+                {DIAS_SEMANA.map(d => <th key={d} className={styles.colDia}>{d}</th>)}
               </tr>
             </thead>
             <tbody>
@@ -145,9 +115,7 @@ export const VistaPlanificacion: React.FC<{ context: WebPartContext }> = ({ cont
                   <td className={styles.cellObra}><span>{obra.Title}</span></td>
                   {DIAS_SEMANA.map(dia => {
                     const fechaDia = getFechaPorDia(dia).toDateString();
-                    const asigsEnDia = asignaciones.filter(a => 
-                      a.ObraId === obra.Id && new Date(a.FechaInicio).toDateString() === fechaDia
-                    );
+                    const asigsEnDia = asignaciones.filter(a => a.ObraId === obra.Id && new Date(a.FechaInicio).toDateString() === fechaDia);
                     return (
                       <td key={dia} onDragOver={e => e.preventDefault()} onDrop={e => onDrop(e, obra.Id, dia)} className={styles.dropZone}>
                         <div className={styles.asignadosConsola}>
@@ -169,15 +137,20 @@ export const VistaPlanificacion: React.FC<{ context: WebPartContext }> = ({ cont
           </table>
         </div>
 
-        {/* Panel Pendientes */}
+        {/* PANEL PENDIENTES CON SCROLL INDEPENDIENTE */}
         <div className={styles.pendingPanel}>
-          <Text variant="large" className={styles.panelTitulo}>Pendientes</Text>
+          <Text className={styles.panelTituloCompacto}>Pendientes</Text>
           <div className={styles.pendingList}>
+            {obrasPendientes.length === 0 && <span className={styles.emptyText}>Sin notas</span>}
             {obrasPendientes.map((op, idx) => (
               <div key={idx} className={styles.pendingItem}>
-                <Stack horizontal horizontalAlign="space-between" verticalAlign="center">
+                <Stack horizontal horizontalAlign="space-between">
                   <Text className={styles.pendingName}>{op.nombre}</Text>
-                  <IconButton iconProps={{ iconName: 'Delete' }} onClick={() => setObrasPendientes(obrasPendientes.filter((_, i) => i !== idx))} />
+                  <IconButton 
+                    iconProps={{ iconName: 'Cancel' }} 
+                    styles={{ root: { height: 16, width: 16, fontSize: 10 }}} 
+                    onClick={() => setObrasPendientes(obrasPendientes.filter((_, i) => i !== idx))} 
+                  />
                 </Stack>
                 <Text className={styles.pendingReason}>{op.motivo}</Text>
               </div>
@@ -186,12 +159,12 @@ export const VistaPlanificacion: React.FC<{ context: WebPartContext }> = ({ cont
         </div>
       </Stack>
 
-      {/* Diálogos */}
-      <Dialog hidden={!showAddPending} onDismiss={() => setShowAddPending(false)} dialogContentProps={{ type: DialogType.normal, title: 'Nueva Obra Pendiente' }}>
+      {/* DIALOGS */}
+      <Dialog hidden={!showAddPending} onDismiss={() => setShowAddPending(false)} dialogContentProps={{ type: DialogType.normal, title: 'Nueva Nota Pendiente' }}>
         <TextField label="Nombre" value={newPending.nombre} onChange={(_, v) => setNewPending({...newPending, nombre: v || ''})} />
         <TextField label="Motivo" multiline rows={3} value={newPending.motivo} onChange={(_, v) => setNewPending({...newPending, motivo: v || ''})} />
         <DialogFooter>
-          <PrimaryButton onClick={agregarObraPendiente} text="Añadir" />
+          <PrimaryButton onClick={() => { setObrasPendientes([...obrasPendientes, newPending]); setNewPending({ nombre: '', motivo: '' }); setShowAddPending(false); }} text="Añadir" />
           <DefaultButton onClick={() => setShowAddPending(false)} text="Cancelar" />
         </DialogFooter>
       </Dialog>
