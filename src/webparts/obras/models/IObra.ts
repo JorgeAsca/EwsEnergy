@@ -1,5 +1,5 @@
 export type EstadoPresupuesto = 'PRESUPUESTO' | 'ACEPTADO OK' | 'STOCK ALMACEN';
-export type EstadoObra = 'En Proceso' | 'Finalizado';
+export type EstadoObra = 'En Proceso' | 'Finalizado' | 'Cancelado';
 
 export interface IObra {
     Id: number;

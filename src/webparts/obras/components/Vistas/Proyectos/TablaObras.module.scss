@@ -8,7 +8,7 @@ $texto-negro: #323130;
 
 .container {
   padding: 20px;
-  background-color: $blanco; /* <-- CAMBIADO A BLANCO PARA QUE SEA UNA PIEZA ÚNICA */
+  background-color: $blanco; 
   min-height: 100vh;
 
   .headerSection {
@@ -38,14 +38,14 @@ $texto-negro: #323130;
   }
 }
 
-/* --- LAYOUT MASTER-DETAIL --- */
+
 .splitLayout {
   display: flex;
   gap: 25px;
   align-items: flex-start;
 }
 
-/* COLUMNA IZQUIERDA (LISTA DELGADA Y AGRUPADA) */
+
 .listColumn {
   width: 25%; 
   min-width: 260px;
@@ -124,6 +124,26 @@ $texto-negro: #323130;
   &.filledAhead { background-color: #0078d4; }       
 }
 
+.btnFinalizar {
+  color: #2e7d32;
+  &:hover { background-color: #e8f5e9; }
+}
+
+.bntCancelar {
+  color: #d32f2f;
+  &:hover { background-color: #ffebee; }
+}
+
+.accionesCard {
+  border-top: 1px solid #eee;
+  padding-top: 10px;
+  margin-top: 10px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+
 .badgeEstado {
   padding: 4px 10px;
   border-radius: 20px;
@@ -142,6 +162,12 @@ $texto-negro: #323130;
     background: #f1f8e9;
     color: $verde-oscuro;
     border-color: $verde-claro;
+  }
+
+  &.cancelado { 
+    background: #fde7e9;
+    color: #a4262c;
+    border-color: #a4262c;
   }
 }
 

@@ -42,13 +42,12 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
   const [loading, setLoading] = React.useState(true);
   const [isOpen, setIsOpen] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
-  const [obraEditandoId, setObraEditandoId] = React.useState<number | null>(
-    null,
-  );
-  const [obraSeleccionada, setObraSeleccionada] =
-    React.useState<IObraCard | null>(null);
+  const [obraEditandoId, setObraEditandoId] = React.useState<number | null>(null,);
+  const [isProcessing, setIsProcessing] = React.useState(false);
+  const [obraSeleccionada, setObraSeleccionada] = React.useState<IObraCard | null>(null);
   const [fotosObra, setFotosObra] = React.useState<any[]>([]);
   const [loadingFotos, setLoadingFotos] = React.useState(false);
+  
 
   const [nuevaObra, setNuevaObra] = React.useState({
     Nombre: "",
@@ -57,13 +56,14 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
     Direccion: "",
     FechaInicio: new Date(),
     FechaFin: new Date(),
-    JornadasTotales: 30, // Nuevo campo
+    JornadasTotales: 30,
   });
 
   const projectService = React.useMemo(
     () => new ProjectService(props.context),
     [props.context],
   );
+
   const personalService = React.useMemo(
     () => new PersonalService(props.context),
     [props.context],
@@ -73,7 +73,7 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
     [props.context],
   );
 
-  const cargarDatos = async () => {
+const cargarDatos = async () => {
     try {
       setLoading(true);
       const [listaObras, respClientes, listaAsignaciones, listaPersonal] =
@@ -146,6 +146,58 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
       console.error(e);
     } finally {
       setLoading(false);
+    }
+  };
+
+const handleEliminar = async (id: number) => {
+    if (!window.confirm("¿Estás SEGURO de eliminar esta obra permanentemente? Se borrarán todos los registros asociados.")) return;
+    try {
+      setIsProcessing(true);
+      const endpoint = `${props.context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('Proyectos y Obras')/items(${id})`;
+      
+      await props.context.spHttpClient.post(endpoint, SPHttpClient.configurations.v1, {
+        headers: {
+          'Accept': 'application/json',
+          'IF-MATCH': '*',
+          'X-HTTP-Method': 'DELETE'
+        }
+      });
+
+      setObraSeleccionada(null);
+      await cargarDatos(); // Refresca el dashboard
+    } catch (error) {
+      console.error("Error al eliminar:", error);
+      alert("Error al intentar eliminar la obra.");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+const handleFinalizar = async (id: number) => {
+    if (!window.confirm("¿Estás seguro de que deseas finalizar esta obra?")) return;
+    try {
+        setIsProcessing(true);
+        await projectService.finalizarObra(id);
+        setObraSeleccionada(null); // Esto limpia la vista
+        await cargarDatos(); // Recarga la lista completa
+    } catch (error) {
+        console.error("Error al finalizar:", error);
+    } finally {
+        setIsProcessing(false);
+    }
+};
+
+const handleCancelar = async (id: number) => {
+    if (!window.confirm("¿Estás seguro de que deseas cancelar esta obra? No aparecerá como activa en el panel.")) return;
+    try {
+      setIsProcessing(true);
+      await projectService.cancelarObra(id); // Cambia el estado en SharePoint
+      setObraSeleccionada(null); // Cierra el panel de detalles
+      await cargarDatos(); // Recarga la lista para reflejar el cambio
+    } catch (error) {
+      console.error("Error al cancelar:", error);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -253,7 +305,7 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
       />
     );
 
-  return (
+return (
     <div className={styles.container}>
       <div className={styles.headerSection}>
         <Stack>
@@ -315,11 +367,16 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
                     {obraSeleccionada.clienteNombre}
                   </Text>
                 </Stack>
-                <div
-                  className={`${styles.badgeEstado} ${obraSeleccionada.EstadoObra === "Finalizado" ? styles.finalizado : styles.activo}`}
-                >
+                
+                <div className={`
+                  ${styles.badgeEstado} 
+                  ${obraSeleccionada.EstadoObra === "Finalizado" ? styles.finalizado : ""}
+                  ${obraSeleccionada.EstadoObra === "Cancelado" ? styles.cancelado : ""}
+                  ${(obraSeleccionada.EstadoObra !== "Finalizado" && obraSeleccionada.EstadoObra !== "Cancelado") ? styles.activo : ""}
+                `.trim()}>
                   {obraSeleccionada.EstadoObra || "Fase Previa"}
                 </div>
+
                 <DefaultButton
                   iconProps={{ iconName: "Edit" }}
                   text="Editar"
@@ -364,7 +421,7 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
                 <Stack>
                   <Text className={styles.labelSeccion}>Equipo en Campo</Text>
                   {obraSeleccionada.operarios &&
-                  obraSeleccionada.operarios.length > 0 ? (
+                    obraSeleccionada.operarios.length > 0 ? (
                     <Facepile
                       personas={obraSeleccionada.operarios}
                       personaSize={PersonaSize.size32}
@@ -399,7 +456,7 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
                 </Stack>
                 <Stack horizontal tokens={{ childrenGap: 15 }} wrap>
                   <div className={styles.planoCard}>
-                    <Icon iconName="PDFSolid" className={styles.pdfIcon} />
+                    <Icon iconName="PDF" className={styles.pdfIcon} />
                     <Text variant="smallPlus">Esquema_Eléctrico_v2.pdf</Text>
                   </div>
                   <div className={styles.planoCard}>
@@ -437,12 +494,11 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
                             <Text className={styles.fotoFecha}>
                               📅{" "}
                               {new Date(f.FechaRegistro).toLocaleDateString()} -
-                              👷 {f.Operario}
+                              Worker {f.Operario}
                             </Text>
                             <div className={styles.fotoComentarioBox}>
                               <Text className={styles.fotoComentarioText}>
-                                "{f.Comentarios || "Sin observaciones técnicas"}
-                                "
+                                "{f.Comentarios || "Sin observaciones técnicas"}"
                               </Text>
                             </div>
                           </Stack>
@@ -455,6 +511,40 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
                     No hay reportes para esta obra.
                   </MessageBar>
                 )}
+              </div>
+
+              <div className={styles.planosSection}> 
+                <Separator />
+                <Stack tokens={{ childrenGap: 15 }} style={{ marginTop: '20px' }}>
+                  <Text variant="large" className={styles.sectionTitle}>
+                    Gestión de Obra
+                  </Text>
+                  <Stack horizontal tokens={{ childrenGap: 12 }} verticalAlign="center">
+                    {isProcessing ? (
+                      <Spinner label="Procesando..." />
+                    ) : (
+                      <>
+                        <PrimaryButton
+                          text="Finalizar Obra"
+                          iconProps={{ iconName: 'Completed' }}
+                          onClick={() => handleFinalizar(obraSeleccionada.Id)}
+                          className={styles.btnNuevaObra}
+                        />
+                        <DefaultButton
+                          text="Cancelar Obra"
+                          iconProps={{ iconName: 'Clear' }}
+                          onClick={() => handleCancelar(obraSeleccionada.Id)}
+                        />
+                        <IconButton
+                          iconProps={{ iconName: 'Delete' }}
+                          title="Eliminar Obra permanentemente"
+                          onClick={() => handleEliminar(obraSeleccionada.Id)}
+                          className={styles.btnClose}
+                        />
+                      </>
+                    )}
+                  </Stack>
+                </Stack>
               </div>
             </div>
           ) : (
@@ -514,7 +604,6 @@ export const TablaObras: React.FC<{ context: any }> = (props) => {
                 }
               />
               <Stack horizontal tokens={{ childrenGap: 20 }}>
-                {/* CAMPO DE JORNADAS */}
                 <div style={{ flex: 1 }}>
                   <TextField
                     label="Jornadas Presupuestadas"

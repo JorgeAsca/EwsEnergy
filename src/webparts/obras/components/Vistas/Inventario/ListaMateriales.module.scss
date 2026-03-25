@@ -1,6 +1,5 @@
 @import '~@fluentui/react/dist/sass/References.scss';
 
-
 $verde-ews: #004d40;
 $verde-claro: #8bc34a;
 $blanco: #ffffff;
@@ -8,22 +7,51 @@ $gris-borde: #edebe9;
 $rojo-alerta: #d13438;
 
 
-:global {
-  .ms-TextField-fieldGroup:after,
-  .ms-Dropdown-container:after,
-  .ms-SearchBox::after {
-    border-color: $verde-ews !important; 
-  }
-  
-  .is-focused .ms-TextField-fieldGroup {
-    border-color: $verde-ews !important;
-  }
-}
-
 .container {
   padding: 20px;
   background-color: #f4f4f4;
   min-height: 100vh;
+
+  :global {
+    
+    .ms-TextField-fieldGroup::after,
+    .ms-Dropdown-container::after,
+    .ms-SearchBox::after {
+      border-color: $verde-ews;
+    }
+    
+    
+    .ms-DetailsHeader {
+      background-color: $verde-ews;
+      padding-top: 0;
+
+      .ms-DetailsHeader-cell {
+        color: $blanco;
+        background-color: $verde-ews;
+        font-weight: 700;
+
+        .ms-DetailsHeader-filterChevron, 
+        .ms-DetailsHeader-cellName {
+          color: $blanco;
+        }
+      }
+    }
+
+    .ms-DetailsRow {
+      border-bottom: 1px solid $gris-borde;
+      
+      
+      &:hover {
+        background-color: rgba($verde-claro, 0.1);
+        color: $verde-ews;
+        
+        .ms-DetailsRow-cell {
+          background-color: transparent;
+          color: $verde-ews;
+        }
+      }
+    }
+  }
 }
 
 .formCard {
@@ -60,8 +88,9 @@ $rojo-alerta: #d13438;
   background-color: $verde-ews;
   border: none;
   border-radius: 4px;
+  color: $blanco;
   &:hover {
-    background-color: $verde-claro !important;
+    background-color: $verde-claro;
   }
 }
 
@@ -76,34 +105,6 @@ $rojo-alerta: #d13438;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
   border: 1px solid $gris-borde;
-
-  :global {
-    .ms-DetailsHeader {
-      background-color: $verde-ews;
-      padding-top: 0;
-      .ms-DetailsHeader-cell {
-        color: $blanco !important;
-        background-color: $verde-ews !important;
-        font-weight: 700;
-        .ms-DetailsHeader-filterChevron, 
-        .ms-DetailsHeader-cellName {
-          color: $blanco !important;
-        }
-      }
-    }
-
-    .ms-DetailsRow {
-      border-bottom: 1px solid $gris-borde;
-      &:hover {
-        background-color: rgba($verde-claro, 0.1) !important;
-        color: $verde-ews !important;
-        .ms-DetailsRow-cell {
-          background-color: transparent !important;
-          color: $verde-ews !important;
-        }
-      }
-    }
-  }
 }
 
 .stockCellAlerta {
