@@ -30,6 +30,12 @@ export const VistaFotosObra: React.FC<{ context: any }> = (props) => {
     const [loading, setLoading] = React.useState(true);
     const [subiendo, setSubiendo] = React.useState(false);
 
+    //Estados para el botón de la cámara
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
+    const photoService = new PhotoService(props.context);
+    const [mensajeExito, setMensajeExito] = React.useState(false);
+    const [procesandoCaptura, setProcesandoCaptura] = React.useState(false);
+
     const [operario, setOperario] = React.useState<IPersonal | null>(null);
     const [obraSeleccionada, setObraSeleccionada] = React.useState<IObra | null>(
         null,
@@ -39,7 +45,7 @@ export const VistaFotosObra: React.FC<{ context: any }> = (props) => {
 
     // El progreso guarda directamente el porcentaje reportado (100, 60, 40, 0)
     const [progresoDia, setProgresoDia] = React.useState<number | null>(null);
-    const [fotos, setFotos] = React.useState<File[]>([]);
+    const [fotos, setFotos] = React.useState<any[]>([]);
     const [comentarios, setComentarios] = React.useState("");
 
     const [listaPersonal, setListaPersonal] = React.useState<IPersonal[]>([]);
@@ -123,58 +129,113 @@ export const VistaFotosObra: React.FC<{ context: any }> = (props) => {
     };
 
     const enviarReporte = async () => {
-        setSubiendo(true);
-        try {
-            if (!obraSeleccionada || !operario) throw new Error("Faltan datos");
+    if (!obraSeleccionada || !operario || fotos.length === 0) {
+        alert("Faltan datos o fotos para enviar el reporte.");
+        return;
+    }
 
-            for (let i = 0; i < fotos.length; i++) {
-                await services.fotos.subirFotoProyecto(
-                    fotos[i],
-                    obraSeleccionada.Title,
-                    {
-                        operario: operario.NombreyApellido,
-                        operarioId: operario.Id as number,
-                        obraId: obraSeleccionada.Id as number,
-                        comentarios: comentarios,
-                    },
-                );
-            }
-
-            // LÓGICA DE JORNADAS FLEXIBLES
-            const jornadasTotales =
-                obraSeleccionada.JornadasTotales && obraSeleccionada.JornadasTotales > 0
-                    ? obraSeleccionada.JornadasTotales
-                    : 30; // Fallback de seguridad
-
-            const pesoUnaJornada = 100 / jornadasTotales;
-            const porcentajeRendido = progresoDia === null ? 0 : progresoDia;
-            const incrementoAvance = (porcentajeRendido / 100) * pesoUnaJornada;
-
-            const progresoAnterior = obraSeleccionada.ProgresoReal || 0;
-            let nuevoProgresoReal = progresoAnterior + incrementoAvance;
-            if (nuevoProgresoReal > 100) nuevoProgresoReal = 100;
-
-            await services.obras.actualizarProgresoObra(
-                obraSeleccionada.Id as number,
-                parseFloat(nuevoProgresoReal.toFixed(2)),
+    setSubiendo(true);
+    try {
+        // 1. Subir todas las fotos acumuladas en el estado
+        for (const fotoObj of fotos) {
+            await photoService.uploadCompressedPhoto(
+                fotoObj.archivo, // El archivo File que guardamos en el paso anterior
+                obraSeleccionada.Title,
+                {
+                    operario: operario.NombreyApellido,
+                    operarioId: operario.Id as number,
+                    obraId: obraSeleccionada.Id as number,
+                    comentarios: comentarios,
+                    latitud: fotoObj.latitud, // Pasamos la ubicación guardada localmente
+                    longitud: fotoObj.longitud
+                }
             );
-
-            alert("¡Reporte enviado con éxito a la oficina! Buen trabajo.");
-
-            setPaso(1);
-            setOperario(null);
-            setObraSeleccionada(null);
-            setFotos([]);
-            setComentarios("");
-            setProgresoDia(null);
-            setEquipoConfirmado([]);
-        } catch (error) {
-            console.error(error);
-            alert("Hubo un error al sincronizar.");
-        } finally {
-            setSubiendo(false);
         }
-    };
+
+        // 2. Lógica de actualización de progreso de la obra (tu lógica existente)
+        const jornadasTotales = obraSeleccionada.JornadasTotales || 30;
+        const incrementoAvance = ((progresoDia || 0) / 100) * (100 / jornadasTotales);
+        const nuevoProgresoReal = Math.min((obraSeleccionada.ProgresoReal || 0) + incrementoAvance, 100);
+
+        await services.obras.actualizarProgresoObra(
+            obraSeleccionada.Id as number,
+            parseFloat(nuevoProgresoReal.toFixed(2))
+        );
+
+        alert("¡Reporte y fotos sincronizados con éxito!");
+
+        // 3. Limpieza y reinicio
+        setPaso(1);
+        setOperario(null);
+        setObraSeleccionada(null);
+        setFotos([]);
+        setComentarios("");
+        setProgresoDia(null);
+    } catch (error) {
+        console.error("Error al sincronizar reporte oficial:", error);
+        alert("Hubo un error al sincronizar el reporte completo.");
+    } finally {
+        setSubiendo(false);
+    }
+};
+
+const manejarCapturaFoto = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const archivo = event.target.files?.[0];
+    if (!archivo) return;
+
+    setProcesandoCaptura(true); // Iniciamos carga visual local
+    setMensajeExito(false);
+
+    try {
+        const ubicacion = await obtenerUbicacion();
+
+        const nuevaFotoLocal = {
+            ID: Date.now(),
+            archivo: archivo,
+            Url: URL.createObjectURL(archivo),
+            Nombre: archivo.name,
+            Fecha: new Date().toLocaleDateString(),
+            latitud: ubicacion?.lat,
+            longitud: ubicacion?.lng,
+            Ubicacion: ubicacion ? `${ubicacion.lat}, ${ubicacion.lng}` : "Capturada"
+        };
+
+        setFotos((prev) => [...prev, nuevaFotoLocal]);
+        setMensajeExito(true); // Mostramos el aviso de éxito
+
+        // Ocultar el mensaje automáticamente tras 3 segundos
+        setTimeout(() => setMensajeExito(false), 3000);
+
+    } catch (error) {
+        console.error("Error en vista previa:", error);
+    } finally {
+        setProcesandoCaptura(false);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+};
+
+    const obtenerUbicacion = (): Promise<{ lat: number; lng: number } | null> => {
+    return new Promise((resolve) => {
+        if (!navigator.geolocation) {
+            console.error("Geolocalización no soportada");
+            resolve(null);
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                resolve({
+                    lat: pos.coords.latitude,
+                    lng: pos.coords.longitude
+                });
+            },
+            (error) => {
+                console.error("Error obteniendo ubicación:", error);
+                resolve(null); 
+            },
+            { enableHighAccuracy: true, timeout: 5000 }
+        );
+    });
+};
 
     if (loading)
         return (
@@ -184,7 +245,7 @@ export const VistaFotosObra: React.FC<{ context: any }> = (props) => {
             />
         );
 
-    return (
+return (
         <div className={styles.container}>
             <header className={styles.appHeader}>
                 <Stack>
@@ -325,7 +386,7 @@ export const VistaFotosObra: React.FC<{ context: any }> = (props) => {
                         <Text className={styles.instruccion}>
                             ¿Qué porcentaje de una jornada típica lograron completar hoy?
                         </Text>
-
+                        
                         <Stack
                             tokens={{ childrenGap: 15 }}
                             className={styles.progressContainer}
@@ -377,21 +438,44 @@ export const VistaFotosObra: React.FC<{ context: any }> = (props) => {
                         <Text variant="large" className={styles.stepTitle}>
                             4. Evidencia Visual
                         </Text>
-                        <label className={styles.photoDropzone}>
-                            <input
-                                type="file"
-                                accept="image/*"
-                                multiple
-                                onChange={handleFileUpload}
-                                style={{ display: "none" }}
-                            />
-                            <Icon iconName="Camera" className={styles.bigIcon} />
-                            <Text>Toca para tomar foto o abrir galería</Text>
+                        
+                        <input
+                            type="file"
+                            accept="image/*"
+                            capture="environment"
+                            style={{ display: "none" }}
+                            ref={fileInputRef}
+                            onChange={manejarCapturaFoto}
+                        />
+
+                        {/* Dropzone interactiva con Spinner local */}
+                        <label 
+                            className={styles.photoDropzone} 
+                            onClick={() => !procesandoCaptura && fileInputRef.current?.click()}
+                            style={{ cursor: procesandoCaptura ? 'wait' : 'pointer', opacity: procesandoCaptura ? 0.7 : 1 }}
+                        >
+                            {procesandoCaptura ? (
+                                <Spinner size={SpinnerSize.large} label="Optimizando..." />
+                            ) : (
+                                <>
+                                    <Icon iconName="Camera" className={styles.bigIcon} />
+                                    <Text>Toca para tomar foto con GPS</Text>
+                                </>
+                            )}
                         </label>
+
+                        {/* Mensaje de confirmación local tras captura exitosa */}
+                        {mensajeExito && (
+                            <MessageBar messageBarType={MessageBarType.success} isMultiline={false} styles={{ root: { marginTop: 10 } }}>
+                                Foto capturada y optimizada correctamente.
+                            </MessageBar>
+                        )}
+
                         <div className={styles.previewContainer}>
                             {fotos.map((f, i) => (
-                                <div key={i} className={styles.previewItem}>
-                                    <img src={URL.createObjectURL(f)} alt="preview" />
+                                <div key={f.ID || i} className={styles.previewItem}>
+                                    <img src={f.Url} alt="preview" />
+                                    {f.Ubicacion && <span className={styles.gpsBadge}><Icon iconName="MapPin" /></span>}
                                     <IconButton
                                         iconProps={{ iconName: "Cancel" }}
                                         className={styles.removePhoto}
@@ -402,6 +486,10 @@ export const VistaFotosObra: React.FC<{ context: any }> = (props) => {
                                 </div>
                             ))}
                         </div>
+
+                        {/* Spinner de sincronización final a SharePoint */}
+                        {subiendo && <Spinner size={SpinnerSize.medium} label="Sincronizando reporte oficial..." styles={{ root: { marginTop: 10 } }} />}
+
                         <TextField
                             label="Comentarios (Usa el micrófono de tu teclado 🎤)"
                             multiline
@@ -410,6 +498,7 @@ export const VistaFotosObra: React.FC<{ context: any }> = (props) => {
                             onChange={(_, v) => setComentarios(v || "")}
                             placeholder="Ej. Dejamos el cuadro principal montado..."
                         />
+
                         <Stack
                             horizontal
                             tokens={{ childrenGap: 10 }}
@@ -418,13 +507,13 @@ export const VistaFotosObra: React.FC<{ context: any }> = (props) => {
                             <DefaultButton
                                 text="Atrás"
                                 onClick={() => setPaso(3)}
-                                disabled={subiendo}
+                                disabled={subiendo || procesandoCaptura}
                             />
                             <PrimaryButton
                                 text={subiendo ? "Sincronizando..." : "Enviar Reporte Oficial"}
                                 iconProps={{ iconName: "Send" }}
                                 onClick={enviarReporte}
-                                disabled={fotos.length === 0 || subiendo}
+                                disabled={fotos.length === 0 || subiendo || procesandoCaptura}
                                 className={styles.btnEws}
                                 style={{ flex: 1 }}
                             />
