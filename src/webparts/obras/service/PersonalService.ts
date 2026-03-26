@@ -104,10 +104,6 @@ export class PersonalService {
 
     public async actualizarTrabajador(id: number, datos: any): Promise<void> {
         const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('${this._listName}')/items(${id})`;
-
-        // SharePoint necesita saber el tipo de objeto que está actualizando. 
-        // Para una lista, el formato estándar es SP.Data.NombreDeLaListaListItem
-        // Como tu lista tiene espacios, SharePoint suele usar 'Personal_x0020_EWS'
         const body = JSON.stringify({
             '__metadata': { 'type': `SP.Data.Personal_x0020_EWSListItem` },
             Title: datos.NombreyApellido,

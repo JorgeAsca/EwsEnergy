@@ -14,13 +14,11 @@ export class AsignacionesService {
         const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('${this._listName}')/items`;
         const response = await this._context.spHttpClient.get(endpoint, SPHttpClient.configurations.v1);
         const data = await response.json();
-        return data.value || []; // Siempre devolver un array
+        return data.value || []; 
     }
 
     public async asignarPersonal(asignacion: IAsignacion): Promise<void> {
         const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('${this._listName}')/items`;
-
-        // SharePoint requiere strings ISO para las fechas
         const body = {
             Title: `Asignación Obra ${asignacion.ObraId}`,
             ObraId: asignacion.ObraId,
@@ -34,7 +32,7 @@ export class AsignacionesService {
             headers: {
                 'Accept': 'application/json;odata=nometadata',
                 'Content-type': 'application/json;odata=nometadata',
-                'odata-version': '3.0' // DEBE ser 3.0
+                'odata-version': '3.0' 
             },
             body: JSON.stringify(body)
         };
@@ -48,7 +46,6 @@ export class AsignacionesService {
         }
     }
 
-    // Eliminación de asignación (opcional, para funcionalidad de seguimiento)
     public async eliminarAsignacion(id: number): Promise<void> {
         const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('Asignaciones EWS')/items(${id})`;
 
@@ -58,7 +55,7 @@ export class AsignacionesService {
                 'Content-type': 'application/json',
                 'X-HTTP-Method': 'DELETE',
                 'IF-MATCH': '*',
-                'odata-version': '3.0' // <--- CAMBIO CRÍTICO AQUÍ
+                'odata-version': '3.0' 
             }
         });
 

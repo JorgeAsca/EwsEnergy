@@ -24,9 +24,6 @@ export class DailyReportService {
     public async guardarReporteDiario(reporte: IDiarioEntrada): Promise<void> {
         const endpoint = `${this._baseUrl}/_api/web/lists/getbytitle('Diario de Trabajo')/items`;
 
-        // SharePoint no permite guardar arrays directamente de forma sencilla en una columna de texto,
-        // así que convertimos las URLs de las fotos en una cadena de texto separada por comas
-        // o las guardamos en un campo de texto multilínea.
         const body = JSON.stringify({
             Title: `Reporte - Obra ${reporte.ObraId} - ${reporte.Fecha}`,
             ObraId: reporte.ObraId,
