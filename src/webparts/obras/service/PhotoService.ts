@@ -136,7 +136,7 @@ export class PhotoService {
   }
   public async uploadCompressedPhoto(
     file: File,
-    nombreProyecto: string, 
+    nombreProyecto: string,
     metadatos: {
       operario: string;
       operarioId: number;
@@ -180,6 +180,18 @@ export class PhotoService {
           );
         };
       };
+    });
+  }
+
+  public async obtenerUbicacion(): Promise<{ lat: number; lng: number;} | null> {
+    return new Promise((resolve) => {
+      if (!navigator.geolocation) resolve(null);
+      navigator.geolocation.getCurrentPosition(
+        (pos) =>
+          resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        () => resolve(null),
+        { enableHighAccuracy: true, timeout: 5000 },
+      );
     });
   }
 }
