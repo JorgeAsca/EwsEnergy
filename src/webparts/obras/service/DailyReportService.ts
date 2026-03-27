@@ -1,10 +1,11 @@
 import { WebPartContext } from '@microsoft/sp-webpart-base';
 import { SPHttpClient } from '@microsoft/sp-http';
+import { IReporteHistorial } from "../models/IReporteHistorial";
 
 export interface IDiarioEntrada {
     ObraId: number;
     Comentarios: string;
-    FotosUrls: string[]; // Aquí guardaremos los links que nos dé el PhotoService
+    FotosUrls: string[]; 
     Fecha: string;
 }
 
@@ -28,7 +29,6 @@ export class DailyReportService {
             Title: `Reporte - Obra ${reporte.ObraId} - ${reporte.Fecha}`,
             ObraId: reporte.ObraId,
             Comentarios: reporte.Comentarios,
-            // Guardamos las URLs de las fotos como texto para que el Front pueda leerlas luego
             FotosRelacionadas: reporte.FotosUrls.join('; ')
         });
 
@@ -40,19 +40,27 @@ export class DailyReportService {
             }
         });
 
-        if (!response.ok) {
-            throw new Error("No se pudo guardar el reporte diario en la lista.");
-        }
+        if (!response.ok) throw new Error("No se pudo guardar el reporte diario.");
     }
 
-    public async getHistorialGlobal(): Promise<any[]> {
-        const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('${this._metadataListName}')/items?$orderby=FechaRegistro desc`;
+    public async getHistorialGlobal(): Promise<IReporteHistorial[]> {
+        // Optimizamos con $select para no traer basura de SharePoint
+        const campos = "Id,Title,Comentarios,FechaRegistro,OperarioId,ObraId,UrlFoto";
+        const endpoint = `${this._baseUrl}/_api/web/lists/getbytitle('${this._metadataListName}')/items?$select=${campos}&$orderby=FechaRegistro desc`;
 
-        const response = await this._context.spHttpClient.get(endpoint, SPHttpClient.configurations.v1);
-        if (!response.ok) return [];
+        try {
+            const response = await this._context.spHttpClient.get(endpoint, SPHttpClient.configurations.v1);
+            
+            if (!response.ok) {
+                throw new Error(`Error al obtener historial: ${response.statusText}`);
+            }
 
-        const data = await response.json();
-        return data.value || [];
+            const data = await response.json();
+            return data.value || [];
+        } catch (error) {
+            console.error("Error en DailyReportService:", error);
+            throw error;
+        }
     }
 
     public async getFotosPorObra(obraId: number): Promise<any[]> {
