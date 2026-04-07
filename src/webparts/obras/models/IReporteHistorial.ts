@@ -1,6 +1,6 @@
 export interface IReporteHistorial {
-    id: number;
-    Tittle: string;
+    Id: number;
+    Title: string;
     Comentarios: string;
     FechaRegistro: string;
     OperarioId: number;

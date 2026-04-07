@@ -1,13 +1,8 @@
 import { WebPartContext } from '@microsoft/sp-webpart-base';
 import { SPHttpClient } from '@microsoft/sp-http';
 import { IReporteHistorial } from "../models/IReporteHistorial";
+import { IDiarioEntrada } from "../models/IDiarioEntrada";
 
-export interface IDiarioEntrada {
-    ObraId: number;
-    Comentarios: string;
-    FotosUrls: string[]; 
-    Fecha: string;
-}
 
 export class DailyReportService {
     private _context: WebPartContext;
