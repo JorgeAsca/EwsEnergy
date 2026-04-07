@@ -24,6 +24,7 @@ import { AsignacionesService } from "../../../service/AsignacionesService";
 import { ProjectService } from "../../../service/ProjectService";
 import { PhotoService } from "../../../service/PhotoService";
 import styles from "./VistaFotosObra.module.scss";
+import { set } from "@microsoft/sp-lodash-subset/lib/index";
 
 export const VistaFotosObra: React.FC<{ context: any }> = (props) => {
     const [paso, setPaso] = React.useState(1);
@@ -69,6 +70,15 @@ export const VistaFotosObra: React.FC<{ context: any }> = (props) => {
                     asignacionesGlobales: asigs,
                     obrasActivas: obs.filter((o) => o.EstadoObra !== "Finalizado")
                 });
+
+                // Logica de autodetección por email
+                const currentUserEmail = props.context.pageContext.user.email.toLowerCase();
+                const yoMismo = pers.find(p => p.Email && p.Email.toLowerCase() === currentUserEmail);
+                if (yoMismo) {
+                    setOperario(yoMismo); // Se asigna automáticamente
+                    // Opcional: setPaso(1) o lógica para saltar directamente a elegir obra
+                }
+
             } catch (e) {
                 console.error(e);
             } finally {
@@ -81,7 +91,7 @@ export const VistaFotosObra: React.FC<{ context: any }> = (props) => {
     const handleSeleccionarObra = (ob: IObra) => {
         setObraSeleccionada(ob);
         const asigsObra = data.asignacionesGlobales.filter(a => Number(a.ObraId) === Number(ob.Id));
-        const compis = data.listaPersonal.filter(p => 
+        const compis = data.listaPersonal.filter(p =>
             asigsObra.some(a => Number(a.PersonalId) === Number(p.Id)) && p.Id !== operario?.Id
         );
         setCompañeros(compis);
@@ -90,7 +100,7 @@ export const VistaFotosObra: React.FC<{ context: any }> = (props) => {
     };
 
     const toggleCompañero = (id: number) => {
-        setEquipoConfirmado((prev) => 
+        setEquipoConfirmado((prev) =>
             prev.indexOf(id) !== -1 ? prev.filter(p => p !== id) : [...prev, id]
         );
     };
@@ -232,15 +242,15 @@ export const VistaFotosObra: React.FC<{ context: any }> = (props) => {
                             {compañeros.length > 0 ? compañeros.map((c) => (
                                 <div key={c.Id} className={styles.teamMemberItem}>
                                     <Persona imageUrl={c.FotoPerfil} text={c.NombreyApellido} size={PersonaSize.size32} />
-                                    <Checkbox 
-                                        checked={equipoConfirmado.indexOf(c.Id as number) !== -1} 
-                                        onChange={() => toggleCompañero(c.Id as number)} 
+                                    <Checkbox
+                                        checked={equipoConfirmado.indexOf(c.Id as number) !== -1}
+                                        onChange={() => toggleCompañero(c.Id as number)}
                                     />
                                 </div>
                             )) : <MessageBar>Trabajaste solo en esta obra.</MessageBar>}
                         </div>
                         <div className={styles.extraSection}>
-                            <Dropdown 
+                            <Dropdown
                                 placeholder="+ Añadir personal imprevisto"
                                 options={data.listaPersonal.filter(p => p.Id !== operario?.Id && !compañeros.some(c => c.Id === p.Id)).map(p => ({ key: p.Id as number, text: p.NombreyApellido }))}
                                 onChange={agregarCompañeroExtra}
@@ -258,7 +268,7 @@ export const VistaFotosObra: React.FC<{ context: any }> = (props) => {
                     <section className={styles.stepContainer}>
                         <Text variant="large" className={styles.stepTitle}>3. Avance de la Jornada</Text>
                         <Stack tokens={{ childrenGap: 15 }} className={styles.progressContainer}>
-                            {[ {v:100, l:"Jornada Óptima (100%)", i:"CompletedSolid", s:styles.btnVerde}, {v:60, l:"Avance Notable (60%)", i:"HalfAlpha", s:styles.btnAmarillo}, {v:40, l:"Avance Menor (40%)", i:"Clock", s:styles.btnNaranja}, {v:0, l:"Obra Bloqueada (0%)", i:"StatusErrorFull", s:styles.btnRojo} ].map(btn => (
+                            {[{ v: 100, l: "Jornada Óptima (100%)", i: "CompletedSolid", s: styles.btnVerde }, { v: 60, l: "Avance Notable (60%)", i: "HalfAlpha", s: styles.btnAmarillo }, { v: 40, l: "Avance Menor (40%)", i: "Clock", s: styles.btnNaranja }, { v: 0, l: "Obra Bloqueada (0%)", i: "StatusErrorFull", s: styles.btnRojo }].map(btn => (
                                 <button key={btn.v} className={`${styles.progressBtn} ${btn.s} ${progresoDia === btn.v ? styles.selected : ""}`} onClick={() => setProgresoDia(btn.v)}>
                                     <Icon iconName={btn.i} /> {btn.l}
                                 </button>
@@ -275,9 +285,9 @@ export const VistaFotosObra: React.FC<{ context: any }> = (props) => {
                     <section className={styles.stepContainer}>
                         <Text variant="large" className={styles.stepTitle}>4. Evidencia Visual</Text>
                         <input type="file" accept="image/*" capture="environment" style={{ display: "none" }} ref={fileInputRef} onChange={manejarCapturaFoto} />
-                        
-                        <label 
-                            className={styles.photoDropzone} 
+
+                        <label
+                            className={styles.photoDropzone}
                             onClick={() => !procesandoCaptura && fileInputRef.current?.click()}
                             style={{ cursor: procesandoCaptura ? 'wait' : 'pointer', opacity: procesandoCaptura ? 0.7 : 1 }}
                         >

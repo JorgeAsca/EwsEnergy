@@ -5,6 +5,7 @@ import styles from "../Obras.module.scss";
 interface ISidebarProps {
   selectedKey: string;
   onLinkClick: (key: string) => void;
+  isOpen?: boolean;
 }
 
 const navGroups: INavLinkGroup[] = [
@@ -23,7 +24,7 @@ const navGroups: INavLinkGroup[] = [
 
 export const Sidebar: React.FC<ISidebarProps> = (props) => {
   return (
-    <div className={styles.sidebar}>
+    <div className={`${styles.sidebar} ${props.isOpen ? styles.isOpen : ""}`}>
       <div className={styles.logoArea}>
         <Text variant="large" style={{ fontWeight: "bold", color: "white" }}>
           EWS ENERGY
@@ -34,7 +35,9 @@ export const Sidebar: React.FC<ISidebarProps> = (props) => {
         groups={navGroups}
         onLinkClick={(ev, item?: INavLink) => {
           if (ev) ev.preventDefault();
-          if (item) props.onLinkClick(item.key as string);
+          if (item) {
+            props.onLinkClick(item.key as string);
+          }
         }}
       />
     </div>
