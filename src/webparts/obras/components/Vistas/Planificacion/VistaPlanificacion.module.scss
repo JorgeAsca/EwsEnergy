@@ -86,16 +86,21 @@ $verde-fondo: #f9fbf9;
 
 .asignadosConsola {
   display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
+  flex-direction: column; /* Cambiado para apilar los nombres verticalmente */
+  gap: 6px;
   padding: 6px;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 .fotoAsignada {
   cursor: pointer;
-  transition: transform 0.2s;
-  &:hover { transform: scale(1.15); z-index: 5; }
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+  /* El transform: scale() suele verse raro con texto, lo cambiamos a un efecto de fondo */
+  &:hover { 
+    background-color: #f3f2f1; 
+  }
 }
 
 // PANEL PENDIENTES FIJO E INDEPENDIENTE

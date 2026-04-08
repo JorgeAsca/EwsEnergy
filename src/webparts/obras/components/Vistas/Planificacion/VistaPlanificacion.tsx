@@ -123,7 +123,7 @@ export const VistaPlanificacion: React.FC<{ context: WebPartContext }> = ({ cont
                             const p = personalDisponible.find(pers => pers.Id === a.PersonalId);
                             return p ? (
                               <div key={a.Id} onClick={() => setSelectedAsig({asig: a, persona: p})} className={styles.fotoAsignada}>
-                                <Persona imageUrl={p.FotoPerfil} size={PersonaSize.size32} hidePersonaDetails />
+                                <Persona text={p.NombreyApellido} imageUrl={p.FotoPerfil} size={PersonaSize.size32} />
                               </div>
                             ) : null;
                           })}
