@@ -1,5 +1,7 @@
 import { SPHttpClient, SPHttpClientResponse } from "@microsoft/sp-http";
 import { IObra } from "../models/IObra";
+import { IObraCard } from "../models/IObraCard";
+import { IFacepilePersona } from "@fluentui/react";
 
 export class ProjectService {
   private _context: any;
@@ -236,5 +238,35 @@ export class ProjectService {
         }),
       },
     );
+  }
+
+  public async getObrasCompletas(
+    asignaciones: any[],
+    personal: any[],
+  ): Promise<IObraCard[]> {
+    const obras = await this.getObras();
+
+    return obras.map((obra) => {
+      // Filtrar operarios asignados a esta obra
+      const asignados = asignaciones.filter(
+        (a) => Number(a.ObraId) === Number(obra.Id),
+      );
+      const operariosProps: IFacepilePersona[] = asignados.map((asig) => {
+        const p = personal.find(
+          (pers) => Number(pers.Id) === Number(asig.PersonalId),
+        );
+        return { personaName: p ? p.NombreyApellido : "Desconocido" };
+      });
+
+      return {
+        ...obra,
+        clienteNombre: (obra as any).Cliente?.Title || "Sin Cliente",
+        porcentajeReal: obra.ProgresoReal || 0,
+        operarios: operariosProps,
+        jornadasConsumidas: Math.round(
+          ((obra.ProgresoReal || 0) / 100) * (obra.JornadasTotales || 30),
+        ),
+      } as IObraCard;
+    });
   }
 }

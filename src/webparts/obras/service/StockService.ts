@@ -37,12 +37,12 @@ export class StockService {
     public async crearMaterial(material: any): Promise<void> {
         const endpoint = `${this._baseUrl}/_api/web/lists/getbytitle('Inventario de Materiales')/items`;
         
-        // USAMOS TUS NOMBRES INTERNOS REALES
+       
         const body = JSON.stringify({
             Title: material.Title,
             Categor_x00ed_a: material.Categoria,
             StockActual: material.StockActual,
-            StockM_x00ed_nimo: material.StockMinimo // <--- Nombre exacto de tu URL
+            StockM_x00ed_nimo: material.StockMinimo 
         });
 
         const response = await this._context.spHttpClient.post(endpoint, SPHttpClient.configurations.v1, { 

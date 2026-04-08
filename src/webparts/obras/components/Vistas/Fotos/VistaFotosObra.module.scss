@@ -234,6 +234,26 @@ $blanco: #ffffff;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
+.gpsBadge {
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  background-color: #0078d4;
+  color: white;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  z-index: 2;
+
+  i {
+    font-size: 12px; // Tamaño del icono MapPin
+  }
+}
+
 .btnEws {
   background-color: $verde-oscuro;
   border: none;

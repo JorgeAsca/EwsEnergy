@@ -4,7 +4,7 @@ export interface IAsignacion {
     Id?: number;
     ObraId: number;
     PersonalId: number;
-    Personal?: IPersonal; // Añadimos esta línea para que TS no de error
+    Personal?: IPersonal;
     FechaInicio: Date;
     FechaFinPrevista: Date;
     EstadoProgreso: number;

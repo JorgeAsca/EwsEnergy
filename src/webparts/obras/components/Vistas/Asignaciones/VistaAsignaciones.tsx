@@ -13,86 +13,66 @@ import {
     DatePicker,
     Separator,
 } from "@fluentui/react";
-import { ProjectService } from "../../../service/ProjectService";
-import { PersonalService } from "../../../service/PersonalService";
 import { AsignacionesService } from "../../../service/AsignacionesService";
 import { IObra } from "../../../models/IObra";
 import { IPersonal } from "../../../models/IPersonal";
 import { IAsignacion } from "../../../models/IAsignacion";
-
 import styles from "./VistaAsignaciones.module.scss";
 
 export const VistaAsignaciones: React.FC<{ context: any }> = (props) => {
-    const [obras, setObras] = React.useState<IObra[]>([]);
-    const [personal, setPersonal] = React.useState<IPersonal[]>([]);
-    const [asignaciones, setAsignaciones] = React.useState<IAsignacion[]>([]);
+    const [data, setData] = React.useState<{
+        obras: IObra[];
+        personal: IPersonal[];
+        asignaciones: IAsignacion[];
+    }>({ obras: [], personal: [], asignaciones: [] });
+
     const [loading, setLoading] = React.useState(true);
     const [error, setError] = React.useState<string | null>(null);
-
     const [seleccion, setSeleccion] = React.useState({
         obraId: 0,
         personalId: 0,
         fechaFin: new Date(),
     });
 
-    const services = React.useMemo(
-        () => ({
-            obras: new ProjectService(props.context),
-            personal: new PersonalService(props.context),
-            asignaciones: new AsignacionesService(props.context),
-        }),
-        [props.context],
-    );
+    // Instancia del servicio orquestador
+    const service = React.useMemo(() => new AsignacionesService(props.context), [props.context]);
 
-    const cargarTodo = async () => {
+    const cargarPanel = async () => {
         try {
             setLoading(true);
-            const [o, p, a]: [IObra[], IPersonal[], IAsignacion[]] =
-                await Promise.all([
-                    services.obras.getObras(),
-                    services.personal.getPersonal(),
-                    services.asignaciones.getAsignaciones() as any,
-                ]);
-            setObras(o || []);
-            setPersonal(p || []);
-            setAsignaciones(a || []);
+            const res = await service.getDatosPanel(); // El servicio orquestador hace el trabajo pesado
+            setData(res);
         } catch (e) {
-            setError("Error al cargar datos.");
+            setError("Error al cargar la logística de obras.");
         } finally {
             setLoading(false);
         }
     };
 
     React.useEffect(() => {
-        cargarTodo().catch(console.error);
+        cargarPanel().catch(console.error);
     }, []);
 
     const handleAsignar = async () => {
-        if (!seleccion.obraId || !seleccion.personalId) return;
-        try {
-            const payload: IAsignacion = {
-                ObraId: seleccion.obraId,
-                PersonalId: seleccion.personalId,
-                FechaInicio: new Date(),
-                FechaFinPrevista: seleccion.fechaFin,
-                EstadoProgreso: 0,
-            };
+        const { obraId, personalId, fechaFin } = seleccion;
+        if (!obraId || !personalId) return;
 
-            await services.asignaciones.asignarPersonal(payload);
-            setSeleccion({ ...seleccion, obraId: 0, personalId: 0, fechaFin: new Date() });
-            await cargarTodo();
+        try {
+            await service.crearAsignacion(obraId, personalId, fechaFin); // Lógica delegada al servicio
+            setSeleccion({ obraId: 0, personalId: 0, fechaFin: new Date() });
+            await cargarPanel();
         } catch (e) {
-            console.error(e);
+            setError("No se pudo completar la asignación.");
         }
     };
 
     const handleEliminar = async (id: number) => {
         if (!window.confirm("¿Estás seguro de eliminar esta asignación?")) return;
         try {
-            await services.asignaciones.eliminarAsignacion(id);
-            await cargarTodo();
+            await service.eliminarAsignacion(id);
+            await cargarPanel();
         } catch (e) {
-            alert("Error al eliminar.");
+            setError("Error al intentar eliminar el registro.");
         }
     };
 
@@ -116,32 +96,26 @@ export const VistaAsignaciones: React.FC<{ context: any }> = (props) => {
 
             <div className={styles.formContainer}>
                 <Stack horizontal verticalAlign="end" tokens={{ childrenGap: 20 }} wrap>
-                    <div className={styles.fieldWrapper}>
-                        <Dropdown
-                            label="Obra"
-                            selectedKey={seleccion.obraId}
-                            options={obras.map((o) => ({ key: o.Id, text: o.Title }))}
-                            onChange={(_, opt) => setSeleccion({ ...seleccion, obraId: opt?.key as number })}
-                            className={styles.dropdownLarge}
-                        />
-                    </div>
-                    <div className={styles.fieldWrapper}>
-                        <Dropdown
-                            label="Trabajador"
-                            selectedKey={seleccion.personalId}
-                            options={personal.map((p) => ({ key: p.Id, text: p.NombreyApellido }))}
-                            onChange={(_, opt) => setSeleccion({ ...seleccion, personalId: opt?.key as number })}
-                            className={styles.dropdownLarge}
-                        />
-                    </div>
-                    <div className={styles.fieldWrapper}>
-                        <DatePicker
-                            label="Fecha límite"
-                            value={seleccion.fechaFin}
-                            onSelectDate={(date) => setSeleccion({ ...seleccion, fechaFin: date || new Date() })}
-                            className={styles.datePicker}
-                        />
-                    </div>
+                    <Dropdown
+                        label="Obra"
+                        selectedKey={seleccion.obraId}
+                        options={data.obras.map((o) => ({ key: o.Id, text: o.Title }))}
+                        onChange={(_, opt) => setSeleccion({ ...seleccion, obraId: opt?.key as number })}
+                        className={styles.dropdownLarge}
+                    />
+                    <Dropdown
+                        label="Trabajador"
+                        selectedKey={seleccion.personalId}
+                        options={data.personal.map((p) => ({ key: p.Id, text: p.NombreyApellido }))}
+                        onChange={(_, opt) => setSeleccion({ ...seleccion, personalId: opt?.key as number })}
+                        className={styles.dropdownLarge}
+                    />
+                    <DatePicker
+                        label="Fecha límite"
+                        value={seleccion.fechaFin}
+                        onSelectDate={(date) => setSeleccion({ ...seleccion, fechaFin: date || new Date() })}
+                        className={styles.datePicker}
+                    />
                     <PrimaryButton
                         text="Asignar"
                         onClick={handleAsignar}
@@ -151,11 +125,11 @@ export const VistaAsignaciones: React.FC<{ context: any }> = (props) => {
                 </Stack>
             </div>
 
-            {error && <MessageBar messageBarType={MessageBarType.error}>{error}</MessageBar>}
+            {error && <MessageBar messageBarType={MessageBarType.error} onDismiss={() => setError(null)}>{error}</MessageBar>}
 
             <div className={styles.grid}>
-                {obras.map((obra) => {
-                    const equipo = asignaciones.filter((a) => Number(a.ObraId) === Number(obra.Id));
+                {data.obras.map((obra) => {
+                    const equipo = data.asignaciones.filter((a) => Number(a.ObraId) === Number(obra.Id));
                     const esFinalizada = obra.EstadoObra === "Finalizado";
 
                     return (
@@ -171,7 +145,7 @@ export const VistaAsignaciones: React.FC<{ context: any }> = (props) => {
                                 <Stack tokens={{ childrenGap: 12 }}>
                                     {equipo.length > 0 ? (
                                         equipo.map((asig) => {
-                                            const p = personal.find((pers) => Number(pers.Id) === Number(asig.PersonalId));
+                                            const p = data.personal.find((pers) => Number(pers.Id) === Number(asig.PersonalId));
                                             const semaforo = getSemaforoInfo(asig.FechaFinPrevista);
                                             return (
                                                 <div key={asig.Id} className={`${styles.assignmentItem} ${semaforo.clase}`}>

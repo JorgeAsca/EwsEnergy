@@ -1,12 +1,8 @@
 import { WebPartContext } from '@microsoft/sp-webpart-base';
 import { SPHttpClient } from '@microsoft/sp-http';
+import { IReporteHistorial } from "../models/IReporteHistorial";
+import { IDiarioEntrada } from "../models/IDiarioEntrada";
 
-export interface IDiarioEntrada {
-    ObraId: number;
-    Comentarios: string;
-    FotosUrls: string[]; // Aquí guardaremos los links que nos dé el PhotoService
-    Fecha: string;
-}
 
 export class DailyReportService {
     private _context: WebPartContext;
@@ -24,14 +20,10 @@ export class DailyReportService {
     public async guardarReporteDiario(reporte: IDiarioEntrada): Promise<void> {
         const endpoint = `${this._baseUrl}/_api/web/lists/getbytitle('Diario de Trabajo')/items`;
 
-        // SharePoint no permite guardar arrays directamente de forma sencilla en una columna de texto,
-        // así que convertimos las URLs de las fotos en una cadena de texto separada por comas
-        // o las guardamos en un campo de texto multilínea.
         const body = JSON.stringify({
             Title: `Reporte - Obra ${reporte.ObraId} - ${reporte.Fecha}`,
             ObraId: reporte.ObraId,
             Comentarios: reporte.Comentarios,
-            // Guardamos las URLs de las fotos como texto para que el Front pueda leerlas luego
             FotosRelacionadas: reporte.FotosUrls.join('; ')
         });
 
@@ -43,19 +35,27 @@ export class DailyReportService {
             }
         });
 
-        if (!response.ok) {
-            throw new Error("No se pudo guardar el reporte diario en la lista.");
-        }
+        if (!response.ok) throw new Error("No se pudo guardar el reporte diario.");
     }
 
-    public async getHistorialGlobal(): Promise<any[]> {
-        const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('${this._metadataListName}')/items?$orderby=FechaRegistro desc`;
+    public async getHistorialGlobal(): Promise<IReporteHistorial[]> {
+        // Optimizamos con $select para no traer basura de SharePoint
+        const campos = "Id,Title,Comentarios,FechaRegistro,OperarioId,ObraId,UrlFoto";
+        const endpoint = `${this._baseUrl}/_api/web/lists/getbytitle('${this._metadataListName}')/items?$select=${campos}&$orderby=FechaRegistro desc`;
 
-        const response = await this._context.spHttpClient.get(endpoint, SPHttpClient.configurations.v1);
-        if (!response.ok) return [];
+        try {
+            const response = await this._context.spHttpClient.get(endpoint, SPHttpClient.configurations.v1);
+            
+            if (!response.ok) {
+                throw new Error(`Error al obtener historial: ${response.statusText}`);
+            }
 
-        const data = await response.json();
-        return data.value || [];
+            const data = await response.json();
+            return data.value || [];
+        } catch (error) {
+            console.error("Error en DailyReportService:", error);
+            throw error;
+        }
     }
 
     public async getFotosPorObra(obraId: number): Promise<any[]> {

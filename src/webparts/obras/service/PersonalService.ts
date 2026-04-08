@@ -9,7 +9,7 @@ export class PersonalService {
 
     public async getPersonal(): Promise<IPersonal[]> {
         try {
-            const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('${this._listName}')/items?$select=Id,Title,Rol,FotoPerfil`;
+            const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('${this._listName}')/items?$select=Id,Title,Rol,FotoPerfil,Email`;
             const response = await this._context.spHttpClient.get(endpoint, SPHttpClient.configurations.v1, {
                 headers: { 'Accept': 'application/json;odata=nometadata', 'odata-version': '' }
             });
@@ -21,7 +21,8 @@ export class PersonalService {
                 Id: item.Id,
                 NombreyApellido: item.Title,
                 Rol: item.Rol,
-                FotoPerfil: item.FotoPerfil ? item.FotoPerfil.Url : undefined
+                FotoPerfil: item.FotoPerfil ? item.FotoPerfil.Url : undefined,
+                Email: item.Email
             }));
         } catch (error) {
             console.error("Error en getPersonal:", error);
@@ -104,10 +105,6 @@ export class PersonalService {
 
     public async actualizarTrabajador(id: number, datos: any): Promise<void> {
         const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('${this._listName}')/items(${id})`;
-
-        // SharePoint necesita saber el tipo de objeto que está actualizando. 
-        // Para una lista, el formato estándar es SP.Data.NombreDeLaListaListItem
-        // Como tu lista tiene espacios, SharePoint suele usar 'Personal_x0020_EWS'
         const body = JSON.stringify({
             '__metadata': { 'type': `SP.Data.Personal_x0020_EWSListItem` },
             Title: datos.NombreyApellido,

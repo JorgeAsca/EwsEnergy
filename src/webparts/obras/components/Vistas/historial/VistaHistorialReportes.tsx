@@ -1,29 +1,60 @@
 import * as React from 'react';
-import { Stack, Text, SearchBox, Spinner, Icon, Image, ImageFit } from '@fluentui/react';
+import { 
+    Stack, 
+    Text, 
+    SearchBox, 
+    Spinner, 
+    Icon, 
+    Image, 
+    ImageFit, 
+    MessageBar, 
+    MessageBarType 
+} from '@fluentui/react';
 import { DailyReportService } from '../../../service/DailyReportService';
+import { IReporteHistorial } from '../../../models/IReporteHistorial';
 import styles from './VistaHistorialTarjetas.module.scss';
 
 export const VistaHistorialTarjetas: React.FC<{ context: any }> = (props) => {
-    const [reportes, setReportes] = React.useState<any[]>([]);
-    const [filtrados, setFiltrados] = React.useState<any[]>([]);
+    // --- ESTADOS ---
+    const [reportes, setReportes] = React.useState<IReporteHistorial[]>([]);
+    const [filtrados, setFiltrados] = React.useState<IReporteHistorial[]>([]);
     const [loading, setLoading] = React.useState(true);
+    const [error, setError] = React.useState<string | null>(null);
 
+    // --- SERVICIO ---
     const service = React.useMemo(() => new DailyReportService(props.context), [props.context]);
 
+    // --- CARGA DE DATOS ---
     const cargarDatos = async () => {
-        setLoading(true);
-        const data = await service.getHistorialGlobal();
-        setReportes(data);
-        setFiltrados(data);
-        setLoading(false);
+        try {
+            setLoading(true);
+            setError(null);
+            const data = await service.getHistorialGlobal();
+            setReportes(data);
+            setFiltrados(data);
+        } catch (e) {
+            setError("Error al cargar el historial de evidencias. Por favor, intente de nuevo.");
+            console.error(e);
+        } finally {
+            setLoading(false);
+        }
     };
 
-    React.useEffect(() => { cargarDatos(); }, []);
+    React.useEffect(() => { 
+        cargarDatos().catch(console.error); 
+    }, []);
 
+    // --- LÓGICA DE FILTRADO ---
     const onFilter = (text: string) => {
+        if (!text) {
+            setFiltrados(reportes);
+            return;
+        }
+        
         const busqueda = text.toLowerCase();
         const filtrado = reportes.filter(r => 
-            r.Title.toLowerCase().indexOf(busqueda) > -1 || 
+            // CORRECCIÓN: Title con una sola 't'
+            (r.Title && r.Title.toLowerCase().indexOf(busqueda) > -1) || 
             (r.Comentarios && r.Comentarios.toLowerCase().indexOf(busqueda) > -1)
         );
         setFiltrados(filtrado);
@@ -47,37 +78,49 @@ export const VistaHistorialTarjetas: React.FC<{ context: any }> = (props) => {
                     />
                 </div>
 
-                <div className={styles.cardGrid}>
-                    {filtrados.map((item, idx) => (
-                        <div key={idx} className={styles.reporteCard}>
-                            <div className={styles.cardHeader}>
-                                <Text className={styles.obraName}>{item.Title}</Text>
-                                <Text className={styles.fechaText}>{new Date(item.FechaRegistro).toLocaleDateString()}</Text>
-                            </div>
-                            
-                            <div className={styles.imageContainer}>
-                                <Image 
-                                    src={item.UrlFoto?.Url} 
-                                    alt="Foto reporte" 
-                                    height={200} 
-                                    imageFit={ImageFit.cover} 
-                                    className={styles.reporteImagen}
-                                />
-                            </div>
+                {error && (
+                    <MessageBar messageBarType={MessageBarType.error} onDismiss={() => setError(null)}>
+                        {error}
+                    </MessageBar>
+                )}
 
-                            <div className={styles.cardContent}>
-                                <div className={styles.comentarioBox}>
-                                    <Text className={styles.comentarios}>
-                                        {item.Comentarios ? `"${item.Comentarios}"` : "Sin observaciones técnicas"}
+                <div className={styles.cardGrid}>
+                    {filtrados.length > 0 ? (
+                        filtrados.map((item) => (
+                            <div key={item.Id} className={styles.reporteCard}>
+                                <div className={styles.cardHeader}>
+                                    <Text className={styles.obraName}>{item.Title}</Text>
+                                    <Text className={styles.fechaText}>
+                                        {item.FechaRegistro ? new Date(item.FechaRegistro).toLocaleDateString() : 'S/F'}
                                     </Text>
                                 </div>
-                                <Stack horizontal verticalAlign="center" tokens={{ childrenGap: 8 }} className={styles.footerOperario}>
-                                    <Icon iconName="Contact" className={styles.iconOperario} />
-                                    <Text variant="small">ID Operario: <b>{item.OperarioId}</b></Text>
-                                </Stack>
+                                
+                                <div className={styles.imageContainer}>
+                                    <Image 
+                                        src={item.UrlFoto?.Url} 
+                                        alt="Foto reporte" 
+                                        height={200} 
+                                        imageFit={ImageFit.cover} 
+                                        className={styles.reporteImagen}
+                                    />
+                                </div>
+
+                                <div className={styles.cardContent}>
+                                    <div className={styles.comentarioBox}>
+                                        <Text className={styles.comentarios}>
+                                            {item.Comentarios ? `"${item.Comentarios}"` : "Sin observaciones técnicas"}
+                                        </Text>
+                                    </div>
+                                    <Stack horizontal verticalAlign="center" tokens={{ childrenGap: 8 }} className={styles.footerOperario}>
+                                        <Icon iconName="Contact" className={styles.iconOperario} />
+                                        <Text variant="small">ID Operario: <b>{item.OperarioId}</b></Text>
+                                    </Stack>
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        ))
+                    ) : (
+                        !error && <Text variant="large" styles={{ root: { textAlign: 'center', marginTop: 20 } }}>No se encontraron evidencias.</Text>
+                    )}
                 </div>
             </Stack>
         </div>
