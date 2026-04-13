@@ -53,7 +53,7 @@ export const VistaHistorialTarjetas: React.FC<{ context: any }> = (props) => {
         
         const busqueda = text.toLowerCase();
         const filtrado = reportes.filter(r => 
-            // CORRECCIÓN: Title con una sola 't'
+            
             (r.Title && r.Title.toLowerCase().indexOf(busqueda) > -1) || 
             (r.Comentarios && r.Comentarios.toLowerCase().indexOf(busqueda) > -1)
         );
