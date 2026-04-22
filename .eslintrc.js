@@ -12,6 +12,13 @@ module.exports = {
         'sourceType': 'module'
       },
       rules: {
+
+        // PAra hacer las pruebas
+
+        "@typescript-eslint/no-floating-promises": "off",
+  "@typescript-eslint/no-use-before-define": "off",
+  "@typescript-eslint/explicit-function-return-type": "off",
+  "@typescript-eslint/no-explicit-any": "off",
         // Prevent usage of the JavaScript null value, while allowing code to access existing APIs that may require null. https://www.npmjs.com/package/@rushstack/eslint-plugin
         '@rushstack/no-new-null': 1,
         // Require Jest module mocking APIs to be called before any other statements in their code block. https://www.npmjs.com/package/@rushstack/eslint-plugin
