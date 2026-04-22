@@ -34,6 +34,7 @@ export const ListaMateriales: React.FC<{ context: any }> = (props) => {
   const [items, setItems] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [filterText, setFilterText] = React.useState("");
+  const [filterCategory, setFilterCategory] = React.useState<string>("Todas"); // <-- NUEVO ESTADO PARA CATEGORÍA
   const [isPanelOpen, setIsPanelOpen] = React.useState(false);
   const [selectedItem, setSelectedItem] = React.useState<any>(null);
   
@@ -158,9 +159,18 @@ export const ListaMateriales: React.FC<{ context: any }> = (props) => {
     },
   ];
 
-  const itemsFiltrados = items.filter(i => 
-    i.Title?.toLowerCase().includes(filterText.toLowerCase())
-  );
+  // Lógica de filtrado combinada (Texto y Categoría)
+  const itemsFiltrados = items.filter(i => {
+    const coincideTexto = i.Title?.toLowerCase().includes(filterText.toLowerCase());
+    const coincideCategoria = filterCategory === "Todas" || i.Categoria === filterCategory;
+    return coincideTexto && coincideCategoria;
+  });
+
+  // Opciones para el Dropdown del filtro
+  const opcionesFiltroCategoria: IDropdownOption[] = [
+    { key: "Todas", text: "Todas las categorías" },
+    ...categorias
+  ];
 
   return (
     <div className={styles.container}>
@@ -205,10 +215,23 @@ export const ListaMateriales: React.FC<{ context: any }> = (props) => {
       </div>
 
       <div className={styles.searchSection}>
-        <SearchBox
-          placeholder="Filtrar materiales..."
-          onChange={(_, v) => setFilterText(v || "")}
-        />
+        <Stack horizontal gap={15} verticalAlign="end">
+          <Stack.Item grow={1}>
+            <SearchBox
+              placeholder="Filtrar materiales por nombre..."
+              onChange={(_, v) => setFilterText(v || "")}
+            />
+          </Stack.Item>
+          <Stack.Item>
+            <Dropdown
+              placeholder="Filtrar por categoría"
+              options={opcionesFiltroCategoria}
+              selectedKey={filterCategory}
+              onChange={(_, o) => setFilterCategory(o?.key as string)}
+              styles={{ root: { minWidth: 200 } }}
+            />
+          </Stack.Item>
+        </Stack>
       </div>
 
       {loading ? (
