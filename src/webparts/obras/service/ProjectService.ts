@@ -1,196 +1,142 @@
-import { SPHttpClient, SPHttpClientResponse } from "@microsoft/sp-http";
+import { SPFI } from "@pnp/sp";
+import "@pnp/sp/webs";
+import "@pnp/sp/lists";
+import "@pnp/sp/items";
 import { IObra } from "../models/IObra";
 import { IObraCard } from "../models/IObraCard";
 import { IFacepilePersona } from "@fluentui/react";
 
 export class ProjectService {
-  private _context: any;
+  private _sp: SPFI;
   private _listName: string = "Proyectos y Obras";
 
-  constructor(context: any) {
-    this._context = context;
+  constructor(sp: SPFI) {
+    this._sp = sp;
   }
 
   public async getObras(): Promise<IObra[]> {
     try {
-      const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('${this._listName}')/items?$select=Id,Title,Descripcion,DireccionObra,FechaInicio,FechaFinPrevista,EstadoObra,ProgresoReal,JornadasTotales,Cliente/Id,Cliente/Title&$expand=Cliente`;
+      const items = await this._sp.web.lists.getByTitle(this._listName).items
+        .select(
+          "Id", 
+          "Title", 
+          "Descripcion",
+          "DireccionObra",
+          "FechaInicio",
+          "FechaFinPrevista",
+          "EstadoObra",
+          "ProgresoReal",
+          "JornadasTotales", 
+          "Cliente/Id", 
+          "Cliente/Title"
+        )
+        .expand("Cliente")();
 
-      const response = await this._context.spHttpClient.get(
-        endpoint,
-        SPHttpClient.configurations.v1,
-      );
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Error en la petición a SharePoint:", errorText);
-        return [];
-      }
-
-      const data = await response.json();
-      return data.value || [];
+      return items.map((item: any) => ({
+        ...item,
+        Id: item.Id,
+        Title: item.Title,
+        EstadoObra: item.EstadoObra || "Fase Previa",
+        ProgresoReal: item.ProgresoReal || 0,
+        JornadasTotales: item.JornadasTotales || 0,
+        Cliente: item.Cliente ? { Id: item.Cliente.Id, Title: item.Cliente.Title } : undefined
+      }));
     } catch (error) {
-      console.error("Error al obtener obras:", error);
+      console.error("Fallo crítico al pedir Obras:", error);
       return [];
     }
   }
 
   public async crearObra(nuevaObra: any): Promise<void> {
-    const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('${this._listName}')/items`;
-    const body = JSON.stringify({
-      Title: nuevaObra.Nombre,
-      ClienteId: nuevaObra.ClienteId,
-      DireccionObra: nuevaObra.Direccion,
-      FechaInicio: nuevaObra.FechaInicio,
-      FechaFinPrevista: nuevaObra.FechaFin,
-      JornadasTotales: nuevaObra.Jornadas,
-      EstadoObra: "Fase Previa",
-      ProgresoReal: 0,
-    });
-
-    await this._context.spHttpClient.post(
-      endpoint,
-      SPHttpClient.configurations.v1,
-      {
-        headers: {
-          Accept: "application/json;odata=nometadata",
-          "Content-type": "application/json;odata=nometadata",
-          "odata-version": "",
-        },
-        body: body,
-      },
-    );
+    try {
+      await this._sp.web.lists.getByTitle(this._listName).items.add({
+        Title: nuevaObra.Nombre || nuevaObra.Title,
+        ClienteId: nuevaObra.ClienteId,
+        DireccionObra: nuevaObra.Direccion || nuevaObra.DireccionObra,
+        FechaInicio: nuevaObra.FechaInicio,
+        FechaFinPrevista: nuevaObra.FechaFin || nuevaObra.FechaFinPrevista,
+        JornadasTotales: nuevaObra.Jornadas || nuevaObra.JornadasTotales,
+        EstadoObra: nuevaObra.EstadoObra || "Fase Previa",
+        ProgresoReal: 0,
+      });
+    } catch (error) {
+      console.error("Error al crear obra:", error);
+      throw error;
+    }
   }
 
-  public async updateObra(id: number, obraActualizada: any): Promise<void> {
-    const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('${this._listName}')/items(${id})`;
-    const body = JSON.stringify({
-      Title: obraActualizada.Nombre,
-      ClienteId: obraActualizada.ClienteId,
-      DireccionObra: obraActualizada.Direccion,
-      FechaInicio: obraActualizada.FechaInicio,
-      FechaFinPrevista: obraActualizada.FechaFin,
-      JornadasTotales: obraActualizada.Jornadas,
-    });
-
-    await this._context.spHttpClient.post(
-      endpoint,
-      SPHttpClient.configurations.v1,
-      {
-        headers: {
-          Accept: "application/json;odata=nometadata",
-          "Content-type": "application/json;odata=nometadata",
-          "odata-version": "",
-          "IF-MATCH": "*",
-          "X-HTTP-Method": "MERGE",
-        },
-        body: body,
-      },
-    );
+  // Mantenemos alias addObra por si lo llamas desde otros componentes con ese nombre
+  public async addObra(nuevaObra: any): Promise<void> {
+    return this.crearObra(nuevaObra);
   }
 
-  public async actualizarProgresoObra(
-    id: number,
-    nuevoProgreso: number,
-  ): Promise<void> {
-    const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('${this._listName}')/items(${id})`;
-    const body = JSON.stringify({
+  public async updateObra(id: number, data: any): Promise<void> {
+    try {
+      // Formateamos los datos para admitir tanto el modelo de formulario antiguo como el nuevo
+      const updateData: any = {};
+      if (data.Nombre || data.Title) updateData.Title = data.Nombre || data.Title;
+      if (data.ClienteId) updateData.ClienteId = data.ClienteId;
+      if (data.Direccion || data.DireccionObra) updateData.DireccionObra = data.Direccion || data.DireccionObra;
+      if (data.FechaInicio) updateData.FechaInicio = data.FechaInicio;
+      if (data.FechaFin || data.FechaFinPrevista) updateData.FechaFinPrevista = data.FechaFin || data.FechaFinPrevista;
+      if (data.Jornadas || data.JornadasTotales) updateData.JornadasTotales = data.Jornadas || data.JornadasTotales;
+      if (data.EstadoObra) updateData.EstadoObra = data.EstadoObra;
+
+      await this._sp.web.lists.getByTitle(this._listName).items.getById(id).update(updateData);
+    } catch (error) {
+      console.error("Error al actualizar obra:", error);
+      throw error;
+    }
+  }
+
+  public async actualizarProgresoObra(id: number, nuevoProgreso: number): Promise<void> {
+    await this._sp.web.lists.getByTitle(this._listName).items.getById(id).update({
       ProgresoReal: nuevoProgreso,
     });
-
-    await this._context.spHttpClient.post(
-      endpoint,
-      SPHttpClient.configurations.v1,
-      {
-        headers: {
-          Accept: "application/json;odata=nometadata",
-          "Content-type": "application/json;odata=nometadata",
-          "odata-version": "",
-          "IF-MATCH": "*",
-          "X-HTTP-Method": "MERGE",
-        },
-        body: body,
-      },
-    );
   }
 
-  public async actualizarEstado(
-    id: number,
-    nuevoEstado: string,
-  ): Promise<void> {
-    const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('${this._listName}')/items(${id})`;
+  public async actualizarEstado(id: number, nuevoEstado: string): Promise<void> {
+    await this._sp.web.lists.getByTitle(this._listName).items.getById(id).update({
+      EstadoObra: nuevoEstado,
+    });
+  }
 
-    await this._context.spHttpClient.post(
-      endpoint,
-      SPHttpClient.configurations.v1,
-      {
-        headers: {
-          Accept: "application/json",
-          "Content-type": "application/json",
-          "X-HTTP-Method": "MERGE",
-          "IF-MATCH": "*",
-          "odata-version": "",
-        },
-        body: JSON.stringify({
-          // Asegúrate de que 'Estado' sea el nombre interno de tu columna en SharePoint
-          Estado: nuevoEstado,
-        }),
-      },
-    );
+  public async finalizarObra(id: number): Promise<void> {
+    await this._sp.web.lists.getByTitle(this._listName).items.getById(id).update({
+      EstadoObra: "Finalizado",
+    });
+  }
+
+  public async cancelarObra(id: number): Promise<void> {
+    await this._sp.web.lists.getByTitle(this._listName).items.getById(id).update({
+      EstadoObra: "Cancelado",
+    });
   }
 
   public async getFotosPorObra(obraId: number): Promise<any[]> {
-    const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('Registro_Fotos_Diarias')/items?$filter=ObraId eq ${obraId}&$orderby=FechaRegistro desc`;
-
     try {
-      const response = await this._context.spHttpClient.get(
-        endpoint,
-        SPHttpClient.configurations.v1,
-      );
-
-      if (!response.ok) {
-        // Esto nos imprimirá el error real de SharePoint en la consola
-        const errorText = await response.text();
-        console.error("Error detallado de SharePoint:", errorText);
-        return [];
-      }
-
-      const data = await response.json();
-      return data.value || [];
+      const items = await this._sp.web.lists.getByTitle('Registro_Fotos_Diarias').items
+        .filter(`ObraId eq ${obraId}`)
+        .orderBy("FechaRegistro", false)();
+      
+      return items || [];
     } catch (e) {
-      console.error("Error de red:", e);
+      console.error("Error al obtener fotos:", e);
       return [];
     }
   }
 
   public async getAsignacionesConPersonal(): Promise<any[]> {
-    const siteUrl = this._context.pageContext.web.absoluteUrl;
-
-    // 1. Obtenemos las asignaciones y expandimos el campo Personal (que debe ser un Lookup a la lista Personal_EWS)
-    // Usamos $expand para traer los datos del operario en la misma consulta
-    const endpoint = `${siteUrl}/_api/web/lists/getbytitle('Asignaciones_Obras')/items?$select=Id,ObraId,Personal/NombreyApellido,Personal/FotoPerfil&$expand=Personal`;
-
     try {
-      const response = await this._context.spHttpClient.get(
-        endpoint,
-        SPHttpClient.configurations.v1,
-      );
+      const items = await this._sp.web.lists.getByTitle('Asignaciones_Obras').items
+        .select("Id", "ObraId", "Personal/NombreyApellido", "Personal/FotoPerfil")
+        .expand("Personal")();
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Error al obtener asignaciones:", errorText);
-        return [];
-      }
-
-      const data = await response.json();
-
-      // Mapeamos los datos para que el componente Facepile los entienda fácilmente
-      return (data.value || []).map((item: any) => ({
+      return items.map((item: any) => ({
         Id: item.Id,
         ObraId: item.ObraId,
         Personal: {
-          NombreyApellido: item.Personal
-            ? item.Personal.NombreyApellido
-            : "Sin nombre",
+          NombreyApellido: item.Personal ? item.Personal.NombreyApellido : "Sin nombre",
           FotoPerfil: item.Personal ? item.Personal.FotoPerfil : "",
         },
       }));
@@ -200,44 +146,39 @@ export class ProjectService {
     }
   }
 
-  public async finalizarObra(id: number): Promise<void> {
-    const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('${this._listName}')/items(${id})`;
-    await this._context.spHttpClient.post(
-      endpoint,
-      SPHttpClient.configurations.v1,
-      {
-        headers: {
-          Accept: "application/json",
-          "Content-type": "application/json",
-          "X-HTTP-Method": "MERGE",
-          "IF-MATCH": "*",
-          "odata-version": "",
-        },
-        body: JSON.stringify({
-          EstadoObra: "Finalizado",
-        }),
-      },
-    );
-  }
+  /**
+   * Método automático para descontar jornadas de una obra y subir el progreso real
+   * @param id ID de la obra
+   * @param jornadasADescontar Cantidad calculada (Horas/8)
+   */
+  public async descontarJornadasObra(id: number, jornadasADescontar: number): Promise<void> {
+    try {
+      if (jornadasADescontar === 0) {
+        console.warn("Se intentó procesar 0 jornadas. Omitiendo actualización.");
+        return;
+      }
 
-  public async cancelarObra(id: number): Promise<void> {
-    const endpoint = `${this._context.pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('${this._listName}')/items(${id})`;
-    await this._context.spHttpClient.post(
-      endpoint,
-      SPHttpClient.configurations.v1,
-      {
-        headers: {
-          Accept: "application/json",
-          "Content-type": "application/json",
-          "X-HTTP-Method": "MERGE",
-          "IF-MATCH": "*",
-          "odata-version": "",
-        },
-        body: JSON.stringify({
-          EstadoObra: "Cancelado",
-        }),
-      },
-    );
+      // 1. Obtenemos los valores actuales (JornadasTotales y ProgresoReal)
+      const obra = await this._sp.web.lists.getByTitle(this._listName).items.getById(id).select("JornadasTotales", "ProgresoReal")();
+      
+      const valorActual = obra.JornadasTotales || 0;
+      const progresoActual = obra.ProgresoReal || 0;
+
+      // 2. Matemáticas: Restamos a las jornadas restantes y sumamos al progreso visual
+      const nuevoValor = valorActual - jornadasADescontar;
+      const nuevoProgreso = progresoActual + jornadasADescontar;
+
+      // 3. Actualizamos la lista con ambos valores
+      await this._sp.web.lists.getByTitle(this._listName).items.getById(id).update({
+        JornadasTotales: nuevoValor,
+        ProgresoReal: nuevoProgreso
+      });
+
+      console.log(`Actualización exitosa - Obra ID ${id} | Restantes: ${nuevoValor} | Progreso: ${nuevoProgreso}`);
+    } catch (error) {
+      console.error("Error al actualizar las jornadas y progreso automáticamente:", error);
+      throw error;
+    }
   }
 
   public async getObrasCompletas(
@@ -247,7 +188,6 @@ export class ProjectService {
     const obras = await this.getObras();
 
     return obras.map((obra) => {
-      // Filtrar operarios asignados a esta obra
       const asignados = asignaciones.filter(
         (a) => Number(a.ObraId) === Number(obra.Id),
       );
@@ -263,9 +203,8 @@ export class ProjectService {
         clienteNombre: (obra as any).Cliente?.Title || "Sin Cliente",
         porcentajeReal: obra.ProgresoReal || 0,
         operarios: operariosProps,
-        jornadasConsumidas: Math.round(
-          ((obra.ProgresoReal || 0) / 100) * (obra.JornadasTotales || 30),
-        ),
+        // Cálculo mantenido del código original
+        jornadasConsumidas: Math.round(((obra.ProgresoReal || 0) / 100) * (obra.JornadasTotales || 30)),
       } as IObraCard;
     });
   }
