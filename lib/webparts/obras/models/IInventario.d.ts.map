@@ -1,0 +1,1 @@
+{"version":3,"file":"IInventario.d.ts","sourceRoot":"","sources":["../../../../src/webparts/obras/models/IInventario.ts"],"names":[],"mappings":"AAAA,MAAM,WAAW,SAAS;IACtB,EAAE,EAAE,MAAM,CAAC;IACX,MAAM,EAAE,MAAM,CAAC;IACf,WAAW,EAAE,MAAM,CAAC;IACpB,SAAS,EAAE,MAAM,CAAC;IAClB,OAAO,CAAC,EAAE,MAAM,CAAC;CACpB"}

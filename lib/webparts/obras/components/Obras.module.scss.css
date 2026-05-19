@@ -1,0 +1,165 @@
+/*
+  Your use of the content in the files referenced here is subject to the terms of the license at http://aka.ms/fabric-assets-license
+*/
+.obras {
+  min-height: 100vh;
+  margin: -1.25rem 0 0 0;
+  padding: 0;
+  overflow: hidden;
+}
+.obras .appWrapper {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  max-width: 100%;
+  align-items: stretch;
+  position: relative;
+  overflow: hidden;
+}
+.obras .sidebar {
+  width: 260px;
+  background-color: #ffffff;
+  border-right: 1px solid #e8eee8;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  transition: transform 0.3s ease-in-out;
+  z-index: 100;
+  position: relative;
+}
+@media (max-width: 768px) {
+  .obras .sidebar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    box-shadow: 5px 0 15px rgba(0, 0, 0, 0.1);
+    transform: translateX(-100%);
+  }
+  .obras .sidebar.isOpen {
+    transform: translateX(0);
+  }
+}
+@media (min-width: 1900px) {
+  .obras .sidebar {
+    width: 350px;
+  }
+  .obras .sidebar .logoArea {
+    padding: 50px 20px;
+  }
+  .obras .sidebar .logoArea span {
+    font-size: 2.2rem !important;
+  }
+}
+.obras .sidebar .logoArea {
+  background-color: #004d40;
+  height: 75px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  border-bottom: 4px solid #8bc34a;
+  box-sizing: border-box;
+}
+.obras .sidebar .logoArea span {
+  letter-spacing: 2px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.obras .sidebar :global .ms-Nav-link {
+  color: #004d40 !important;
+  background-color: transparent;
+  height: 50px;
+}
+.obras .sidebar :global .ms-Nav-link:hover {
+  background-color: rgba(139, 195, 74, 0.1) !important;
+  color: #004d40 !important;
+}
+.obras .sidebar :global .ms-Nav-link::after {
+  border-left: 4px solid transparent !important;
+}
+.obras .sidebar :global .is-selected .ms-Nav-link {
+  background-color: #f9fbf9 !important;
+  color: #8bc34a !important;
+  font-weight: bold !important;
+}
+.obras .sidebar :global .is-selected .ms-Nav-link::after {
+  border-left: 4px solid #8bc34a !important;
+}
+.obras .sidebar :global .is-selected .ms-Nav-link .ms-Nav-linkText {
+  color: #8bc34a !important;
+}
+.obras .sidebar :global .is-selected .ms-Nav-link .ms-Icon {
+  color: #8bc34a !important;
+}
+.obras .sidebar :global .ms-Nav-compositeLink .ms-Icon {
+  color: #004d40;
+}
+.obras .sidebar :global(.ms-Nav) {
+  overflow-y: auto;
+  flex-grow: 1;
+}
+.obras .mainContent {
+  flex: 1;
+  min-width: 0;
+  background-color: #f9fbf9;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.obras .mainContent .header {
+  background-color: #ffffff;
+  padding: 0 32px;
+  height: 75px;
+  border-bottom: 1px solid #e8eee8;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+.obras .mainContent .header .headerLeft {
+  display: flex;
+  align-items: center;
+}
+.obras .mainContent .header .headerLeft .menuButton {
+  display: none;
+  margin-right: 15px;
+  color: #004d40;
+}
+@media (max-width: 768px) {
+  .obras .mainContent .header .headerLeft .menuButton {
+    display: block;
+  }
+}
+.obras .mainContent .header .headerRight {
+  display: flex;
+  align-items: center;
+  color: #004d40;
+}
+.obras .mainContent .header .headerRight b {
+  margin-left: 8px;
+  color: #004d40;
+}
+.obras .mainContent .pageBody {
+  padding: 24px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex-grow: 1;
+}
+@media (min-width: 1024px) {
+  .obras .mainContent .pageBody {
+    padding: 32px;
+  }
+}
+@media (max-width: 768px) {
+  .obras .overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 90;
+  }
+}

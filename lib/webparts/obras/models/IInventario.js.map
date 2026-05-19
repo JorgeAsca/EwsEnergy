@@ -1,0 +1,1 @@
+{"version":3,"file":"IInventario.js","sourceRoot":"","sources":["../../../../src/webparts/obras/models/IInventario.ts"],"names":[],"mappings":"","sourcesContent":["export interface IMaterial {\r\n    id: number;\r\n    titulo: string;\r\n    stockActual: number;\r\n    categoria: string;\r\n    fotoUrl?: string; // Para la gestión de las fotos\r\n}"]}

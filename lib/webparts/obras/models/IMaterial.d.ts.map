@@ -1,0 +1,1 @@
+{"version":3,"file":"IMaterial.d.ts","sourceRoot":"","sources":["../../../../src/webparts/obras/models/IMaterial.ts"],"names":[],"mappings":"AAAA,MAAM,WAAW,SAAS;IACtB,EAAE,EAAE,MAAM,CAAC;IACX,KAAK,EAAE,MAAM,CAAC;IACd,SAAS,EAAE,MAAM,CAAC;IAClB,WAAW,EAAE,MAAM,CAAC;IACpB,WAAW,EAAE,MAAM,CAAC;IACpB,YAAY,CAAC,EAAE;QACX,GAAG,EAAE,MAAM,CAAC;KACf,CAAC;CACL"}

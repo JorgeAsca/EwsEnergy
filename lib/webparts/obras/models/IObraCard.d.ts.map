@@ -1,0 +1,1 @@
+{"version":3,"file":"IObraCard.d.ts","sourceRoot":"","sources":["../../../../src/webparts/obras/models/IObraCard.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,KAAK,EAAE,MAAM,SAAS,CAAC;AAChC,OAAO,EAAE,gBAAgB,EAAE,MAAM,iBAAiB,CAAC;AAEnD,MAAM,WAAW,SAAU,SAAQ,KAAK;IACtC,aAAa,EAAE,MAAM,CAAC;IACtB,cAAc,EAAE,MAAM,CAAC;IACvB,SAAS,EAAE,gBAAgB,EAAE,CAAC;IAC9B,kBAAkB,EAAE,MAAM,CAAC;CAC5B"}

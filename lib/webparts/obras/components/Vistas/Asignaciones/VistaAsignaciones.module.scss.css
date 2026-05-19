@@ -1,0 +1,119 @@
+/*
+  Your use of the content in the files referenced here is subject to the terms of the license at http://aka.ms/fabric-assets-license
+*/
+.container {
+  padding: 30px;
+  background-color: #f9fbf9;
+  min-height: 100vh;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #004d40;
+  display: block;
+  margin-bottom: 5px;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: #605e5c;
+  display: block;
+  margin-bottom: 25px;
+}
+
+.panelAsignacion {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #edebe9;
+  padding: 25px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+  max-width: 500px;
+  margin-bottom: 25px;
+}
+
+.panelTitle {
+  font-weight: 600;
+  color: #004d40;
+  margin-bottom: 10px;
+}
+
+.separator {
+  margin: 30px 0;
+}
+
+.gridObras {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 25px;
+}
+
+.obraCard {
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #edebe9;
+  padding: 25px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+
+.obraHeader {
+  border-bottom: 1px solid #f3f2f1;
+  padding-bottom: 12px;
+  margin-bottom: 10px;
+}
+
+.obraTitle {
+  font-weight: 700;
+  font-size: 16px;
+  color: #004d40;
+  display: block;
+}
+
+.obraUbicacion {
+  font-size: 12px;
+  color: #797775;
+  display: block;
+  margin-top: 4px;
+}
+
+.personalList {
+  margin-top: 10px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.personalRow {
+  background: #fbfbfb;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #f3f2f1;
+  transition: background 0.2s ease;
+}
+.personalRow:hover {
+  background: #f3f2f1;
+}
+
+.personaName {
+  font-weight: 600;
+  color: #323130;
+}
+
+.semaforoText {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.deleteBtn {
+  color: #a19f9d;
+}
+.deleteBtn:hover {
+  color: #a4262c !important;
+  background-color: #fde7e9;
+}
+
+.emptyText {
+  font-style: italic;
+  color: #a19f9d;
+  text-align: center;
+  padding: 15px 0;
+}

@@ -1,0 +1,156 @@
+@charset "UTF-8";
+/*
+  Your use of the content in the files referenced here is subject to the terms of the license at http://aka.ms/fabric-assets-license
+*/
+.container {
+  padding: 20px;
+  background-color: #f9fbf9;
+  min-height: 100vh;
+}
+@media (min-width: 1024px) {
+  .container {
+    padding: 30px;
+  }
+}
+
+.loader {
+  margin-top: 100px;
+  display: flex;
+  justify-content: center;
+}
+
+.headerSection {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid rgba(0, 77, 64, 0.1);
+  padding-bottom: 20px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+@media (max-width: 640px) {
+  .headerSection {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+.titulo {
+  color: #004d40;
+  font-weight: 700;
+  margin: 0;
+}
+
+.subtitulo {
+  color: #666;
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
+.searchBar {
+  width: 350px;
+  border-radius: 8px;
+  border-color: #e1e1e1;
+  transition: all 0.2s;
+}
+.searchBar:hover {
+  border-color: #8bc34a;
+}
+@media (max-width: 640px) {
+  .searchBar {
+    width: 100% !important;
+  }
+}
+
+/* --- GRID DE REPORTES (MODIFICADO PARA MÓVIL) --- */
+.cardGrid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+}
+@media (max-width: 480px) {
+  .cardGrid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+}
+
+.reporteCard {
+  background: #ffffff;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #e1e1e1;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+}
+.reporteCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 24px rgba(0, 77, 64, 0.1);
+  border-color: #8bc34a;
+}
+.reporteCard .cardHeader {
+  padding: 15px 20px;
+  background: #ffffff;
+  border-bottom: 1px solid #f0f0f0;
+}
+.reporteCard .cardHeader .obraName {
+  font-weight: 700;
+  display: block;
+  color: #004d40;
+  font-size: 16px;
+}
+.reporteCard .cardHeader .fechaText {
+  color: #888;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.reporteCard .imageContainer {
+  width: 100%;
+  height: 200px;
+  background: #f3f2f1;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.reporteCard .reporteImagen {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+.reporteCard .reporteImagen:hover {
+  transform: scale(1.05);
+}
+.reporteCard .cardContent {
+  padding: 20px;
+  flex-grow: 1;
+}
+.reporteCard .cardContent .comentarioBox {
+  background: #f9fbf9;
+  padding: 12px;
+  border-radius: 8px;
+  border-left: 4px solid #8bc34a;
+  margin-bottom: 15px;
+  min-height: 50px;
+}
+.reporteCard .cardContent .comentarioBox .comentarios {
+  font-size: 14px;
+  color: #444;
+  line-height: 1.4;
+}
+.reporteCard .cardContent .footerOperario {
+  padding-top: 10px;
+  border-top: 1px solid #f0f0f0;
+  color: #666;
+}
+.reporteCard .cardContent .footerOperario .iconOperario {
+  color: #004d40;
+}
+.reporteCard .cardContent .footerOperario b {
+  color: #004d40;
+}

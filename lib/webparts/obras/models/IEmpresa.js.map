@@ -1,0 +1,1 @@
+{"version":3,"file":"IEmpresa.js","sourceRoot":"","sources":["../../../../src/webparts/obras/models/IEmpresa.ts"],"names":[],"mappings":"","sourcesContent":["export interface IEmpresa {\r\n    Id: number;\r\n    Title: string; // Nombre de la empresa\r\n    EsAsociada: boolean;\r\n}"]}

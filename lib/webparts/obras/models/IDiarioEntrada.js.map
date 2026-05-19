@@ -1,0 +1,1 @@
+{"version":3,"file":"IDiarioEntrada.js","sourceRoot":"","sources":["../../../../src/webparts/obras/models/IDiarioEntrada.ts"],"names":[],"mappings":"","sourcesContent":["export interface IDiarioEntrada {\r\n    ObraId: number;\r\n    Comentarios: string;\r\n    FotosUrls: string[]; \r\n    Fecha: string;\r\n}"]}

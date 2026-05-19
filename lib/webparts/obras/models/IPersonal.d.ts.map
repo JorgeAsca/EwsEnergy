@@ -1,0 +1,1 @@
+{"version":3,"file":"IPersonal.d.ts","sourceRoot":"","sources":["../../../../src/webparts/obras/models/IPersonal.ts"],"names":[],"mappings":"AAAA,MAAM,MAAM,UAAU,GAAG,SAAS,GAAG,UAAU,CAAC;AAEhD,MAAM,WAAW,SAAS;IACtB,EAAE,EAAE,MAAM,CAAC;IACX,eAAe,EAAE,MAAM,CAAC;IACxB,GAAG,CAAC,EAAE,MAAM,CAAC;IACb,UAAU,CAAC,EAAE,MAAM,CAAC;IACpB,KAAK,CAAC,EAAE,MAAM,CAAC;CAElB"}
