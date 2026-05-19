@@ -5,9 +5,10 @@ export interface IAsignacion {
     ObraId: number;
     PersonalId: number;
     Personal?: IPersonal;
-    FechaInicio: Date;
-    FechaFinPrevista: Date;
-    EstadoProgreso: number;
+    FechaInicio?: Date;
+    FechaFinPrevista?: Date;
+    FechaFin?: string;
+    EstadoProgreso?: number;
     FechaFinReal?: Date;
     Comentarios?: string;
 }

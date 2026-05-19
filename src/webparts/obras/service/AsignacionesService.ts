@@ -4,6 +4,7 @@ import { IAsignacion } from "../models/IAsignacion";
 import { ProjectService } from "./ProjectService";
 import { PersonalService } from "./PersonalService";
 import { IPersonal } from "../models/IPersonal";
+import { IObra } from "../models/IObra";
 
 export class AsignacionesService {
   private _context: WebPartContext;
@@ -36,6 +37,36 @@ export class AsignacionesService {
     const data = await response.json();
     return data.value || [];
   }
+
+  public async getObrasActivas(): Promise<IObra[]> {
+    const projectService = new ProjectService(this._context);
+    const obras = await projectService.getObras();
+    return obras.filter((o) => o.EstadoObra !== "Finalizado");
+  }
+
+
+  public async getPersonalDisponible(): Promise<IPersonal[]> {
+    const personalService = new PersonalService(this._context);
+    return await personalService.getPersonal();
+  }
+
+  public calcularSemaforoAsignacion(fechaFinStr?: string) {
+    if (!fechaFinStr) return { label: "Sin fecha", presence: 0 };
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const fin = new Date(fechaFinStr);
+    fin.setHours(0, 0, 0, 0);
+
+    if (fin.getTime() < hoy.getTime()) {
+      return { label: "Finalizado / Concluido", presence: 4 }; 
+    } else if (fin.getTime() === hoy.getTime()) {
+      return { label: "Asiste Hoy", presence: 3 }; 
+    } else {
+      return { label: "Programado Próximamente", presence: 2 }; 
+    }
+  }
+
+  
 
   // Creación encapsulada en el servicio
   public async crearAsignacion(
@@ -77,9 +108,9 @@ export class AsignacionesService {
       Title: `Asignación Obra ${asignacion.ObraId}`,
       ObraId: asignacion.ObraId,
       PersonalId: asignacion.PersonalId,
-      FechaInicio: asignacion.FechaInicio.toISOString(),
-      FechaFinPrevista: asignacion.FechaFinPrevista.toISOString(),
-      EstadoProgreso: asignacion.EstadoProgreso,
+      FechaInicio: asignacion.FechaInicio ? new Date(asignacion.FechaInicio).toISOString() : new Date().toISOString(),
+      FechaFinPrevista: asignacion.FechaFinPrevista ? new Date(asignacion.FechaFinPrevista).toISOString() : new Date().toISOString(),
+      EstadoProgreso: asignacion.EstadoProgreso ?? 0,
     };
 
     const options: ISPHttpClientOptions = {
