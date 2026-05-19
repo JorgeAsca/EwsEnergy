@@ -1,0 +1,1 @@
+{"version":3,"file":"IMaterial.js","sourceRoot":"","sources":["../../../../src/webparts/obras/models/IMaterial.ts"],"names":[],"mappings":"","sourcesContent":["export interface IMaterial {\r\n    Id: number;\r\n    Title: string;\r\n    Categoria: string;\r\n    StockActual: number;\r\n    StockMinimo: number;\r\n    FotoMaterial?: {\r\n        Url: string;\r\n    };\r\n}"]}

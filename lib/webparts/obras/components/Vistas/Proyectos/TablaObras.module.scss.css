@@ -1,0 +1,377 @@
+@charset "UTF-8";
+/*
+  Your use of the content in the files referenced here is subject to the terms of the license at http://aka.ms/fabric-assets-license
+*/
+.container {
+  padding: 20px;
+  background-color: #ffffff;
+  min-height: 100vh;
+}
+.container .headerSection {
+  margin-bottom: 25px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.container .tituloPrincipal {
+  color: #004d40;
+  font-weight: 700;
+}
+.container .subtituloHeader {
+  color: #666;
+}
+.container .btnNuevaObra {
+  background-color: #004d40;
+  border: none;
+  border-radius: 8px;
+}
+.container .btnNuevaObra:hover {
+  background-color: #8bc34a;
+}
+
+.splitLayout {
+  display: flex;
+  gap: 25px;
+  align-items: flex-start;
+}
+
+.listColumn {
+  width: 25%;
+  min-width: 260px;
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e1e1e1;
+  padding: 15px 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+.listColumn .listContainer {
+  max-height: 75vh;
+  overflow-y: auto;
+  padding-right: 5px;
+}
+.listColumn .listContainer::-webkit-scrollbar {
+  width: 4px;
+}
+.listColumn .listContainer::-webkit-scrollbar-thumb {
+  background: #ddd;
+  border-radius: 10px;
+}
+
+.listGroupHeader {
+  font-size: 11px;
+  font-weight: 800;
+  color: #999;
+  text-transform: uppercase;
+  margin: 15px 0 8px 5px;
+  letter-spacing: 0.5px;
+}
+
+.listItem {
+  padding: 10px 12px;
+  border: 1px solid #f0f0f0;
+  border-radius: 6px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background-color: #ffffff;
+}
+.listItem:hover {
+  border-color: #8bc34a;
+  transform: translateX(2px);
+  background-color: #fdfdfd;
+}
+.listItem.selected {
+  border-color: #004d40;
+  background-color: rgba(139, 195, 74, 0.05);
+}
+.listItem .obraTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: #004d40;
+  display: block;
+  margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Cuadros de Progreso más finos */
+.progressTrackerBox {
+  display: flex;
+  gap: 3px;
+}
+
+.trackerDot {
+  height: 6px;
+  flex: 1;
+  background-color: #eee;
+  border-radius: 3px;
+  transition: background-color 0.3s;
+}
+.trackerDot.filledOnTrack {
+  background-color: #8bc34a;
+}
+.trackerDot.filledDelayed {
+  background-color: #d13438;
+}
+.trackerDot.filledAhead {
+  background-color: #0078d4;
+}
+
+.btnFinalizar {
+  color: #2e7d32;
+}
+.btnFinalizar:hover {
+  background-color: #e8f5e9;
+}
+
+.bntCancelar {
+  color: #d32f2f;
+}
+.bntCancelar:hover {
+  background-color: #ffebee;
+}
+
+.accionesCard {
+  border-top: 1px solid #eee;
+  padding-top: 10px;
+  margin-top: 10px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.badgeEstado {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  border: 1px solid;
+}
+.badgeEstado.finalizado {
+  background: #e8f5e9;
+  color: #2e7d32;
+  border-color: #2e7d32;
+}
+.badgeEstado.activo {
+  background: #f1f8e9;
+  color: #004d40;
+  border-color: #8bc34a;
+}
+.badgeEstado.cancelado {
+  background: #fde7e9;
+  color: #a4262c;
+  border-color: #a4262c;
+}
+
+/* COLUMNA DERECHA (DETALLES) */
+.detailColumn {
+  width: 65%;
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e1e1e1;
+  min-height: 600px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+}
+
+.detailContent {
+  padding: 30px;
+}
+
+.detailTitle {
+  color: #004d40;
+  font-weight: 700;
+}
+
+.infoSection {
+  margin: 20px 0;
+}
+.infoSection .labelSeccion {
+  font-size: 12px;
+  font-weight: 700;
+  color: #888;
+  margin-bottom: 4px;
+  display: block;
+  text-transform: uppercase;
+}
+.infoSection .iconVerde {
+  color: #8bc34a;
+  margin-right: 5px;
+}
+
+/* Sección Planos */
+.planosSection {
+  margin-top: 30px;
+  background-color: #fcfcfc;
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid #eee;
+}
+.planosSection .sectionTitle {
+  color: #004d40;
+  font-weight: 700;
+}
+.planosSection .btnUpload {
+  border-color: #8bc34a;
+  color: #004d40;
+}
+.planosSection .planoCard {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 15px;
+  border: 1px solid #e1e1e1;
+  border-radius: 8px;
+  background: #ffffff;
+  cursor: pointer;
+}
+.planosSection .planoCard:hover {
+  border-color: #8bc34a;
+}
+.planosSection .planoCard .pdfIcon {
+  color: #d13438;
+  font-size: 20px;
+}
+.planosSection .planoCard .dwgIcon {
+  color: #0078d4;
+  font-size: 20px;
+}
+
+/* Sección Historial / Fotos */
+.historialSection {
+  margin-top: 30px;
+}
+.historialSection .sectionTitle {
+  color: #004d40;
+  font-weight: 700;
+  margin-bottom: 15px;
+  display: block;
+}
+
+.fotoCard {
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 12px;
+  background: #ffffff;
+}
+.fotoCard .fotoThumb {
+  border-radius: 6px;
+  border: 1px solid #ddd;
+}
+.fotoCard .fotoFecha {
+  font-weight: 700;
+  color: #004d40;
+  font-size: 13px;
+}
+.fotoCard .fotoComentarioBox {
+  padding: 8px 12px;
+  background: #f9fbf9;
+  border-left: 3px solid #8bc34a;
+  margin-top: 8px;
+}
+.fotoCard .fotoComentarioText {
+  font-style: italic;
+  color: #555;
+  font-size: 13px;
+}
+
+/* Estado Vacío */
+.emptyState {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #999;
+}
+.emptyState .emptyIcon {
+  font-size: 60px;
+  color: #e1e1e1;
+  margin-bottom: 20px;
+}
+
+/* --- MODAL DE CREACIÓN --- */
+.modalFlotanteContainer {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+.modalFlotanteContainer :global(.ms-Modal-main) {
+  background-color: #ffffff !important;
+  border-radius: 16px !important;
+  border: 2px solid #004d40 !important;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15) !important;
+  width: 100% !important;
+  max-width: 550px !important;
+  overflow: hidden !important;
+}
+.modalFlotanteContainer .modalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.modalContent {
+  padding: 30px;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.modalTitle {
+  color: #004d40;
+  font-weight: 700;
+  margin: 0;
+}
+
+.btnClose {
+  color: #888;
+}
+.btnClose:hover {
+  color: #d32f2f;
+  background-color: #f8f8f8;
+  border-radius: 50%;
+}
+
+.modalSeparator {
+  margin: 15px 0;
+  border-color: #eee;
+}
+
+.modalBody {
+  margin-bottom: 25px;
+}
+.modalBody :global(.ms-Label) {
+  color: #004d40 !important;
+  font-weight: 600 !important;
+}
+
+.btnLaunch {
+  background-color: #004d40;
+  border: none;
+  border-radius: 8px;
+  height: 40px;
+  padding: 0 25px;
+}
+.btnLaunch:hover {
+  background-color: #8bc34a;
+}
+
+/* --- TRUCO PARA PANTALLA COMPLETA EN WORKBENCH --- */
+:global #workbenchPageContent,
+:global .CanvasComponent.LgHost,
+:global .CanvasZoneContainer,
+:global .CanvasZone,
+:global .SPCanvas-canvas {
+  max-width: 100% !important;
+  padding: 0 !important;
+}

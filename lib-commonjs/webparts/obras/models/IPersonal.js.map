@@ -1,0 +1,1 @@
+{"version":3,"file":"IPersonal.js","sourceRoot":"","sources":["../../../../src/webparts/obras/models/IPersonal.ts"],"names":[],"mappings":"","sourcesContent":["export type RolUsuario = 'Manager' | 'Operario';\r\n\r\nexport interface IPersonal {\r\n    Id: number;\r\n    NombreyApellido: string;\r\n    Rol?: string;\r\n    FotoPerfil?: string;\r\n    Email?: string;\r\n\r\n}"]}

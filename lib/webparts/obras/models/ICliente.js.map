@@ -1,0 +1,1 @@
+{"version":3,"file":"ICliente.js","sourceRoot":"","sources":["../../../../src/webparts/obras/models/ICliente.ts"],"names":[],"mappings":"","sourcesContent":["export interface ICliente {\r\n    Id: number;\r\n    Title: string; // Nombre del cliente\r\n    CIF?: string;\r\n    EmpresaRelacionadaId?: number; // ID del Lookup\r\n}"]}

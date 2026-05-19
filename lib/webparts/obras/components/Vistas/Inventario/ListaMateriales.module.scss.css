@@ -1,0 +1,115 @@
+/*
+  Your use of the content in the files referenced here is subject to the terms of the license at http://aka.ms/fabric-assets-license
+*/
+.container {
+  padding: 20px;
+  background-color: #f4f4f4;
+  min-height: 100vh;
+}
+.container :global .ms-TextField-fieldGroup::after,
+.container :global .ms-Dropdown-container::after,
+.container :global .ms-SearchBox::after {
+  border-color: #004d40;
+}
+.container :global .ms-DetailsHeader {
+  background-color: #004d40;
+  padding-top: 0;
+}
+.container :global .ms-DetailsHeader .ms-DetailsHeader-cell {
+  color: #ffffff;
+  background-color: #004d40;
+  font-weight: 700;
+}
+.container :global .ms-DetailsHeader .ms-DetailsHeader-cell .ms-DetailsHeader-filterChevron,
+.container :global .ms-DetailsHeader .ms-DetailsHeader-cell .ms-DetailsHeader-cellName {
+  color: #ffffff;
+}
+.container :global .ms-DetailsRow {
+  border-bottom: 1px solid #edebe9;
+}
+.container :global .ms-DetailsRow:hover {
+  background-color: rgba(139, 195, 74, 0.1);
+  color: #004d40;
+}
+.container :global .ms-DetailsRow:hover .ms-DetailsRow-cell {
+  background-color: transparent;
+  color: #004d40;
+}
+
+.formCard {
+  background-color: #ffffff;
+  padding: 24px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  margin-bottom: 25px;
+  border-top: 4px solid #004d40;
+}
+
+.formTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  color: #004d40;
+}
+.formTitle i {
+  font-size: 24px;
+}
+
+.gridForm {
+  display: grid;
+  grid-template-columns: 2fr 1fr 0.8fr 0.8fr 1fr;
+  gap: 15px;
+  align-items: end;
+}
+@media (max-width: 1024px) {
+  .gridForm {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.btnAdd {
+  height: 32px;
+  background-color: #004d40;
+  border: none;
+  border-radius: 4px;
+  color: #ffffff;
+}
+.btnAdd:hover {
+  background-color: #8bc34a;
+}
+
+.searchSection {
+  margin: 15px 0;
+  width: 350px;
+}
+
+.tableContainer {
+  background-color: #ffffff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid #edebe9;
+}
+
+.stockCellAlerta {
+  color: #d13438;
+  font-weight: 700;
+}
+
+.stockCellNormal {
+  color: #004d40;
+  font-weight: 700;
+}
+
+.actionBtn {
+  color: #004d40;
+}
+
+.deleteBtn {
+  color: #d13438;
+}
+
+.panelStack {
+  margin-top: 20px;
+}

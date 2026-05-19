@@ -1,0 +1,1 @@
+{"version":3,"file":"IObrasProps.d.ts","sourceRoot":"","sources":["../../../../src/webparts/obras/components/IObrasProps.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,cAAc,EAAE,MAAM,4BAA4B,CAAC;AAE5D,MAAM,WAAW,WAAW;IAC1B,WAAW,EAAE,MAAM,CAAC;IACpB,WAAW,EAAE,OAAO,CAAC;IACrB,kBAAkB,EAAE,MAAM,CAAC;IAC3B,eAAe,EAAE,OAAO,CAAC;IACzB,eAAe,EAAE,MAAM,CAAC;IACxB,OAAO,EAAE,cAAc,CAAC;CACzB"}
